@@ -244,9 +244,17 @@ public class ProcessFromPereup extends ProcessTask {
         callSetTaskState(TaskState.CNF_MERGE, ctx);
         callSetMsg("В ячейке " + f.CELL + " (склад " + f.LGORT2 + ") числится " + ProcessTask.delDecZeros(f.QTY0.toString()) + " ед товара", ctx);
       } else {
-        callSetMsg("Паллета " + f.PAL2 + " (переупаковка " + f.PAL1 + ") размещена в " + f.CELL + " (склад " + f.LGORT2 + ")", ctx);
+        String s = "Паллета " + f.PAL2 + " (переупаковка " + f.PAL1 + ") размещена в " + f.CELL + " (склад " + f.LGORT2 + ")";
+        if (!f.ADD_MSG.isEmpty()) {
+          s += "\n<br>" + f.ADD_MSG;
+        }
+        callSetMsg(s, ctx);
         callAddHist(f.PAL2 + " (" + f.PAL1 + ") -> " + f.CELL + " (" + f.LGORT2 + ")", ctx);
         callSetTaskState(TaskState.SEL_PEREUP, ctx);
+        if (!f.ADD_ERR.isEmpty()) {
+          HtmlPageMessage p = new HtmlPageMessage(f.ADD_ERR, s, null, null);
+          return p.getPage();
+        }
       }
     } else {
       callSetErr(f.err, ctx);
