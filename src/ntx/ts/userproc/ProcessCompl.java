@@ -356,6 +356,7 @@ public class ProcessCompl extends ProcessTask {
     HtmlPageMenu p = new HtmlPageMenu("Комплектация",
             "Имеются недокомплектованные позиции по ячейке/поставке (" + restQty + "), всё равно сохранить?",
             "no:Отмена;showcell:Нет, показать недокомпл. позиции;restqty_cnf:Да, сохранить недокомпл. кол-во", "no", null, null, true);
+    p.sound = "err.wav";
     return p.getPage();
   }
 
