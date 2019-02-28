@@ -107,7 +107,7 @@ public class ProcessVygr extends ProcessTask {
         break;
 
       default:
-        def = "cont:Назад;later:Отложить";
+        def = "cont:Назад;later:Отложить;fin:Отменить выгрузку";
         break;
     }
 
@@ -169,6 +169,7 @@ public class ProcessVygr extends ProcessTask {
     String s = "Кубатура машины: " + delDecZeros(qty.toString());
     callSetMsg(s, ctx);
     callAddHist(s, ctx);
+    callTaskNameChange(ctx);
 
     return htmlGet(true, ctx);
   }
@@ -193,6 +194,7 @@ public class ProcessVygr extends ProcessTask {
     String s = "Кубатура груза: " + delDecZeros(qty.toString());
     callSetMsg(s, ctx);
     callAddHist(s, ctx);
+    callTaskNameChange(ctx);
 
     return htmlGet(true, ctx);
   }
@@ -211,6 +213,7 @@ public class ProcessVygr extends ProcessTask {
       String s = "Выгрузка машины начата";
       callSetMsg(s, ctx);
       callAddHist(s, ctx);
+      callTaskNameChange(ctx);
     }
 
     return htmlGet(true, ctx);
@@ -222,7 +225,11 @@ public class ProcessVygr extends ProcessTask {
   }
 
   private FileData handleFin(TaskContext ctx) throws Exception {
-    boolean isErr = saveData(ctx);
+    boolean isErr = false;
+
+    if (d.getStarted()) {
+      isErr = saveData(ctx);
+    }
 
     if (isErr) {
       return htmlGet(true, ctx);
@@ -259,7 +266,11 @@ public class ProcessVygr extends ProcessTask {
 
   @Override
   public String procName() {
-    return getProcType().text + " " + d.getLgort() + " " + df2.format(new Date(getProcId()));
+    return getProcType().text + " " + d.getLgort()
+            + " (" + delDecZeros(d.getM3Mach().toString())
+            + "/" + delDecZeros(d.getM3Gr().toString())
+            + (d.getStarted() ? ") " : " !не начато! ) ")
+            + df2.format(new Date(getProcId()));
   }
 
   @Override

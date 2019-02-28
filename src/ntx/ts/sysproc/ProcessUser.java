@@ -80,7 +80,7 @@ public class ProcessUser extends Process {
 
   public ProcessUser(long procId) throws Exception {
     super(ProcType.USER, procId);
-    tasks = new HandlerTaskList(getProcId(), 3);
+    tasks = new HandlerTaskList(getProcId(), 5);
   }
 
   public String getLastLgort() {
