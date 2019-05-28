@@ -115,7 +115,7 @@ public class ProcessFromPereup extends ProcessTask {
       String s = "Размещение товара с переупакованной паллеты " + pal + " (на склад " + f.LGORT2 + ")";
       callSetMsg(s, ctx);
       callAddHist(pal + " (-> " + f.LGORT2 + ")", ctx);
-      d.callSetPal1(pal, TaskState.TOV_PAL, ctx);
+      d.callSetPal1(pal, f.LGORT2, TaskState.TOV_PAL, ctx);
       d.callSetNerazm(f.IT, ctx);
     } else {
       callSetErr(f.err, ctx);
@@ -461,7 +461,7 @@ class FromPereupData extends ProcData {
     return cell;
   }
 
-  public void callSetPal1(String pal, TaskState state, TaskContext ctx) throws Exception {
+  public void callSetPal1(String pal, String lgort, TaskState state, TaskContext ctx) throws Exception {
     DataRecord dr = new DataRecord();
     dr.procId = ctx.task.getProcId();
     if (!strEq(this.pal1, pal)) {
@@ -479,6 +479,7 @@ class FromPereupData extends ProcData {
     if (!cell.isEmpty()) {
       dr.setS(FieldType.CELL, "");
     }
+    dr.setI(FieldType.LOG, LogType.SET_LGORT.ordinal());
     Track.saveProcessChange(dr, ctx.task, ctx);
   }
 
