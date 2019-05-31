@@ -160,7 +160,7 @@ public class DataRecord {
 
   public String getValStr(FieldType tp) {
     String s = (String) fld[tp.ordinal()];
-    return s.isEmpty() ? null : s;
+    return (s == null) || s.isEmpty() ? null : s;
   }
 
   public void clearAll() {
