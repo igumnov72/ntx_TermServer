@@ -7,6 +7,8 @@ import java.util.HashMap;
 import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentSkipListMap;
 import ntx.sap.fm.*;
+import ntx.sap.refs.RefAbc;
+import ntx.sap.refs.RefAbcStruct;
 import ntx.sap.refs.RefCharg;
 import ntx.sap.refs.RefChargStruct;
 import ntx.sap.refs.RefInfo;
@@ -260,6 +262,10 @@ public class ProcessInvent extends ProcessTask {
     }
   }
 
+  private String appendAbc(String s, RefAbcStruct a) {
+    return (a == null) || a.abc.isEmpty() ? s : s + " (ABC: " + a.abc + ")";
+  }
+
   private FileData handleScanTovDo(String scan, TaskContext ctx) throws Exception {
     // тип ШК уже проверен
     try {
@@ -271,9 +277,11 @@ public class ProcessInvent extends ProcessTask {
       }
       RefMatStruct m = RefMat.getNoNull(c.matnr);
       BigDecimal qty = getScanQty(scan);
+      RefAbcStruct a = RefAbc.get(d.getLgort(), c.matnr);
 
       if (ctx.user.getAskQty()) {
         String s = c.matnr + "/" + charg + " " + m.name;
+        s = appendAbc(s, a);
         callSetMsg(s, ctx);
         callSetTaskState(TaskState.QTY, ctx);
         d.callSetLastScan(scan, ctx);
@@ -282,6 +290,7 @@ public class ProcessInvent extends ProcessTask {
         String s = delDecZeros(qty.toString()) + " ед: "
                 + c.matnr + "/" + charg + " " + m.name
                 + " (всего " + d.getDifStr(false) + ")";
+        s = appendAbc(s, a);
         callAddHist(s, ctx);
         callSetMsg(s, ctx);
       }
@@ -306,10 +315,12 @@ public class ProcessInvent extends ProcessTask {
         callSetWorkState(ctx);
         return htmlGet(true, ctx);
       }
+      RefAbcStruct a = RefAbc.get(d.getLgort(), c.matnr);
       d.callAddTov(c.matnr, charg, qty, ctx);
       String s = delDecZeros(qty.toString()) + " ед: "
               + c.matnr + "/" + charg + " " + RefMat.getName(c.matnr)
               + " (всего " + d.getDifStr(false) + ")";
+      s = appendAbc(s, a);
       callAddHist(s, ctx);
       callSetMsg(s, ctx);
       callSetWorkState(ctx);

@@ -159,12 +159,15 @@ public class ProcessProdPriemka extends ProcessTask {
     boolean ok = false;
     BigDecimal qtyTot = q;
 
+    String abc = "";
+
     if (r != null) {
       // партия уже сканировалась, проверяем имеющееся макс кол-во
       qtyTot = qtyTot.add(r.qty);
       if (qtyTot.compareTo(r.qtyMax) <= 0) {
         ok = true;
-        d.callAddTov(charg, q, r.qtyMax, null, ctx);
+        abc = r.abc;
+        d.callAddTov(charg, q, r.qtyMax, abc, null, ctx);
       }
     }
 
@@ -178,7 +181,8 @@ public class ProcessProdPriemka extends ProcessTask {
       f.execute();
 
       if (!f.isErr) {
-        d.callAddTov(charg, q, f.QTY_MAX, TaskState.TOV_PAL, ctx);
+        abc = f.ABC;
+        d.callAddTov(charg, q, f.QTY_MAX, abc, TaskState.TOV_PAL, ctx);
         d.callSetEbelns(f.EBELNS2, ctx);
         ok = true;
       } else {
@@ -191,6 +195,9 @@ public class ProcessProdPriemka extends ProcessTask {
               + ": " + delDecZeros(q.toString()) + " ед (на паллете: "
               + delDecZeros(d.getQtyPal().toString()) + " ед; "
               + d.getNScan() + " скан)";
+      if (!abc.isEmpty()) {
+        s += " (ABC: " + abc + ")";
+      }
       callSetMsg(s, ctx);
       callAddHist(s, ctx);
     }
@@ -579,10 +586,12 @@ class ProdPriemkaScanData {  // отсканированные позиции
 
   public String charg;
   public BigDecimal qty;
+  public String abc;
 
-  public ProdPriemkaScanData(String charg, BigDecimal qty) {
+  public ProdPriemkaScanData(String charg, BigDecimal qty, String abc) {
     this.charg = charg;
     this.qty = qty;
+    this.abc = abc;
   }
 }
 
@@ -590,10 +599,12 @@ class ProdPriemkaTovData {  // общее и максимальное кол-в�
 
   public BigDecimal qty;
   public BigDecimal qtyMax;
+  public String abc;
 
-  public ProdPriemkaTovData(BigDecimal qty, BigDecimal qtyMax) {
+  public ProdPriemkaTovData(BigDecimal qty, BigDecimal qtyMax, String abc) {
     this.qty = qty;
     this.qtyMax = (qtyMax == null ? BigDecimal.ZERO : qtyMax);
+    this.abc = abc;
   }
 }
 
@@ -665,7 +676,7 @@ class ProdPriemkaData extends ProcData {
   public ProdPriemkaTovData getPrtQty(String charg) {
     ProdPriemkaTovData ret = pq.get(charg);
     if (ret == null) {
-      ret = new ProdPriemkaTovData(BigDecimal.ZERO, BigDecimal.ZERO);
+      ret = new ProdPriemkaTovData(BigDecimal.ZERO, BigDecimal.ZERO, "");
     }
     return ret;
   }
@@ -739,11 +750,12 @@ class ProdPriemkaData extends ProcData {
     Track.saveProcessChange(dr, ctx.task, ctx);
   }
 
-  public void callAddTov(String charg, BigDecimal qty, BigDecimal qtyMax, TaskState state, TaskContext ctx) throws Exception {
+  public void callAddTov(String charg, BigDecimal qty, BigDecimal qtyMax, String abc, TaskState state, TaskContext ctx) throws Exception {
     DataRecord dr = new DataRecord();
     dr.procId = ctx.task.getProcId();
     dr.setS(FieldType.CHARG, charg);
     dr.setN(FieldType.QTY, qty);
+    dr.setS(FieldType.ABC, abc);
     if (qtyMax != null) {
       dr.setN(FieldType.QTY_MAX, qtyMax);
     }
@@ -779,8 +791,13 @@ class ProdPriemkaData extends ProcData {
   }
 
   private void hdAddTov(DataRecord dr) {
+    String abc = dr.getValStr(FieldType.ABC);
+    if (abc == null) {
+      abc = "";
+    }
+
     ProdPriemkaScanData sd = new ProdPriemkaScanData(dr.getValStr(FieldType.CHARG),
-            (BigDecimal) dr.getVal(FieldType.QTY));
+            (BigDecimal) dr.getVal(FieldType.QTY), abc);
     BigDecimal qtyMax = (BigDecimal) dr.getVal(FieldType.QTY_MAX);
 
     if (sd.qty.signum() > 0) {
@@ -788,7 +805,7 @@ class ProdPriemkaData extends ProcData {
       qtyPal = qtyPal.add(sd.qty);
       ProdPriemkaTovData r = pq.get(sd.charg);
       if (r == null) {
-        r = new ProdPriemkaTovData(BigDecimal.ZERO, qtyMax);
+        r = new ProdPriemkaTovData(BigDecimal.ZERO, qtyMax, abc);
         pq.put(sd.charg, r);
       }
       r.qty = r.qty.add(sd.qty);

@@ -19,6 +19,7 @@ public class Z_TS_PROD1 {
   // exporting params
   public String EBELNS2 = ""; // Список заказов на поставку
   public BigDecimal QTY_MAX = new BigDecimal(0); // Максимальное кол-во (мин по всем заказам)
+  public String ABC = ""; // Признак материала на складе ABC
   //
   // переменные для работы с ошибками
   public boolean isErr;
@@ -56,6 +57,7 @@ public class Z_TS_PROD1 {
         System.out.println("Возврат из ФМ Z_TS_PROD1:");
         System.out.println("  EBELNS2=" + EBELNS2);
         System.out.println("  QTY_MAX=" + QTY_MAX);
+        System.out.println("  ABC=" + ABC);
         System.out.println("  err=" + err);
       }
     } else {
@@ -104,6 +106,7 @@ public class Z_TS_PROD1 {
     if (ret == null) {
       params.EBELNS2 = expParams.getString("EBELNS2");
       params.QTY_MAX = expParams.getBigDecimal("QTY_MAX");
+      params.ABC = expParams.getString("ABC");
       params.err = expParams.getString("ERR");
       if (!params.err.isEmpty()) {
         params.isErr = true;

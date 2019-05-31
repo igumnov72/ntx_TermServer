@@ -27,6 +27,7 @@ public class Z_TS_SKL_MOVE3 {
   public BigDecimal QTY = new BigDecimal(0); // Количество
   public String MAKTX = ""; // Краткий текст материала
   public String MAT_CELL = ""; // Ячейки с материалом
+  public String ABC = ""; // Признак материала на складе ABC
   //
   // table params
   public ZTS_MAT_QTY_S[] IT_MQ = new ZTS_MAT_QTY_S[0]; // Кол-во по материалу
@@ -83,6 +84,7 @@ public class Z_TS_SKL_MOVE3 {
         System.out.println("  QTY=" + QTY);
         System.out.println("  MAKTX=" + MAKTX);
         System.out.println("  MAT_CELL=" + MAT_CELL);
+        System.out.println("  ABC=" + ABC);
         System.out.println("  err=" + err);
         System.out.println("  IT_MQ.length=" + IT_MQ.length);
       }
@@ -149,6 +151,7 @@ public class Z_TS_SKL_MOVE3 {
       params.QTY = expParams.getBigDecimal("QTY");
       params.MAKTX = expParams.getString("MAKTX");
       params.MAT_CELL = expParams.getString("MAT_CELL");
+      params.ABC = expParams.getString("ABC");
       params.err = expParams.getString("ERR");
       if (!params.err.isEmpty()) {
         params.isErr = true;

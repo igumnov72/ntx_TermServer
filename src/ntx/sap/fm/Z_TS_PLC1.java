@@ -24,6 +24,7 @@ public class Z_TS_PLC1 {
   public int NERAZM = 0; // Число неразмещенных паллет
   public String IS_PNP = ""; // Приемка по ПНП
   public String ASK_CNF_PM = ""; // требуется запрос создания ПМ (есть вход пост)
+  public String ABC = ""; // Признак материала на складе ABC
   //
   // переменные для работы с ошибками
   public boolean isErr;
@@ -67,6 +68,7 @@ public class Z_TS_PLC1 {
         System.out.println("  NERAZM=" + NERAZM);
         System.out.println("  IS_PNP=" + IS_PNP);
         System.out.println("  ASK_CNF_PM=" + ASK_CNF_PM);
+        System.out.println("  ABC=" + ABC);
         System.out.println("  err=" + err);
       }
     } else {
@@ -121,6 +123,7 @@ public class Z_TS_PLC1 {
       params.NERAZM = expParams.getInt("NERAZM");
       params.IS_PNP = expParams.getString("IS_PNP");
       params.ASK_CNF_PM = expParams.getString("ASK_CNF_PM");
+      params.ABC = expParams.getString("ABC");
       params.err = expParams.getString("ERR");
       if (!params.err.isEmpty()) {
         params.isErr = true;

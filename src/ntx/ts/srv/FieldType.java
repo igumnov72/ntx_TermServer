@@ -129,7 +129,8 @@ public enum FieldType {
   M3_GR(ValType.DEC), // кубатера груза
   ALL_CHARGS(ValType.STRING_AR), // массив всех номеров партий (по материалам в ведомости по ячейке)
   NEXT_CELL(ValType.STRING), // следующая ячейка
-  NEXT_VBELN(ValType.STRING); // следующая поставка
+  NEXT_VBELN(ValType.STRING), // следующая поставка
+  ABC(ValType.STRING); // признак материала ABC
   //
   public final ValType valType;
 

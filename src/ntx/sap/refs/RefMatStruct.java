@@ -3,7 +3,6 @@ package ntx.sap.refs;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
-import java.util.Arrays;
 import ntx.sap.fm.Z_TS_MAT_IMG;
 import ntx.sap.sys.SAPconn;
 import ntx.ts.sysproc.ProcessTask;

@@ -20,6 +20,7 @@ public class Z_TS_SKL_MOVE1 {
   public String NO_PAL = ""; // Без сканирования паллеты
   public String PAL1 = ""; // № единицы складирования
   public String NOT_WHOLE = ""; // Флаг невозм перем всего товара с паллеты
+  public String ABC = ""; // Признак материала на складе ABC
   //
   // переменные для работы с ошибками
   public boolean isErr;
@@ -59,6 +60,7 @@ public class Z_TS_SKL_MOVE1 {
         System.out.println("  NO_PAL=" + NO_PAL);
         System.out.println("  PAL1=" + PAL1);
         System.out.println("  NOT_WHOLE=" + NOT_WHOLE);
+        System.out.println("  ABC=" + ABC);
         System.out.println("  err=" + err);
       }
     } else {
@@ -109,6 +111,7 @@ public class Z_TS_SKL_MOVE1 {
       params.NO_PAL = expParams.getString("NO_PAL");
       params.PAL1 = expParams.getString("PAL1");
       params.NOT_WHOLE = expParams.getString("NOT_WHOLE");
+      params.ABC = expParams.getString("ABC");
       params.err = expParams.getString("ERR");
       if (!params.err.isEmpty()) {
         params.isErr = true;

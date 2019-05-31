@@ -110,8 +110,11 @@ public class ProcessPlacement extends ProcessTask {
         if (!f.LGPLA.isEmpty()) {
           s1 = "<br>\r\n(только в " + f.LGPLA + ")";
         }
-        callSetMsg("Размещение паллеты " + d.getPal() + " на складе " + f.LGORT
-                + s1 + "<br>\r\nВсего паллет к размещению по " + d.getVbeln() + ": " + f.NERAZM, ctx);
+        String s = "Размещение паллеты " + d.getPal() + " на складе " + f.LGORT;
+        if (!f.ABC.isEmpty()) {
+          s += " (ABC: " + f.ABC + ")";
+        }
+        callSetMsg(s + s1 + "<br>\r\nВсего паллет к размещению по " + d.getVbeln() + ": " + f.NERAZM, ctx);
         d.callSetDoPM(false, false, ctx);
         if (f.ASK_CNF_PM.equals("X")) {
           callSetTaskState(TaskState.CNF_PM, ctx);

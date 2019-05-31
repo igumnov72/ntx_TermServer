@@ -185,6 +185,10 @@ public class ProcessSklMove extends ProcessTask {
     return false;
   }
 
+  private String appendAbc(String s, String abc) {
+    return (abc == null) || abc.isEmpty() ? s : s + " (ABC: " + abc + ")";
+  }
+
   private FileData handleScanCell(String scan, TaskContext ctx) throws Exception {
     if (!isScanCell(scan)) {
       callSetErr("Требуется отсканировать ШК ячейки (сканирование " + scan + " не принято)", ctx);
@@ -204,6 +208,7 @@ public class ProcessSklMove extends ProcessTask {
         d.callSetPal1(f.PAL1, TaskState.SEL_TOV_CELL, ctx);
         d.callClearTovData(ctx);
         String s = "Перемещение из " + d.getCell1() + " " + d.getPal1() + " (БЕЗ СКАНИРОВАНИЯ ПАЛЛЕТЫ)";
+        appendAbc(s, f.ABC);
         if (f.NOT_WHOLE.equals("X")) {
           s = s + " <br>!!! ОТКРЫТЫЕ ТРАНСП. ЗАКАЗЫ, ВЕСЬ ТОВАР С ПАЛЛЕТЫ ПЕРЕМЕСТИТЬ НЕЛЬЗЯ";
         }
@@ -239,6 +244,7 @@ public class ProcessSklMove extends ProcessTask {
     if (!f.isErr) {
       d.callSetPal1(scan.substring(1), TaskState.SEL_TOV_CELL, ctx);
       String s = "Перемещение из " + d.getCell1() + " " + d.getPal1();
+      appendAbc(s, f.ABC);
       if (f.NOT_WHOLE.equals("X")) {
         s = s + " <br>!!! ОТКРЫТЫЕ ТРАНСП. ЗАКАЗЫ, ВЕСЬ ТОВАР С ПАЛЛЕТЫ ПЕРЕМЕСТИТЬ НЕЛЬЗЯ";
       }
@@ -338,8 +344,9 @@ public class ProcessSklMove extends ProcessTask {
       f.MATNR = delZeros(f.MATNR);
       f.CHARG = delZeros(f.CHARG);
       d.callAddTov(f.MATNR, f.CHARG, f.QTY, ctx);
-      
+
       String s = delDecZeros(f.QTY.toString()) + "ед " + f.MATNR + " (" + f.CHARG + ") " + f.MAKTX;
+      appendAbc(s, f.ABC);
 
       if (!f.MAT_CELL.isEmpty()) {
         s = s + " (" + f.MAT_CELL + ")";

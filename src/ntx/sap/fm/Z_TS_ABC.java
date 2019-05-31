@@ -5,25 +5,21 @@ import ntx.sap.sys.*;
 import com.sap.conn.jco.*;
 
 /**
- * Отсканирована паллета-источник при перемещении
+ * Получение данных о признаке ABC
  */
-public class Z_TS_SKL_MOVE2 {
+public class Z_TS_ABC {
 
   // importing params
-  public String LGPLA = "";
-  public String LGNUM = ""; // Номер склада/комплекс
-  public String LGTYP = ""; // Тип склада
-  public String PAL = ""; // № единицы складирования
+  public String LGORT = ""; // Склад
+  public String MATNR = ""; // Номер материала
   //
   // exporting params
-  public String NOT_WHOLE = ""; // Флаг невозм перем всего товара с паллеты
   public String ABC = ""; // Признак материала на складе ABC
   //
   // переменные для работы с ошибками
   public boolean isErr;
   public String err;
   public String errFull;
-  public boolean isSapErr;
   //
   // вспомогательные переменные
   private static volatile JCoFunction function;
@@ -33,18 +29,15 @@ public class Z_TS_SKL_MOVE2 {
 
   public void execute() {
     isErr = false;
-    isSapErr = false;
     err = "";
     errFull = "";
 
     if (TSparams.logDocLevel == 1) {
-      System.out.println("Вызов ФМ Z_TS_SKL_MOVE2");
+      System.out.println("Вызов ФМ Z_TS_ABC");
     } else if (TSparams.logDocLevel >= 2) {
-      System.out.println("Вызов ФМ Z_TS_SKL_MOVE2:");
-      System.out.println("  LGPLA=" + LGPLA);
-      System.out.println("  LGNUM=" + LGNUM);
-      System.out.println("  LGTYP=" + LGTYP);
-      System.out.println("  PAL=" + PAL);
+      System.out.println("Вызов ФМ Z_TS_ABC:");
+      System.out.println("  LGORT=" + LGORT);
+      System.out.println("  MATNR=" + MATNR);
     }
 
     // вызов САПовской процедуры
@@ -52,20 +45,17 @@ public class Z_TS_SKL_MOVE2 {
 
     if (e == null) {
       if (TSparams.logDocLevel >= 2) {
-        System.out.println("Возврат из ФМ Z_TS_SKL_MOVE2:");
-        System.out.println("  NOT_WHOLE=" + NOT_WHOLE);
+        System.out.println("Возврат из ФМ Z_TS_ABC:");
         System.out.println("  ABC=" + ABC);
-        System.out.println("  err=" + err);
       }
     } else {
       // обработка ошибки
       isErr = true;
-      isSapErr = true;
       errFull = e.toString();
       ErrDescr ed = SAPconn.describeErr(errFull);
       err = ed.err;
 
-      System.err.println("Error calling SAP procedure Z_TS_SKL_MOVE2:");
+      System.err.println("Error calling SAP procedure Z_TS_ABC:");
       if (ed.isShort || !err.equals(errFull)) {
         System.err.println(err);
       }
@@ -75,12 +65,12 @@ public class Z_TS_SKL_MOVE2 {
       System.err.flush();
 
       if (errFull.startsWith("com.sap.conn.jco.JCoException: (104) JCO_ERROR_SYSTEM_FAILURE:")) {
-        System.out.println("!!! Error in Z_TS_SKL_MOVE2: " + err);
+        System.out.println("!!! Error in Z_TS_ABC: " + err);
       }
     }
   }
 
-  private static synchronized JCoException execute(Z_TS_SKL_MOVE2 params) {
+  private static synchronized JCoException execute(Z_TS_ABC params) {
     JCoException ret = null;
 
     if (!isInit) {
@@ -93,21 +83,13 @@ public class Z_TS_SKL_MOVE2 {
     impParams.clear();
     expParams.clear();
 
-    impParams.setValue("LGPLA", params.LGPLA);
-    impParams.setValue("LGNUM", params.LGNUM);
-    impParams.setValue("LGTYP", params.LGTYP);
-    impParams.setValue("PAL", params.PAL);
+    impParams.setValue("LGORT", params.LGORT);
+    impParams.setValue("MATNR", params.MATNR);
 
     ret = SAPconn.executeFunction(function);
 
     if (ret == null) {
-      params.NOT_WHOLE = expParams.getString("NOT_WHOLE");
       params.ABC = expParams.getString("ABC");
-      params.err = expParams.getString("ERR");
-      if (!params.err.isEmpty()) {
-        params.isErr = true;
-        params.errFull = params.err;
-      }
     }
 
     return ret;
@@ -115,13 +97,13 @@ public class Z_TS_SKL_MOVE2 {
 
   private static JCoException init() {
     try {
-      function = SAPconn.getFunction("Z_TS_SKL_MOVE2");
+      function = SAPconn.getFunction("Z_TS_ABC");
     } catch (JCoException e) {
       return e;
     }
 
     if (function == null) {
-      return new JCoException(0, "Z_TS_SKL_MOVE2 not found in SAP.");
+      return new JCoException(0, "Z_TS_ABC not found in SAP.");
     }
 
     impParams = function.getImportParameterList();
