@@ -6,6 +6,8 @@ import java.util.HashMap;
 import java.util.Map.Entry;
 import ntx.sap.fm.*;
 import ntx.sap.refs.*;
+import ntx.sap.struct.ZTS_MAT_ABC_S;
+import ntx.sap.struct.ZTS_VED_S;
 import ntx.ts.html.*;
 import ntx.ts.http.FileData;
 import ntx.ts.srv.DataRecord;
@@ -13,11 +15,15 @@ import ntx.ts.srv.FieldType;
 import ntx.ts.srv.LogType;
 import ntx.ts.srv.TaskState;
 import ntx.ts.srv.ProcType;
+import ntx.ts.srv.TSparams;
 import ntx.ts.srv.TermQuery;
 import ntx.ts.srv.Track;
 import ntx.ts.sysproc.ProcData;
 import ntx.ts.sysproc.ProcessContext;
 import ntx.ts.sysproc.ProcessTask;
+import static ntx.ts.sysproc.ProcessUtil.delDecZeros;
+import static ntx.ts.sysproc.ProcessUtil.delZeros;
+import static ntx.ts.sysproc.ProcessUtil.fillZeros;
 import ntx.ts.sysproc.TaskContext;
 import ntx.ts.sysproc.UserContext;
 
@@ -151,6 +157,9 @@ public class ProcessSklMove extends ProcessTask {
     } else if (menu.equals("new_cell")) {
       callClearErrMsg(ctx);
       return handleNewCell(ctx);
+    } else if (menu.equals("abc")) {
+      callClearErrMsg(ctx);
+      return htmlShowABC(ctx);
     } else {
       return htmlGet(false, ctx);
     }
@@ -523,6 +532,11 @@ public class ProcessSklMove extends ProcessTask {
         definition = "cont:Продолжить;later:Отложить;new_cell:В другую ячейку";
         break;
 
+      case SEL_PAL:
+      case SEL_TOV_CELL:
+        definition = "cont:Назад;abc:Товары ABC;cancel:Отменить перемещение;later:Отложить;" + askQtyMenu;
+        break;
+
       default:
         definition = "cont:Назад;cancel:Отменить перемещение;later:Отложить;" + askQtyMenu;
         break;
@@ -538,6 +552,56 @@ public class ProcessSklMove extends ProcessTask {
 
     HtmlPageMenu p = new HtmlPageMenu("Перемещение", "Выберите действие",
             definition, null, null, null);
+
+    return p.getPage();
+  }
+
+  private FileData htmlShowABC(TaskContext ctx) throws Exception {
+    // отображение ABC-признака товара в ячейке
+
+    Z_TS_SKL_MOVE6 f = new Z_TS_SKL_MOVE6();
+    f.LGORT = d.getLgort();
+    f.LGPLA = d.getCell1();
+    f.LGNUM = d.getLgnum();
+    f.LGTYP = d.getLgtyp1();
+    f.PAL = d.getPal1();
+    f.execute();
+
+    f.execute();
+
+    if (f.isErr) {
+      callSetErr(f.err, ctx);
+      return htmlGet(true, ctx);
+    }
+
+    int n = f.IT.length;
+
+    HtmlPage p = new HtmlPage();
+    p.title = "Признаки ABC";
+    p.sound = "ask.wav";
+    p.fontSize = TSparams.fontSize2;
+    p.scrollToTop = true;
+
+    p.addLine("<b>Признаки ABC товара в ячейке:</b>");
+    p.addNewLine();
+    String s;
+    ZTS_MAT_ABC_S r;
+    for (int i = 0; i < n; i++) {
+      r = f.IT[i];
+      r.MATNR = delZeros(r.MATNR);
+
+      s = "<b><font color=red>" + r.ZABCN + "</font>";
+      s = s + " " + r.MATNR;
+      s = s + "</b> " + RefMat.getFullName(r.MATNR) + " <b>"
+              + delDecZeros(r.QTY.toString()) + " ед</b>";
+      p.addLine(s);
+    }
+
+    p.addNewLine();
+
+    p.addFormStart("work.html", "f");
+    p.addFormButtonSubmitGo("Продолжить");
+    p.addFormEnd();
 
     return p.getPage();
   }
