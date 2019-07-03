@@ -323,7 +323,7 @@ public class ProcessFromPereup extends ProcessTask {
         if (nn > 0) { // отменяем сканирование товара
           FromPereupScanData t = d.getTov(nn - 1);
           String s = "Отменено " + d.getQtyTotStr() + " ед (весь товар)";
-          d.callClearTov(null, ctx);
+          d.callClearTov(ctx);
           callSetMsg(s, ctx);
           callAddHist(s, ctx);
         } else {
@@ -332,7 +332,7 @@ public class ProcessFromPereup extends ProcessTask {
         break;
 
       default:
-        callSetErr("Неподходящее состояние (для отмены последнего сканирования): " + getTaskState().name(), ctx);
+        callSetErr("Неподходящее состояние (для отмены сканирования товара): " + getTaskState().name(), ctx);
         break;
     }
   }
@@ -513,7 +513,7 @@ class FromPereupData extends ProcData {
     Track.saveProcessChange(dr, ctx.task, ctx);
   }
 
-  public void callClearTov(TaskState state, TaskContext ctx) throws Exception {
+  public void callClearTov(TaskContext ctx) throws Exception {
     DataRecord dr = new DataRecord();
     dr.procId = ctx.task.getProcId();
     dr.setV(FieldType.CLEAR_TOV_DATA);
@@ -600,7 +600,6 @@ class FromPereupData extends ProcData {
             scanData.remove(scanData.size() - 1);
             addNerazm(d.matnr, d.charg, d.qty);
           }
-          scanData.clear();
         }
         if (dr.haveVal(FieldType.MATNR) && dr.haveVal(FieldType.CHARG) && dr.haveVal(FieldType.QTY)) {
           String charg = dr.getValStr(FieldType.CHARG);
