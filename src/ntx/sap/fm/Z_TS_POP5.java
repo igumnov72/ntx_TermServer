@@ -59,7 +59,7 @@ public class Z_TS_POP5 {
     }
 
     // вызов САПовской процедуры
-    JCoException e = execute(this);
+    Exception e = execute(this);
 
     if (e == null) {
       if (TSparams.logDocLevel >= 2) {
@@ -92,40 +92,44 @@ public class Z_TS_POP5 {
     }
   }
 
-  private static synchronized JCoException execute(Z_TS_POP5 params) {
-    JCoException ret = null;
+  private static synchronized Exception execute(Z_TS_POP5 params) {
+    Exception ret = null;
 
-    if (!isInit) {
-      ret = init();
-      if (ret != null) {
-        return ret;
+    try {
+      if (!isInit) {
+        ret = init();
+        if (ret != null) {
+          return ret;
+        }
       }
-    }
 
-    impParams.clear();
-    expParams.clear();
+      impParams.clear();
+      expParams.clear();
 
-    impParams.setValue("DT", params.DT);
-    impParams.setValue("LGPLA", params.LGPLA);
-    impParams.setValue("LGPLA1", params.LGPLA1);
-    impParams.setValue("LGPLA2", params.LGPLA2);
-    impParams.setValue("LGNUM", params.LGNUM);
-    impParams.setValue("LGTYP1", params.LGTYP1);
-    impParams.setValue("PAL", params.PAL);
-    impParams.setValue("LGORT", params.LGORT);
-    impParams.setValue("TSD_USER", params.TSD_USER);
+      impParams.setValue("DT", params.DT);
+      impParams.setValue("LGPLA", params.LGPLA);
+      impParams.setValue("LGPLA1", params.LGPLA1);
+      impParams.setValue("LGPLA2", params.LGPLA2);
+      impParams.setValue("LGNUM", params.LGNUM);
+      impParams.setValue("LGTYP1", params.LGTYP1);
+      impParams.setValue("PAL", params.PAL);
+      impParams.setValue("LGORT", params.LGORT);
+      impParams.setValue("TSD_USER", params.TSD_USER);
 
-    ret = SAPconn.executeFunction(function);
+      ret = SAPconn.executeFunction(function);
 
-    if (ret == null) {
-      params.KEY1 = expParams.getInt("KEY1");
-      params.TR_ZAK_CREATED = expParams.getString("TR_ZAK_CREATED");
-      params.NEXT_CELL = expParams.getString("NEXT_CELL");
-      params.err = expParams.getString("ERR");
-      if (!params.err.isEmpty()) {
-        params.isErr = true;
-        params.errFull = params.err;
+      if (ret == null) {
+        params.KEY1 = expParams.getInt("KEY1");
+        params.TR_ZAK_CREATED = expParams.getString("TR_ZAK_CREATED");
+        params.NEXT_CELL = expParams.getString("NEXT_CELL");
+        params.err = expParams.getString("ERR");
+        if (!params.err.isEmpty()) {
+          params.isErr = true;
+          params.errFull = params.err;
+        }
       }
+    } catch (Exception e) {
+      return e;
     }
 
     return ret;

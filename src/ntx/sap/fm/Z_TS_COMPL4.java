@@ -72,7 +72,7 @@ public class Z_TS_COMPL4 {
     }
 
     // вызов САПовской процедуры
-    JCoException e = execute(this);
+    Exception e = execute(this);
 
     if (e == null) {
       if (TSparams.logDocLevel >= 2) {
@@ -108,76 +108,80 @@ public class Z_TS_COMPL4 {
     }
   }
 
-  private static synchronized JCoException execute(Z_TS_COMPL4 params) {
-    JCoException ret = null;
+  private static synchronized Exception execute(Z_TS_COMPL4 params) {
+    Exception ret = null;
 
-    if (!isInit) {
-      ret = init();
-      if (ret != null) {
-        return ret;
-      }
-    }
-
-    impParams.clear();
-    expParams.clear();
-    tabParams.clear();
-
-    JCoTable IT_t = tabParams.getTable("IT");
-    JCoTable IT_FP_t = tabParams.getTable("IT_FP");
-
-    impParams.setValue("LGORT", params.LGORT);
-    impParams.setValue("VBELN", params.VBELN);
-    impParams.setValue("INF_COMPL1", params.INF_COMPL1);
-    impParams.setValue("CHECK_COMPL1", params.CHECK_COMPL1);
-
-    IT_t.appendRows(params.IT.length);
-    for (int i = 0; i < params.IT.length; i++) {
-      IT_t.setRow(i);
-      IT_t.setValue("LGTYP", params.IT[i].LGTYP);
-      IT_t.setValue("LGPLA", params.IT[i].LGPLA);
-      IT_t.setValue("QTY", params.IT[i].QTY);
-    }
-
-    IT_FP_t.appendRows(params.IT_FP.length);
-    for (int i = 0; i < params.IT_FP.length; i++) {
-      IT_FP_t.setRow(i);
-      IT_FP_t.setValue("LGPLA", params.IT_FP[i].LGPLA);
-      IT_FP_t.setValue("COMPL_FROM", params.IT_FP[i].COMPL_FROM);
-    }
-
-    ret = SAPconn.executeFunction(function);
-
-    if (ret == null) {
-      params.INF_COMPL = expParams.getString("INF_COMPL");
-      params.LGNUM = expParams.getString("LGNUM");
-      params.CHECK_COMPL = expParams.getString("CHECK_COMPL");
-      params.ZCOMP_CLIENT = expParams.getString("ZCOMP_CLIENT");
-      params.err = expParams.getString("ERR");
-      if (!params.err.isEmpty()) {
-        params.isErr = true;
-        params.errFull = params.err;
+    try {
+      if (!isInit) {
+        ret = init();
+        if (ret != null) {
+          return ret;
+        }
       }
 
-      params.IT = new ZTS_COMPL_CELL_S[IT_t.getNumRows()];
-      ZTS_COMPL_CELL_S IT_r;
+      impParams.clear();
+      expParams.clear();
+      tabParams.clear();
+
+      JCoTable IT_t = tabParams.getTable("IT");
+      JCoTable IT_FP_t = tabParams.getTable("IT_FP");
+
+      impParams.setValue("LGORT", params.LGORT);
+      impParams.setValue("VBELN", params.VBELN);
+      impParams.setValue("INF_COMPL1", params.INF_COMPL1);
+      impParams.setValue("CHECK_COMPL1", params.CHECK_COMPL1);
+
+      IT_t.appendRows(params.IT.length);
       for (int i = 0; i < params.IT.length; i++) {
         IT_t.setRow(i);
-        IT_r = new ZTS_COMPL_CELL_S();
-        IT_r.LGTYP = IT_t.getString("LGTYP");
-        IT_r.LGPLA = IT_t.getString("LGPLA");
-        IT_r.QTY = IT_t.getBigDecimal("QTY");
-        params.IT[i] = IT_r;
+        IT_t.setValue("LGTYP", params.IT[i].LGTYP);
+        IT_t.setValue("LGPLA", params.IT[i].LGPLA);
+        IT_t.setValue("QTY", params.IT[i].QTY);
       }
 
-      params.IT_FP = new ZTS_COMPL_FP_S[IT_FP_t.getNumRows()];
-      ZTS_COMPL_FP_S IT_FP_r;
+      IT_FP_t.appendRows(params.IT_FP.length);
       for (int i = 0; i < params.IT_FP.length; i++) {
         IT_FP_t.setRow(i);
-        IT_FP_r = new ZTS_COMPL_FP_S();
-        IT_FP_r.LGPLA = IT_FP_t.getString("LGPLA");
-        IT_FP_r.COMPL_FROM = IT_FP_t.getString("COMPL_FROM");
-        params.IT_FP[i] = IT_FP_r;
+        IT_FP_t.setValue("LGPLA", params.IT_FP[i].LGPLA);
+        IT_FP_t.setValue("COMPL_FROM", params.IT_FP[i].COMPL_FROM);
       }
+
+      ret = SAPconn.executeFunction(function);
+
+      if (ret == null) {
+        params.INF_COMPL = expParams.getString("INF_COMPL");
+        params.LGNUM = expParams.getString("LGNUM");
+        params.CHECK_COMPL = expParams.getString("CHECK_COMPL");
+        params.ZCOMP_CLIENT = expParams.getString("ZCOMP_CLIENT");
+        params.err = expParams.getString("ERR");
+        if (!params.err.isEmpty()) {
+          params.isErr = true;
+          params.errFull = params.err;
+        }
+
+        params.IT = new ZTS_COMPL_CELL_S[IT_t.getNumRows()];
+        ZTS_COMPL_CELL_S IT_r;
+        for (int i = 0; i < params.IT.length; i++) {
+          IT_t.setRow(i);
+          IT_r = new ZTS_COMPL_CELL_S();
+          IT_r.LGTYP = IT_t.getString("LGTYP");
+          IT_r.LGPLA = IT_t.getString("LGPLA");
+          IT_r.QTY = IT_t.getBigDecimal("QTY");
+          params.IT[i] = IT_r;
+        }
+
+        params.IT_FP = new ZTS_COMPL_FP_S[IT_FP_t.getNumRows()];
+        ZTS_COMPL_FP_S IT_FP_r;
+        for (int i = 0; i < params.IT_FP.length; i++) {
+          IT_FP_t.setRow(i);
+          IT_FP_r = new ZTS_COMPL_FP_S();
+          IT_FP_r.LGPLA = IT_FP_t.getString("LGPLA");
+          IT_FP_r.COMPL_FROM = IT_FP_t.getString("COMPL_FROM");
+          params.IT_FP[i] = IT_FP_r;
+        }
+      }
+    } catch (Exception e) {
+      return e;
     }
 
     return ret;

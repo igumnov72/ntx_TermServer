@@ -57,7 +57,7 @@ public class Z_TS_POP2 {
     }
 
     // вызов САПовской процедуры
-    JCoException e = execute(this);
+    Exception e = execute(this);
 
     if (e == null) {
       if (TSparams.logDocLevel >= 2) {
@@ -92,53 +92,57 @@ public class Z_TS_POP2 {
     }
   }
 
-  private static synchronized JCoException execute(Z_TS_POP2 params) {
-    JCoException ret = null;
+  private static synchronized Exception execute(Z_TS_POP2 params) {
+    Exception ret = null;
 
-    if (!isInit) {
-      ret = init();
-      if (ret != null) {
-        return ret;
-      }
-    }
-
-    impParams.clear();
-    expParams.clear();
-    tabParams.clear();
-
-    JCoTable IT_t = tabParams.getTable("IT");
-
-    impParams.setValue("LGORT", params.LGORT);
-
-    IT_t.appendRows(params.IT.length);
-    for (int i = 0; i < params.IT.length; i++) {
-      IT_t.setRow(i);
-      IT_t.setValue("LGTYP", params.IT[i].LGTYP);
-      IT_t.setValue("LGPLA", params.IT[i].LGPLA);
-    }
-
-    ret = SAPconn.executeFunction(function);
-
-    if (ret == null) {
-      params.LGTYP1 = expParams.getString("LGTYP1");
-      params.LGTYP2 = expParams.getString("LGTYP2");
-      params.DT = expParams.getString("DT");
-      params.LGNUM = expParams.getString("LGNUM");
-      params.err = expParams.getString("ERR");
-      if (!params.err.isEmpty()) {
-        params.isErr = true;
-        params.errFull = params.err;
+    try {
+      if (!isInit) {
+        ret = init();
+        if (ret != null) {
+          return ret;
+        }
       }
 
-      params.IT = new ZTS_CELLS_S[IT_t.getNumRows()];
-      ZTS_CELLS_S IT_r;
+      impParams.clear();
+      expParams.clear();
+      tabParams.clear();
+
+      JCoTable IT_t = tabParams.getTable("IT");
+
+      impParams.setValue("LGORT", params.LGORT);
+
+      IT_t.appendRows(params.IT.length);
       for (int i = 0; i < params.IT.length; i++) {
         IT_t.setRow(i);
-        IT_r = new ZTS_CELLS_S();
-        IT_r.LGTYP = IT_t.getString("LGTYP");
-        IT_r.LGPLA = IT_t.getString("LGPLA");
-        params.IT[i] = IT_r;
+        IT_t.setValue("LGTYP", params.IT[i].LGTYP);
+        IT_t.setValue("LGPLA", params.IT[i].LGPLA);
       }
+
+      ret = SAPconn.executeFunction(function);
+
+      if (ret == null) {
+        params.LGTYP1 = expParams.getString("LGTYP1");
+        params.LGTYP2 = expParams.getString("LGTYP2");
+        params.DT = expParams.getString("DT");
+        params.LGNUM = expParams.getString("LGNUM");
+        params.err = expParams.getString("ERR");
+        if (!params.err.isEmpty()) {
+          params.isErr = true;
+          params.errFull = params.err;
+        }
+
+        params.IT = new ZTS_CELLS_S[IT_t.getNumRows()];
+        ZTS_CELLS_S IT_r;
+        for (int i = 0; i < params.IT.length; i++) {
+          IT_t.setRow(i);
+          IT_r = new ZTS_CELLS_S();
+          IT_r.LGTYP = IT_t.getString("LGTYP");
+          IT_r.LGPLA = IT_t.getString("LGPLA");
+          params.IT[i] = IT_r;
+        }
+      }
+    } catch (Exception e) {
+      return e;
     }
 
     return ret;

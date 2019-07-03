@@ -52,7 +52,7 @@ public class Z_TS_PLC1 {
     }
 
     // вызов САПовской процедуры
-    JCoException e = execute(this);
+    Exception e = execute(this);
 
     if (e == null) {
       if (TSparams.logDocLevel >= 2) {
@@ -94,41 +94,45 @@ public class Z_TS_PLC1 {
     }
   }
 
-  private static synchronized JCoException execute(Z_TS_PLC1 params) {
-    JCoException ret = null;
+  private static synchronized Exception execute(Z_TS_PLC1 params) {
+    Exception ret = null;
 
-    if (!isInit) {
-      ret = init();
-      if (ret != null) {
-        return ret;
+    try {
+      if (!isInit) {
+        ret = init();
+        if (ret != null) {
+          return ret;
+        }
       }
-    }
 
-    impParams.clear();
-    expParams.clear();
+      impParams.clear();
+      expParams.clear();
 
-    impParams.setValue("PAL", params.PAL);
+      impParams.setValue("PAL", params.PAL);
 
-    ret = SAPconn.executeFunction(function);
+      ret = SAPconn.executeFunction(function);
 
-    if (ret == null) {
-      params.CAN_USE = expParams.getString("CAN_USE");
-      params.LGORT = expParams.getString("LGORT");
-      params.LENUM = expParams.getString("LENUM");
-      params.VBELN = expParams.getString("VBELN");
-      params.WERKS = expParams.getString("WERKS");
-      params.LGNUM = expParams.getString("LGNUM");
-      params.LGPLA = expParams.getString("LGPLA");
-      params.MATNR = expParams.getString("MATNR");
-      params.NERAZM = expParams.getInt("NERAZM");
-      params.IS_PNP = expParams.getString("IS_PNP");
-      params.ASK_CNF_PM = expParams.getString("ASK_CNF_PM");
-      params.ABC = expParams.getString("ABC");
-      params.err = expParams.getString("ERR");
-      if (!params.err.isEmpty()) {
-        params.isErr = true;
-        params.errFull = params.err;
+      if (ret == null) {
+        params.CAN_USE = expParams.getString("CAN_USE");
+        params.LGORT = expParams.getString("LGORT");
+        params.LENUM = expParams.getString("LENUM");
+        params.VBELN = expParams.getString("VBELN");
+        params.WERKS = expParams.getString("WERKS");
+        params.LGNUM = expParams.getString("LGNUM");
+        params.LGPLA = expParams.getString("LGPLA");
+        params.MATNR = expParams.getString("MATNR");
+        params.NERAZM = expParams.getInt("NERAZM");
+        params.IS_PNP = expParams.getString("IS_PNP");
+        params.ASK_CNF_PM = expParams.getString("ASK_CNF_PM");
+        params.ABC = expParams.getString("ABC");
+        params.err = expParams.getString("ERR");
+        if (!params.err.isEmpty()) {
+          params.isErr = true;
+          params.errFull = params.err;
+        }
       }
+    } catch (Exception e) {
+      return e;
     }
 
     return ret;

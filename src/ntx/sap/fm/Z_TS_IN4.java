@@ -64,7 +64,7 @@ public class Z_TS_IN4 {
     }
 
     // вызов САПовской процедуры
-    JCoException e = execute(this);
+    Exception e = execute(this);
 
     if (e == null) {
       if (TSparams.logDocLevel >= 2) {
@@ -102,65 +102,69 @@ public class Z_TS_IN4 {
     }
   }
 
-  private static synchronized JCoException execute(Z_TS_IN4 params) {
-    JCoException ret = null;
+  private static synchronized Exception execute(Z_TS_IN4 params) {
+    Exception ret = null;
 
-    if (!isInit) {
-      ret = init();
-      if (ret != null) {
-        return ret;
+    try {
+      if (!isInit) {
+        ret = init();
+        if (ret != null) {
+          return ret;
+        }
       }
-    }
 
-    impParams.clear();
-    expParams.clear();
-    tabParams.clear();
+      impParams.clear();
+      expParams.clear();
+      tabParams.clear();
 
-    JCoStructure QTY_DIF_s = expParams.getStructure("QTY_DIF");
-    JCoTable IT_TOV_t = tabParams.getTable("IT_TOV");
+      JCoStructure QTY_DIF_s = expParams.getStructure("QTY_DIF");
+      JCoTable IT_TOV_t = tabParams.getTable("IT_TOV");
 
-    impParams.setValue("VBELN", params.VBELN);
-    impParams.setValue("PAL", params.PAL);
-    impParams.setValue("LGORT", params.LGORT);
-    impParams.setValue("LGNUM", params.LGNUM);
-    impParams.setValue("TSD_USER", params.TSD_USER);
+      impParams.setValue("VBELN", params.VBELN);
+      impParams.setValue("PAL", params.PAL);
+      impParams.setValue("LGORT", params.LGORT);
+      impParams.setValue("LGNUM", params.LGNUM);
+      impParams.setValue("TSD_USER", params.TSD_USER);
 
-    IT_TOV_t.appendRows(params.IT_TOV.length);
-    for (int i = 0; i < params.IT_TOV.length; i++) {
-      IT_TOV_t.setRow(i);
-      IT_TOV_t.setValue("MATNR", params.IT_TOV[i].MATNR);
-      IT_TOV_t.setValue("CHARG", params.IT_TOV[i].CHARG);
-      IT_TOV_t.setValue("PROD_DT", params.IT_TOV[i].PROD_DT);
-      IT_TOV_t.setValue("QTY", params.IT_TOV[i].QTY);
-    }
-
-    ret = SAPconn.executeFunction(function);
-
-    if (ret == null) {
-      params.LGPLA = expParams.getString("LGPLA");
-      params.PREV_DELETED = expParams.getString("PREV_DELETED");
-      params.err = expParams.getString("ERR");
-      if (!params.err.isEmpty()) {
-        params.isErr = true;
-        params.errFull = params.err;
-      }
-      params.QTY_DIF.QTY_VBEL = QTY_DIF_s.getBigDecimal("QTY_VBEL");
-      params.QTY_DIF.QTY_SCAN = QTY_DIF_s.getBigDecimal("QTY_SCAN");
-      params.QTY_DIF.QTY_NEDOST = QTY_DIF_s.getBigDecimal("QTY_NEDOST");
-      params.QTY_DIF.QTY_IZL = QTY_DIF_s.getBigDecimal("QTY_IZL");
-      params.QTY_DIF.QTY_PRT = QTY_DIF_s.getBigDecimal("QTY_PRT");
-
-      params.IT_TOV = new ZTS_IN4_S[IT_TOV_t.getNumRows()];
-      ZTS_IN4_S IT_TOV_r;
+      IT_TOV_t.appendRows(params.IT_TOV.length);
       for (int i = 0; i < params.IT_TOV.length; i++) {
         IT_TOV_t.setRow(i);
-        IT_TOV_r = new ZTS_IN4_S();
-        IT_TOV_r.MATNR = IT_TOV_t.getString("MATNR");
-        IT_TOV_r.CHARG = IT_TOV_t.getString("CHARG");
-        IT_TOV_r.PROD_DT = IT_TOV_t.getString("PROD_DT");
-        IT_TOV_r.QTY = IT_TOV_t.getBigDecimal("QTY");
-        params.IT_TOV[i] = IT_TOV_r;
+        IT_TOV_t.setValue("MATNR", params.IT_TOV[i].MATNR);
+        IT_TOV_t.setValue("CHARG", params.IT_TOV[i].CHARG);
+        IT_TOV_t.setValue("PROD_DT", params.IT_TOV[i].PROD_DT);
+        IT_TOV_t.setValue("QTY", params.IT_TOV[i].QTY);
       }
+
+      ret = SAPconn.executeFunction(function);
+
+      if (ret == null) {
+        params.LGPLA = expParams.getString("LGPLA");
+        params.PREV_DELETED = expParams.getString("PREV_DELETED");
+        params.err = expParams.getString("ERR");
+        if (!params.err.isEmpty()) {
+          params.isErr = true;
+          params.errFull = params.err;
+        }
+        params.QTY_DIF.QTY_VBEL = QTY_DIF_s.getBigDecimal("QTY_VBEL");
+        params.QTY_DIF.QTY_SCAN = QTY_DIF_s.getBigDecimal("QTY_SCAN");
+        params.QTY_DIF.QTY_NEDOST = QTY_DIF_s.getBigDecimal("QTY_NEDOST");
+        params.QTY_DIF.QTY_IZL = QTY_DIF_s.getBigDecimal("QTY_IZL");
+        params.QTY_DIF.QTY_PRT = QTY_DIF_s.getBigDecimal("QTY_PRT");
+
+        params.IT_TOV = new ZTS_IN4_S[IT_TOV_t.getNumRows()];
+        ZTS_IN4_S IT_TOV_r;
+        for (int i = 0; i < params.IT_TOV.length; i++) {
+          IT_TOV_t.setRow(i);
+          IT_TOV_r = new ZTS_IN4_S();
+          IT_TOV_r.MATNR = IT_TOV_t.getString("MATNR");
+          IT_TOV_r.CHARG = IT_TOV_t.getString("CHARG");
+          IT_TOV_r.PROD_DT = IT_TOV_t.getString("PROD_DT");
+          IT_TOV_r.QTY = IT_TOV_t.getBigDecimal("QTY");
+          params.IT_TOV[i] = IT_TOV_r;
+        }
+      }
+    } catch (Exception e) {
+      return e;
     }
 
     return ret;

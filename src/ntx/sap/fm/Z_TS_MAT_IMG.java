@@ -45,7 +45,7 @@ public class Z_TS_MAT_IMG {
     }
 
     // вызов САПовской процедуры
-    JCoException e = execute(this);
+    Exception e = execute(this);
 
     if (e == null) {
       if (TSparams.logDocLevel >= 2) {
@@ -79,43 +79,47 @@ public class Z_TS_MAT_IMG {
     }
   }
 
-  private static synchronized JCoException execute(Z_TS_MAT_IMG params) {
-    JCoException ret = null;
+  private static synchronized Exception execute(Z_TS_MAT_IMG params) {
+    Exception ret = null;
 
-    if (!isInit) {
-      ret = init();
-      if (ret != null) {
-        return ret;
-      }
-    }
-
-    impParams.clear();
-    expParams.clear();
-
-    JCoTable IT_t = expParams.getTable("IT");
-
-    impParams.setValue("MATNR", params.MATNR);
-
-    ret = SAPconn.executeFunction(function);
-
-    if (ret == null) {
-      params.COMP_SIZE = expParams.getInt("COMP_SIZE");
-      params.DT_MOD = expParams.getInt("DT_MOD");
-      params.NO_FOTO = expParams.getString("NO_FOTO");
-      params.err = expParams.getString("ERR");
-      if (!params.err.isEmpty()) {
-        params.isErr = true;
-        params.errFull = params.err;
+    try {
+      if (!isInit) {
+        ret = init();
+        if (ret != null) {
+          return ret;
+        }
       }
 
-      params.IT = new SDOKCNTBIN[IT_t.getNumRows()];
-      SDOKCNTBIN IT_r;
-      for (int i = 0; i < params.IT.length; i++) {
-        IT_t.setRow(i);
-        IT_r = new SDOKCNTBIN();
-        IT_r.LINE = IT_t.getByteArray("LINE");
-        params.IT[i] = IT_r;
+      impParams.clear();
+      expParams.clear();
+
+      JCoTable IT_t = expParams.getTable("IT");
+
+      impParams.setValue("MATNR", params.MATNR);
+
+      ret = SAPconn.executeFunction(function);
+
+      if (ret == null) {
+        params.COMP_SIZE = expParams.getInt("COMP_SIZE");
+        params.DT_MOD = expParams.getInt("DT_MOD");
+        params.NO_FOTO = expParams.getString("NO_FOTO");
+        params.err = expParams.getString("ERR");
+        if (!params.err.isEmpty()) {
+          params.isErr = true;
+          params.errFull = params.err;
+        }
+
+        params.IT = new SDOKCNTBIN[IT_t.getNumRows()];
+        SDOKCNTBIN IT_r;
+        for (int i = 0; i < params.IT.length; i++) {
+          IT_t.setRow(i);
+          IT_r = new SDOKCNTBIN();
+          IT_r.LINE = IT_t.getByteArray("LINE");
+          params.IT[i] = IT_r;
+        }
       }
+    } catch (Exception e) {
+      return e;
     }
 
     return ret;

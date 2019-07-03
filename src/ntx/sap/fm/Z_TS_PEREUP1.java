@@ -47,7 +47,7 @@ public class Z_TS_PEREUP1 {
     }
 
     // вызов САПовской процедуры
-    JCoException e = execute(this);
+    Exception e = execute(this);
 
     if (e == null) {
       if (TSparams.logDocLevel >= 2) {
@@ -84,39 +84,43 @@ public class Z_TS_PEREUP1 {
     }
   }
 
-  private static synchronized JCoException execute(Z_TS_PEREUP1 params) {
-    JCoException ret = null;
+  private static synchronized Exception execute(Z_TS_PEREUP1 params) {
+    Exception ret = null;
 
-    if (!isInit) {
-      ret = init();
-      if (ret != null) {
-        return ret;
+    try {
+      if (!isInit) {
+        ret = init();
+        if (ret != null) {
+          return ret;
+        }
       }
-    }
 
-    impParams.clear();
-    expParams.clear();
+      impParams.clear();
+      expParams.clear();
 
-    JCoStructure WA_I_s = expParams.getStructure("WA_I");
+      JCoStructure WA_I_s = expParams.getStructure("WA_I");
 
-    impParams.setValue("LGORT", params.LGORT);
-    impParams.setValue("CELL", params.CELL);
+      impParams.setValue("LGORT", params.LGORT);
+      impParams.setValue("CELL", params.CELL);
 
-    ret = SAPconn.executeFunction(function);
+      ret = SAPconn.executeFunction(function);
 
-    if (ret == null) {
-      params.WERKS = expParams.getString("WERKS");
-      params.LGNUM = expParams.getString("LGNUM");
-      params.LGTYP = expParams.getString("LGTYP");
-      params.err = expParams.getString("ERR");
-      if (!params.err.isEmpty()) {
-        params.isErr = true;
-        params.errFull = params.err;
+      if (ret == null) {
+        params.WERKS = expParams.getString("WERKS");
+        params.LGNUM = expParams.getString("LGNUM");
+        params.LGTYP = expParams.getString("LGTYP");
+        params.err = expParams.getString("ERR");
+        if (!params.err.isEmpty()) {
+          params.isErr = true;
+          params.errFull = params.err;
+        }
+        params.WA_I.MANDT = WA_I_s.getString("MANDT");
+        params.WA_I.LGORT = WA_I_s.getString("LGORT");
+        params.WA_I.LGPLA_PEREUP = WA_I_s.getString("LGPLA_PEREUP");
+        params.WA_I.SHOW_MAT_CELL = WA_I_s.getString("SHOW_MAT_CELL");
       }
-      params.WA_I.MANDT = WA_I_s.getString("MANDT");
-      params.WA_I.LGORT = WA_I_s.getString("LGORT");
-      params.WA_I.LGPLA_PEREUP = WA_I_s.getString("LGPLA_PEREUP");
-      params.WA_I.SHOW_MAT_CELL = WA_I_s.getString("SHOW_MAT_CELL");
+    } catch (Exception e) {
+      return e;
     }
 
     return ret;

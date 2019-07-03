@@ -74,7 +74,7 @@ public class Z_TS_SKL_MOVE3 {
     }
 
     // вызов САПовской процедуры
-    JCoException e = execute(this);
+    Exception e = execute(this);
 
     if (e == null) {
       if (TSparams.logDocLevel >= 2) {
@@ -111,62 +111,66 @@ public class Z_TS_SKL_MOVE3 {
     }
   }
 
-  private static synchronized JCoException execute(Z_TS_SKL_MOVE3 params) {
-    JCoException ret = null;
+  private static synchronized Exception execute(Z_TS_SKL_MOVE3 params) {
+    Exception ret = null;
 
-    if (!isInit) {
-      ret = init();
-      if (ret != null) {
-        return ret;
-      }
-    }
-
-    impParams.clear();
-    expParams.clear();
-    tabParams.clear();
-
-    JCoTable IT_MQ_t = tabParams.getTable("IT_MQ");
-
-    impParams.setValue("LGORT", params.LGORT);
-    impParams.setValue("LGNUM", params.LGNUM);
-    impParams.setValue("LGTYP", params.LGTYP);
-    impParams.setValue("LGPLA", params.LGPLA);
-    impParams.setValue("PAL", params.PAL);
-    impParams.setValue("SHK", params.SHK);
-    impParams.setValue("A_CHARG", params.A_CHARG);
-    impParams.setValue("A_QTY", params.A_QTY);
-
-    IT_MQ_t.appendRows(params.IT_MQ.length);
-    for (int i = 0; i < params.IT_MQ.length; i++) {
-      IT_MQ_t.setRow(i);
-      IT_MQ_t.setValue("MATNR", params.IT_MQ[i].MATNR);
-      IT_MQ_t.setValue("QTY", params.IT_MQ[i].QTY);
-    }
-
-    ret = SAPconn.executeFunction(function);
-
-    if (ret == null) {
-      params.MATNR = expParams.getString("MATNR");
-      params.CHARG = expParams.getString("CHARG");
-      params.QTY = expParams.getBigDecimal("QTY");
-      params.MAKTX = expParams.getString("MAKTX");
-      params.MAT_CELL = expParams.getString("MAT_CELL");
-      params.ABC = expParams.getString("ABC");
-      params.err = expParams.getString("ERR");
-      if (!params.err.isEmpty()) {
-        params.isErr = true;
-        params.errFull = params.err;
+    try {
+      if (!isInit) {
+        ret = init();
+        if (ret != null) {
+          return ret;
+        }
       }
 
-      params.IT_MQ = new ZTS_MAT_QTY_S[IT_MQ_t.getNumRows()];
-      ZTS_MAT_QTY_S IT_MQ_r;
+      impParams.clear();
+      expParams.clear();
+      tabParams.clear();
+
+      JCoTable IT_MQ_t = tabParams.getTable("IT_MQ");
+
+      impParams.setValue("LGORT", params.LGORT);
+      impParams.setValue("LGNUM", params.LGNUM);
+      impParams.setValue("LGTYP", params.LGTYP);
+      impParams.setValue("LGPLA", params.LGPLA);
+      impParams.setValue("PAL", params.PAL);
+      impParams.setValue("SHK", params.SHK);
+      impParams.setValue("A_CHARG", params.A_CHARG);
+      impParams.setValue("A_QTY", params.A_QTY);
+
+      IT_MQ_t.appendRows(params.IT_MQ.length);
       for (int i = 0; i < params.IT_MQ.length; i++) {
         IT_MQ_t.setRow(i);
-        IT_MQ_r = new ZTS_MAT_QTY_S();
-        IT_MQ_r.MATNR = IT_MQ_t.getString("MATNR");
-        IT_MQ_r.QTY = IT_MQ_t.getBigDecimal("QTY");
-        params.IT_MQ[i] = IT_MQ_r;
+        IT_MQ_t.setValue("MATNR", params.IT_MQ[i].MATNR);
+        IT_MQ_t.setValue("QTY", params.IT_MQ[i].QTY);
       }
+
+      ret = SAPconn.executeFunction(function);
+
+      if (ret == null) {
+        params.MATNR = expParams.getString("MATNR");
+        params.CHARG = expParams.getString("CHARG");
+        params.QTY = expParams.getBigDecimal("QTY");
+        params.MAKTX = expParams.getString("MAKTX");
+        params.MAT_CELL = expParams.getString("MAT_CELL");
+        params.ABC = expParams.getString("ABC");
+        params.err = expParams.getString("ERR");
+        if (!params.err.isEmpty()) {
+          params.isErr = true;
+          params.errFull = params.err;
+        }
+
+        params.IT_MQ = new ZTS_MAT_QTY_S[IT_MQ_t.getNumRows()];
+        ZTS_MAT_QTY_S IT_MQ_r;
+        for (int i = 0; i < params.IT_MQ.length; i++) {
+          IT_MQ_t.setRow(i);
+          IT_MQ_r = new ZTS_MAT_QTY_S();
+          IT_MQ_r.MATNR = IT_MQ_t.getString("MATNR");
+          IT_MQ_r.QTY = IT_MQ_t.getBigDecimal("QTY");
+          params.IT_MQ[i] = IT_MQ_r;
+        }
+      }
+    } catch (Exception e) {
+      return e;
     }
 
     return ret;

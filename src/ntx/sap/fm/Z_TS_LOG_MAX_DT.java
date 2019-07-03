@@ -39,7 +39,7 @@ public class Z_TS_LOG_MAX_DT {
     }
 
     // вызов САПовской процедуры
-    JCoException e = execute(this);
+    Exception e = execute(this);
 
     if (e == null) {
       if (TSparams.logDocLevel >= 2) {
@@ -68,25 +68,29 @@ public class Z_TS_LOG_MAX_DT {
     }
   }
 
-  private static synchronized JCoException execute(Z_TS_LOG_MAX_DT params) {
-    JCoException ret = null;
+  private static synchronized Exception execute(Z_TS_LOG_MAX_DT params) {
+    Exception ret = null;
 
-    if (!isInit) {
-      ret = init();
-      if (ret != null) {
-        return ret;
+    try {
+      if (!isInit) {
+        ret = init();
+        if (ret != null) {
+          return ret;
+        }
       }
-    }
 
-    impParams.clear();
-    expParams.clear();
+      impParams.clear();
+      expParams.clear();
 
-    impParams.setValue("SRV_NAME", params.SRV_NAME);
+      impParams.setValue("SRV_NAME", params.SRV_NAME);
 
-    ret = SAPconn.executeFunction(function);
+      ret = SAPconn.executeFunction(function);
 
-    if (ret == null) {
-      params.MAX_DT = expParams.getString("MAX_DT");
+      if (ret == null) {
+        params.MAX_DT = expParams.getString("MAX_DT");
+      }
+    } catch (Exception e) {
+      return e;
     }
 
     return ret;

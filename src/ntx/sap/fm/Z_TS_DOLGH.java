@@ -39,7 +39,7 @@ public class Z_TS_DOLGH {
     }
 
     // вызов САПовской процедуры
-    JCoException e = execute(this);
+    Exception e = execute(this);
 
     if (e == null) {
       if (TSparams.logDocLevel >= 2) {
@@ -68,25 +68,29 @@ public class Z_TS_DOLGH {
     }
   }
 
-  private static synchronized JCoException execute(Z_TS_DOLGH params) {
-    JCoException ret = null;
+  private static synchronized Exception execute(Z_TS_DOLGH params) {
+    Exception ret = null;
 
-    if (!isInit) {
-      ret = init();
-      if (ret != null) {
-        return ret;
+    try {
+      if (!isInit) {
+        ret = init();
+        if (ret != null) {
+          return ret;
+        }
       }
-    }
 
-    impParams.clear();
-    expParams.clear();
+      impParams.clear();
+      expParams.clear();
 
-    impParams.setValue("DOLGH_ID", params.DOLGH_ID);
+      impParams.setValue("DOLGH_ID", params.DOLGH_ID);
 
-    ret = SAPconn.executeFunction(function);
+      ret = SAPconn.executeFunction(function);
 
-    if (ret == null) {
-      params.DOLGH_NAME = expParams.getString("DOLGH_NAME");
+      if (ret == null) {
+        params.DOLGH_NAME = expParams.getString("DOLGH_NAME");
+      }
+    } catch (Exception e) {
+      return e;
     }
 
     return ret;

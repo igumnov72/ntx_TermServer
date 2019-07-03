@@ -48,7 +48,7 @@ public class Z_TS_PRINTERS {
     }
 
     // вызов САПовской процедуры
-    JCoException e = execute(this);
+    Exception e = execute(this);
 
     if (e == null) {
       if (TSparams.logDocLevel >= 2) {
@@ -77,42 +77,46 @@ public class Z_TS_PRINTERS {
     }
   }
 
-  private static synchronized JCoException execute(Z_TS_PRINTERS params) {
-    JCoException ret = null;
+  private static synchronized Exception execute(Z_TS_PRINTERS params) {
+    Exception ret = null;
 
-    if (!isInit) {
-      ret = init();
-      if (ret != null) {
-        return ret;
+    try {
+      if (!isInit) {
+        ret = init();
+        if (ret != null) {
+          return ret;
+        }
       }
-    }
 
-    impParams.clear();
-    tabParams.clear();
+      impParams.clear();
+      tabParams.clear();
 
-    JCoTable IT_t = tabParams.getTable("IT");
+      JCoTable IT_t = tabParams.getTable("IT");
 
-    impParams.setValue("PRINTERS", params.PRINTERS);
+      impParams.setValue("PRINTERS", params.PRINTERS);
 
-    IT_t.appendRows(params.IT.length);
-    for (int i = 0; i < params.IT.length; i++) {
-      IT_t.setRow(i);
-      IT_t.setValue("PADEST", params.IT[i].PADEST);
-      IT_t.setValue("PASTANDORT", params.IT[i].PASTANDORT);
-    }
-
-    ret = SAPconn.executeFunction(function);
-
-    if (ret == null) {
-      params.IT = new ZTS_PRN_S[IT_t.getNumRows()];
-      ZTS_PRN_S IT_r;
+      IT_t.appendRows(params.IT.length);
       for (int i = 0; i < params.IT.length; i++) {
         IT_t.setRow(i);
-        IT_r = new ZTS_PRN_S();
-        IT_r.PADEST = IT_t.getString("PADEST");
-        IT_r.PASTANDORT = IT_t.getString("PASTANDORT");
-        params.IT[i] = IT_r;
+        IT_t.setValue("PADEST", params.IT[i].PADEST);
+        IT_t.setValue("PASTANDORT", params.IT[i].PASTANDORT);
       }
+
+      ret = SAPconn.executeFunction(function);
+
+      if (ret == null) {
+        params.IT = new ZTS_PRN_S[IT_t.getNumRows()];
+        ZTS_PRN_S IT_r;
+        for (int i = 0; i < params.IT.length; i++) {
+          IT_t.setRow(i);
+          IT_r = new ZTS_PRN_S();
+          IT_r.PADEST = IT_t.getString("PADEST");
+          IT_r.PASTANDORT = IT_t.getString("PASTANDORT");
+          params.IT[i] = IT_r;
+        }
+      }
+    } catch (Exception e) {
+      return e;
     }
 
     return ret;

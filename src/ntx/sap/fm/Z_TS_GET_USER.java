@@ -40,7 +40,7 @@ public class Z_TS_GET_USER {
     }
 
     // вызов САПовской процедуры
-    JCoException e = execute(this);
+    Exception e = execute(this);
 
     if (e == null) {
       if (TSparams.logDocLevel >= 2) {
@@ -70,26 +70,30 @@ public class Z_TS_GET_USER {
     }
   }
 
-  private static synchronized JCoException execute(Z_TS_GET_USER params) {
-    JCoException ret = null;
+  private static synchronized Exception execute(Z_TS_GET_USER params) {
+    Exception ret = null;
 
-    if (!isInit) {
-      ret = init();
-      if (ret != null) {
-        return ret;
+    try {
+      if (!isInit) {
+        ret = init();
+        if (ret != null) {
+          return ret;
+        }
       }
-    }
 
-    impParams.clear();
-    expParams.clear();
+      impParams.clear();
+      expParams.clear();
 
-    impParams.setValue("USER_CODE", params.USER_CODE);
+      impParams.setValue("USER_CODE", params.USER_CODE);
 
-    ret = SAPconn.executeFunction(function);
+      ret = SAPconn.executeFunction(function);
 
-    if (ret == null) {
-      params.NAME1 = expParams.getString("NAME1");
-      params.SHK = expParams.getString("SHK");
+      if (ret == null) {
+        params.NAME1 = expParams.getString("NAME1");
+        params.SHK = expParams.getString("SHK");
+      }
+    } catch (Exception e) {
+      return e;
     }
 
     return ret;

@@ -63,7 +63,7 @@ public class Z_TS_VOZ1 {
     }
 
     // вызов САПовской процедуры
-    JCoException e = execute(this);
+    Exception e = execute(this);
 
     if (e == null) {
       if (TSparams.logDocLevel >= 2) {
@@ -97,61 +97,65 @@ public class Z_TS_VOZ1 {
     }
   }
 
-  private static synchronized JCoException execute(Z_TS_VOZ1 params) {
-    JCoException ret = null;
+  private static synchronized Exception execute(Z_TS_VOZ1 params) {
+    Exception ret = null;
 
-    if (!isInit) {
-      ret = init();
-      if (ret != null) {
-        return ret;
-      }
-    }
-
-    impParams.clear();
-    expParams.clear();
-    chaParams.clear();
-    tabParams.clear();
-
-    JCoTable IT_TOV_t = tabParams.getTable("IT_TOV");
-
-    chaParams.setValue("ID", params.ID);
-    impParams.setValue("LGORT", params.LGORT);
-    impParams.setValue("TSD_USER", params.TSD_USER);
-
-    IT_TOV_t.appendRows(params.IT_TOV.length);
-    for (int i = 0; i < params.IT_TOV.length; i++) {
-      IT_TOV_t.setRow(i);
-      IT_TOV_t.setValue("LENUM", params.IT_TOV[i].LENUM);
-      IT_TOV_t.setValue("MATNR", params.IT_TOV[i].MATNR);
-      IT_TOV_t.setValue("CHARG", params.IT_TOV[i].CHARG);
-      IT_TOV_t.setValue("QTY", params.IT_TOV[i].QTY);
-      IT_TOV_t.setValue("N_POS", params.IT_TOV[i].N_POS);
-    }
-
-    ret = SAPconn.executeFunction(function);
-
-    if (ret == null) {
-      params.ID = chaParams.getInt("ID");
-      params.N_PAL = expParams.getInt("N_PAL");
-      params.QTY_TOT = expParams.getBigDecimal("QTY_TOT");
-      params.err = expParams.getString("ERR");
-      if (!params.err.isEmpty()) {
-        params.isErr = true;
-        params.errFull = params.err;
+    try {
+      if (!isInit) {
+        ret = init();
+        if (ret != null) {
+          return ret;
+        }
       }
 
-      params.IT_TOV = new ZTS_VOZ1_S[IT_TOV_t.getNumRows()];
-      ZTS_VOZ1_S IT_TOV_r;
+      impParams.clear();
+      expParams.clear();
+      chaParams.clear();
+      tabParams.clear();
+
+      JCoTable IT_TOV_t = tabParams.getTable("IT_TOV");
+
+      chaParams.setValue("ID", params.ID);
+      impParams.setValue("LGORT", params.LGORT);
+      impParams.setValue("TSD_USER", params.TSD_USER);
+
+      IT_TOV_t.appendRows(params.IT_TOV.length);
       for (int i = 0; i < params.IT_TOV.length; i++) {
         IT_TOV_t.setRow(i);
-        IT_TOV_r = new ZTS_VOZ1_S();
-        IT_TOV_r.LENUM = IT_TOV_t.getString("LENUM");
-        IT_TOV_r.MATNR = IT_TOV_t.getString("MATNR");
-        IT_TOV_r.CHARG = IT_TOV_t.getString("CHARG");
-        IT_TOV_r.QTY = IT_TOV_t.getBigDecimal("QTY");
-        IT_TOV_r.N_POS = IT_TOV_t.getInt("N_POS");
-        params.IT_TOV[i] = IT_TOV_r;
+        IT_TOV_t.setValue("LENUM", params.IT_TOV[i].LENUM);
+        IT_TOV_t.setValue("MATNR", params.IT_TOV[i].MATNR);
+        IT_TOV_t.setValue("CHARG", params.IT_TOV[i].CHARG);
+        IT_TOV_t.setValue("QTY", params.IT_TOV[i].QTY);
+        IT_TOV_t.setValue("N_POS", params.IT_TOV[i].N_POS);
       }
+
+      ret = SAPconn.executeFunction(function);
+
+      if (ret == null) {
+        params.ID = chaParams.getInt("ID");
+        params.N_PAL = expParams.getInt("N_PAL");
+        params.QTY_TOT = expParams.getBigDecimal("QTY_TOT");
+        params.err = expParams.getString("ERR");
+        if (!params.err.isEmpty()) {
+          params.isErr = true;
+          params.errFull = params.err;
+        }
+
+        params.IT_TOV = new ZTS_VOZ1_S[IT_TOV_t.getNumRows()];
+        ZTS_VOZ1_S IT_TOV_r;
+        for (int i = 0; i < params.IT_TOV.length; i++) {
+          IT_TOV_t.setRow(i);
+          IT_TOV_r = new ZTS_VOZ1_S();
+          IT_TOV_r.LENUM = IT_TOV_t.getString("LENUM");
+          IT_TOV_r.MATNR = IT_TOV_t.getString("MATNR");
+          IT_TOV_r.CHARG = IT_TOV_t.getString("CHARG");
+          IT_TOV_r.QTY = IT_TOV_t.getBigDecimal("QTY");
+          IT_TOV_r.N_POS = IT_TOV_t.getInt("N_POS");
+          params.IT_TOV[i] = IT_TOV_r;
+        }
+      }
+    } catch (Exception e) {
+      return e;
     }
 
     return ret;

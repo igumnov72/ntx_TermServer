@@ -40,7 +40,7 @@ public class Z_TS_USERS {
     }
 
     // вызов САПовской процедуры
-    JCoException e = execute(this);
+    Exception e = execute(this);
 
     if (e == null) {
       if (TSparams.logDocLevel >= 2) {
@@ -69,39 +69,43 @@ public class Z_TS_USERS {
     }
   }
 
-  private static synchronized JCoException execute(Z_TS_USERS params) {
-    JCoException ret = null;
+  private static synchronized Exception execute(Z_TS_USERS params) {
+    Exception ret = null;
 
-    if (!isInit) {
-      ret = init();
-      if (ret != null) {
-        return ret;
+    try {
+      if (!isInit) {
+        ret = init();
+        if (ret != null) {
+          return ret;
+        }
       }
-    }
 
-    tabParams.clear();
+      tabParams.clear();
 
-    JCoTable USERS_t = tabParams.getTable("USERS");
+      JCoTable USERS_t = tabParams.getTable("USERS");
 
-    USERS_t.appendRows(params.USERS.length);
-    for (int i = 0; i < params.USERS.length; i++) {
-      USERS_t.setRow(i);
-      USERS_t.setValue("SHK", params.USERS[i].SHK);
-      USERS_t.setValue("NAME1", params.USERS[i].NAME1);
-    }
-
-    ret = SAPconn.executeFunction(function);
-
-    if (ret == null) {
-      params.USERS = new ZTS_USERS_S[USERS_t.getNumRows()];
-      ZTS_USERS_S USERS_r;
+      USERS_t.appendRows(params.USERS.length);
       for (int i = 0; i < params.USERS.length; i++) {
         USERS_t.setRow(i);
-        USERS_r = new ZTS_USERS_S();
-        USERS_r.SHK = USERS_t.getString("SHK");
-        USERS_r.NAME1 = USERS_t.getString("NAME1");
-        params.USERS[i] = USERS_r;
+        USERS_t.setValue("SHK", params.USERS[i].SHK);
+        USERS_t.setValue("NAME1", params.USERS[i].NAME1);
       }
+
+      ret = SAPconn.executeFunction(function);
+
+      if (ret == null) {
+        params.USERS = new ZTS_USERS_S[USERS_t.getNumRows()];
+        ZTS_USERS_S USERS_r;
+        for (int i = 0; i < params.USERS.length; i++) {
+          USERS_t.setRow(i);
+          USERS_r = new ZTS_USERS_S();
+          USERS_r.SHK = USERS_t.getString("SHK");
+          USERS_r.NAME1 = USERS_t.getString("NAME1");
+          params.USERS[i] = USERS_r;
+        }
+      }
+    } catch (Exception e) {
+      return e;
     }
 
     return ret;

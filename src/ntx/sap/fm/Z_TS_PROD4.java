@@ -57,7 +57,7 @@ public class Z_TS_PROD4 {
     }
 
     // вызов САПовской процедуры
-    JCoException e = execute(this);
+    Exception e = execute(this);
 
     if (e == null) {
       if (TSparams.logDocLevel >= 2) {
@@ -87,64 +87,68 @@ public class Z_TS_PROD4 {
     }
   }
 
-  private static synchronized JCoException execute(Z_TS_PROD4 params) {
-    JCoException ret = null;
+  private static synchronized Exception execute(Z_TS_PROD4 params) {
+    Exception ret = null;
 
-    if (!isInit) {
-      ret = init();
-      if (ret != null) {
-        return ret;
+    try {
+      if (!isInit) {
+        ret = init();
+        if (ret != null) {
+          return ret;
+        }
       }
-    }
 
-    impParams.clear();
-    tabParams.clear();
+      impParams.clear();
+      tabParams.clear();
 
-    JCoTable IT_TOV_t = tabParams.getTable("IT_TOV");
-    JCoTable IT_EBELNS_t = tabParams.getTable("IT_EBELNS");
+      JCoTable IT_TOV_t = tabParams.getTable("IT_TOV");
+      JCoTable IT_EBELNS_t = tabParams.getTable("IT_EBELNS");
 
-    impParams.setValue("LGORT", params.LGORT);
+      impParams.setValue("LGORT", params.LGORT);
 
-    IT_TOV_t.appendRows(params.IT_TOV.length);
-    for (int i = 0; i < params.IT_TOV.length; i++) {
-      IT_TOV_t.setRow(i);
-      IT_TOV_t.setValue("CHARG", params.IT_TOV[i].CHARG);
-      IT_TOV_t.setValue("QTY", params.IT_TOV[i].QTY);
-    }
-
-    IT_EBELNS_t.appendRows(params.IT_EBELNS.length);
-    for (int i = 0; i < params.IT_EBELNS.length; i++) {
-      IT_EBELNS_t.setRow(i);
-      IT_EBELNS_t.setValue("CHARG", params.IT_EBELNS[i].CHARG);
-      IT_EBELNS_t.setValue("EBELN", params.IT_EBELNS[i].EBELN);
-      IT_EBELNS_t.setValue("QTY_SCAN", params.IT_EBELNS[i].QTY_SCAN);
-      IT_EBELNS_t.setValue("QTY", params.IT_EBELNS[i].QTY);
-    }
-
-    ret = SAPconn.executeFunction(function);
-
-    if (ret == null) {
-      params.IT_TOV = new ZTS_PRT_QTY_S[IT_TOV_t.getNumRows()];
-      ZTS_PRT_QTY_S IT_TOV_r;
+      IT_TOV_t.appendRows(params.IT_TOV.length);
       for (int i = 0; i < params.IT_TOV.length; i++) {
         IT_TOV_t.setRow(i);
-        IT_TOV_r = new ZTS_PRT_QTY_S();
-        IT_TOV_r.CHARG = IT_TOV_t.getString("CHARG");
-        IT_TOV_r.QTY = IT_TOV_t.getBigDecimal("QTY");
-        params.IT_TOV[i] = IT_TOV_r;
+        IT_TOV_t.setValue("CHARG", params.IT_TOV[i].CHARG);
+        IT_TOV_t.setValue("QTY", params.IT_TOV[i].QTY);
       }
 
-      params.IT_EBELNS = new ZTS_CHARG_EBELN_S[IT_EBELNS_t.getNumRows()];
-      ZTS_CHARG_EBELN_S IT_EBELNS_r;
+      IT_EBELNS_t.appendRows(params.IT_EBELNS.length);
       for (int i = 0; i < params.IT_EBELNS.length; i++) {
         IT_EBELNS_t.setRow(i);
-        IT_EBELNS_r = new ZTS_CHARG_EBELN_S();
-        IT_EBELNS_r.CHARG = IT_EBELNS_t.getString("CHARG");
-        IT_EBELNS_r.EBELN = IT_EBELNS_t.getString("EBELN");
-        IT_EBELNS_r.QTY_SCAN = IT_EBELNS_t.getBigDecimal("QTY_SCAN");
-        IT_EBELNS_r.QTY = IT_EBELNS_t.getBigDecimal("QTY");
-        params.IT_EBELNS[i] = IT_EBELNS_r;
+        IT_EBELNS_t.setValue("CHARG", params.IT_EBELNS[i].CHARG);
+        IT_EBELNS_t.setValue("EBELN", params.IT_EBELNS[i].EBELN);
+        IT_EBELNS_t.setValue("QTY_SCAN", params.IT_EBELNS[i].QTY_SCAN);
+        IT_EBELNS_t.setValue("QTY", params.IT_EBELNS[i].QTY);
       }
+
+      ret = SAPconn.executeFunction(function);
+
+      if (ret == null) {
+        params.IT_TOV = new ZTS_PRT_QTY_S[IT_TOV_t.getNumRows()];
+        ZTS_PRT_QTY_S IT_TOV_r;
+        for (int i = 0; i < params.IT_TOV.length; i++) {
+          IT_TOV_t.setRow(i);
+          IT_TOV_r = new ZTS_PRT_QTY_S();
+          IT_TOV_r.CHARG = IT_TOV_t.getString("CHARG");
+          IT_TOV_r.QTY = IT_TOV_t.getBigDecimal("QTY");
+          params.IT_TOV[i] = IT_TOV_r;
+        }
+
+        params.IT_EBELNS = new ZTS_CHARG_EBELN_S[IT_EBELNS_t.getNumRows()];
+        ZTS_CHARG_EBELN_S IT_EBELNS_r;
+        for (int i = 0; i < params.IT_EBELNS.length; i++) {
+          IT_EBELNS_t.setRow(i);
+          IT_EBELNS_r = new ZTS_CHARG_EBELN_S();
+          IT_EBELNS_r.CHARG = IT_EBELNS_t.getString("CHARG");
+          IT_EBELNS_r.EBELN = IT_EBELNS_t.getString("EBELN");
+          IT_EBELNS_r.QTY_SCAN = IT_EBELNS_t.getBigDecimal("QTY_SCAN");
+          IT_EBELNS_r.QTY = IT_EBELNS_t.getBigDecimal("QTY");
+          params.IT_EBELNS[i] = IT_EBELNS_r;
+        }
+      }
+    } catch (Exception e) {
+      return e;
     }
 
     return ret;

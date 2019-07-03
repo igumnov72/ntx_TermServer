@@ -46,7 +46,7 @@ public class Z_TS_IN2 {
     }
 
     // вызов САПовской процедуры
-    JCoException e = execute(this);
+    Exception e = execute(this);
 
     if (e == null) {
       if (TSparams.logDocLevel >= 2) {
@@ -83,39 +83,43 @@ public class Z_TS_IN2 {
     }
   }
 
-  private static synchronized JCoException execute(Z_TS_IN2 params) {
-    JCoException ret = null;
+  private static synchronized Exception execute(Z_TS_IN2 params) {
+    Exception ret = null;
 
-    if (!isInit) {
-      ret = init();
-      if (ret != null) {
-        return ret;
+    try {
+      if (!isInit) {
+        ret = init();
+        if (ret != null) {
+          return ret;
+        }
       }
-    }
 
-    impParams.clear();
-    expParams.clear();
+      impParams.clear();
+      expParams.clear();
 
-    JCoStructure QTY_DIF_s = expParams.getStructure("QTY_DIF");
+      JCoStructure QTY_DIF_s = expParams.getStructure("QTY_DIF");
 
-    impParams.setValue("VBELN", params.VBELN);
-    impParams.setValue("VBELN2", params.VBELN2);
+      impParams.setValue("VBELN", params.VBELN);
+      impParams.setValue("VBELN2", params.VBELN2);
 
-    ret = SAPconn.executeFunction(function);
+      ret = SAPconn.executeFunction(function);
 
-    if (ret == null) {
-      params.VBELNS = expParams.getString("VBELNS");
-      params.ZCOMP_CLIENT = expParams.getString("ZCOMP_CLIENT");
-      params.err = expParams.getString("ERR");
-      if (!params.err.isEmpty()) {
-        params.isErr = true;
-        params.errFull = params.err;
+      if (ret == null) {
+        params.VBELNS = expParams.getString("VBELNS");
+        params.ZCOMP_CLIENT = expParams.getString("ZCOMP_CLIENT");
+        params.err = expParams.getString("ERR");
+        if (!params.err.isEmpty()) {
+          params.isErr = true;
+          params.errFull = params.err;
+        }
+        params.QTY_DIF.QTY_VBEL = QTY_DIF_s.getBigDecimal("QTY_VBEL");
+        params.QTY_DIF.QTY_SCAN = QTY_DIF_s.getBigDecimal("QTY_SCAN");
+        params.QTY_DIF.QTY_NEDOST = QTY_DIF_s.getBigDecimal("QTY_NEDOST");
+        params.QTY_DIF.QTY_IZL = QTY_DIF_s.getBigDecimal("QTY_IZL");
+        params.QTY_DIF.QTY_PRT = QTY_DIF_s.getBigDecimal("QTY_PRT");
       }
-      params.QTY_DIF.QTY_VBEL = QTY_DIF_s.getBigDecimal("QTY_VBEL");
-      params.QTY_DIF.QTY_SCAN = QTY_DIF_s.getBigDecimal("QTY_SCAN");
-      params.QTY_DIF.QTY_NEDOST = QTY_DIF_s.getBigDecimal("QTY_NEDOST");
-      params.QTY_DIF.QTY_IZL = QTY_DIF_s.getBigDecimal("QTY_IZL");
-      params.QTY_DIF.QTY_PRT = QTY_DIF_s.getBigDecimal("QTY_PRT");
+    } catch (Exception e) {
+      return e;
     }
 
     return ret;

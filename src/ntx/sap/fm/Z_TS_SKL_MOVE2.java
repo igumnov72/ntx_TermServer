@@ -48,7 +48,7 @@ public class Z_TS_SKL_MOVE2 {
     }
 
     // вызов САПовской процедуры
-    JCoException e = execute(this);
+    Exception e = execute(this);
 
     if (e == null) {
       if (TSparams.logDocLevel >= 2) {
@@ -80,34 +80,38 @@ public class Z_TS_SKL_MOVE2 {
     }
   }
 
-  private static synchronized JCoException execute(Z_TS_SKL_MOVE2 params) {
-    JCoException ret = null;
+  private static synchronized Exception execute(Z_TS_SKL_MOVE2 params) {
+    Exception ret = null;
 
-    if (!isInit) {
-      ret = init();
-      if (ret != null) {
-        return ret;
+    try {
+      if (!isInit) {
+        ret = init();
+        if (ret != null) {
+          return ret;
+        }
       }
-    }
 
-    impParams.clear();
-    expParams.clear();
+      impParams.clear();
+      expParams.clear();
 
-    impParams.setValue("LGPLA", params.LGPLA);
-    impParams.setValue("LGNUM", params.LGNUM);
-    impParams.setValue("LGTYP", params.LGTYP);
-    impParams.setValue("PAL", params.PAL);
+      impParams.setValue("LGPLA", params.LGPLA);
+      impParams.setValue("LGNUM", params.LGNUM);
+      impParams.setValue("LGTYP", params.LGTYP);
+      impParams.setValue("PAL", params.PAL);
 
-    ret = SAPconn.executeFunction(function);
+      ret = SAPconn.executeFunction(function);
 
-    if (ret == null) {
-      params.NOT_WHOLE = expParams.getString("NOT_WHOLE");
-      params.ABC = expParams.getString("ABC");
-      params.err = expParams.getString("ERR");
-      if (!params.err.isEmpty()) {
-        params.isErr = true;
-        params.errFull = params.err;
+      if (ret == null) {
+        params.NOT_WHOLE = expParams.getString("NOT_WHOLE");
+        params.ABC = expParams.getString("ABC");
+        params.err = expParams.getString("ERR");
+        if (!params.err.isEmpty()) {
+          params.isErr = true;
+          params.errFull = params.err;
+        }
       }
+    } catch (Exception e) {
+      return e;
     }
 
     return ret;

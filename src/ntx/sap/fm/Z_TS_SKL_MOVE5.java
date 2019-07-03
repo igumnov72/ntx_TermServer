@@ -71,7 +71,7 @@ public class Z_TS_SKL_MOVE5 {
     }
 
     // вызов САПовской процедуры
-    JCoException e = execute(this);
+    Exception e = execute(this);
 
     if (e == null) {
       if (TSparams.logDocLevel >= 2) {
@@ -104,59 +104,63 @@ public class Z_TS_SKL_MOVE5 {
     }
   }
 
-  private static synchronized JCoException execute(Z_TS_SKL_MOVE5 params) {
-    JCoException ret = null;
+  private static synchronized Exception execute(Z_TS_SKL_MOVE5 params) {
+    Exception ret = null;
 
-    if (!isInit) {
-      ret = init();
-      if (ret != null) {
-        return ret;
-      }
-    }
-
-    impParams.clear();
-    expParams.clear();
-    tabParams.clear();
-
-    JCoTable IT_CQ_t = tabParams.getTable("IT_CQ");
-
-    impParams.setValue("LGORT", params.LGORT);
-    impParams.setValue("LGNUM", params.LGNUM);
-    impParams.setValue("LGTYP1", params.LGTYP1);
-    impParams.setValue("CELL1", params.CELL1);
-    impParams.setValue("PAL1", params.PAL1);
-    impParams.setValue("LGTYP2", params.LGTYP2);
-    impParams.setValue("CELL2", params.CELL2);
-    impParams.setValue("PAL2", params.PAL2);
-    impParams.setValue("TSD_USER", params.TSD_USER);
-
-    IT_CQ_t.appendRows(params.IT_CQ.length);
-    for (int i = 0; i < params.IT_CQ.length; i++) {
-      IT_CQ_t.setRow(i);
-      IT_CQ_t.setValue("CHARG", params.IT_CQ[i].CHARG);
-      IT_CQ_t.setValue("QTY", params.IT_CQ[i].QTY);
-    }
-
-    ret = SAPconn.executeFunction(function);
-
-    if (ret == null) {
-      params.KEY1 = expParams.getInt("KEY1");
-      params.TR_ZAK_CREATED = expParams.getString("TR_ZAK_CREATED");
-      params.err = expParams.getString("ERR");
-      if (!params.err.isEmpty()) {
-        params.isErr = true;
-        params.errFull = params.err;
+    try {
+      if (!isInit) {
+        ret = init();
+        if (ret != null) {
+          return ret;
+        }
       }
 
-      params.IT_CQ = new ZTS_PRT_QTY_S[IT_CQ_t.getNumRows()];
-      ZTS_PRT_QTY_S IT_CQ_r;
+      impParams.clear();
+      expParams.clear();
+      tabParams.clear();
+
+      JCoTable IT_CQ_t = tabParams.getTable("IT_CQ");
+
+      impParams.setValue("LGORT", params.LGORT);
+      impParams.setValue("LGNUM", params.LGNUM);
+      impParams.setValue("LGTYP1", params.LGTYP1);
+      impParams.setValue("CELL1", params.CELL1);
+      impParams.setValue("PAL1", params.PAL1);
+      impParams.setValue("LGTYP2", params.LGTYP2);
+      impParams.setValue("CELL2", params.CELL2);
+      impParams.setValue("PAL2", params.PAL2);
+      impParams.setValue("TSD_USER", params.TSD_USER);
+
+      IT_CQ_t.appendRows(params.IT_CQ.length);
       for (int i = 0; i < params.IT_CQ.length; i++) {
         IT_CQ_t.setRow(i);
-        IT_CQ_r = new ZTS_PRT_QTY_S();
-        IT_CQ_r.CHARG = IT_CQ_t.getString("CHARG");
-        IT_CQ_r.QTY = IT_CQ_t.getBigDecimal("QTY");
-        params.IT_CQ[i] = IT_CQ_r;
+        IT_CQ_t.setValue("CHARG", params.IT_CQ[i].CHARG);
+        IT_CQ_t.setValue("QTY", params.IT_CQ[i].QTY);
       }
+
+      ret = SAPconn.executeFunction(function);
+
+      if (ret == null) {
+        params.KEY1 = expParams.getInt("KEY1");
+        params.TR_ZAK_CREATED = expParams.getString("TR_ZAK_CREATED");
+        params.err = expParams.getString("ERR");
+        if (!params.err.isEmpty()) {
+          params.isErr = true;
+          params.errFull = params.err;
+        }
+
+        params.IT_CQ = new ZTS_PRT_QTY_S[IT_CQ_t.getNumRows()];
+        ZTS_PRT_QTY_S IT_CQ_r;
+        for (int i = 0; i < params.IT_CQ.length; i++) {
+          IT_CQ_t.setRow(i);
+          IT_CQ_r = new ZTS_PRT_QTY_S();
+          IT_CQ_r.CHARG = IT_CQ_t.getString("CHARG");
+          IT_CQ_r.QTY = IT_CQ_t.getBigDecimal("QTY");
+          params.IT_CQ[i] = IT_CQ_r;
+        }
+      }
+    } catch (Exception e) {
+      return e;
     }
 
     return ret;

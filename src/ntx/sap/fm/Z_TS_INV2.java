@@ -59,7 +59,7 @@ public class Z_TS_INV2 {
     }
 
     // вызов САПовской процедуры
-    JCoException e = execute(this);
+    Exception e = execute(this);
 
     if (e == null) {
       if (TSparams.logDocLevel >= 2) {
@@ -90,55 +90,59 @@ public class Z_TS_INV2 {
     }
   }
 
-  private static synchronized JCoException execute(Z_TS_INV2 params) {
-    JCoException ret = null;
+  private static synchronized Exception execute(Z_TS_INV2 params) {
+    Exception ret = null;
 
-    if (!isInit) {
-      ret = init();
-      if (ret != null) {
-        return ret;
-      }
-    }
-
-    impParams.clear();
-    expParams.clear();
-    tabParams.clear();
-
-    JCoTable IT_t = tabParams.getTable("IT");
-
-    impParams.setValue("LGNUM", params.LGNUM);
-    impParams.setValue("LGTYP", params.LGTYP);
-    impParams.setValue("LGPLA", params.LGPLA);
-    impParams.setValue("IVNUM", params.IVNUM);
-    impParams.setValue("LENUM", params.LENUM);
-
-    IT_t.appendRows(params.IT.length);
-    for (int i = 0; i < params.IT.length; i++) {
-      IT_t.setRow(i);
-      IT_t.setValue("MATNR", params.IT[i].MATNR);
-      IT_t.setValue("CHARG", params.IT[i].CHARG);
-      IT_t.setValue("QTY", params.IT[i].QTY);
-    }
-
-    ret = SAPconn.executeFunction(function);
-
-    if (ret == null) {
-      params.err = expParams.getString("ERR");
-      if (!params.err.isEmpty()) {
-        params.isErr = true;
-        params.errFull = params.err;
+    try {
+      if (!isInit) {
+        ret = init();
+        if (ret != null) {
+          return ret;
+        }
       }
 
-      params.IT = new ZTS_MP_QTY_S[IT_t.getNumRows()];
-      ZTS_MP_QTY_S IT_r;
+      impParams.clear();
+      expParams.clear();
+      tabParams.clear();
+
+      JCoTable IT_t = tabParams.getTable("IT");
+
+      impParams.setValue("LGNUM", params.LGNUM);
+      impParams.setValue("LGTYP", params.LGTYP);
+      impParams.setValue("LGPLA", params.LGPLA);
+      impParams.setValue("IVNUM", params.IVNUM);
+      impParams.setValue("LENUM", params.LENUM);
+
+      IT_t.appendRows(params.IT.length);
       for (int i = 0; i < params.IT.length; i++) {
         IT_t.setRow(i);
-        IT_r = new ZTS_MP_QTY_S();
-        IT_r.MATNR = IT_t.getString("MATNR");
-        IT_r.CHARG = IT_t.getString("CHARG");
-        IT_r.QTY = IT_t.getBigDecimal("QTY");
-        params.IT[i] = IT_r;
+        IT_t.setValue("MATNR", params.IT[i].MATNR);
+        IT_t.setValue("CHARG", params.IT[i].CHARG);
+        IT_t.setValue("QTY", params.IT[i].QTY);
       }
+
+      ret = SAPconn.executeFunction(function);
+
+      if (ret == null) {
+        params.err = expParams.getString("ERR");
+        if (!params.err.isEmpty()) {
+          params.isErr = true;
+          params.errFull = params.err;
+        }
+
+        params.IT = new ZTS_MP_QTY_S[IT_t.getNumRows()];
+        ZTS_MP_QTY_S IT_r;
+        for (int i = 0; i < params.IT.length; i++) {
+          IT_t.setRow(i);
+          IT_r = new ZTS_MP_QTY_S();
+          IT_r.MATNR = IT_t.getString("MATNR");
+          IT_r.CHARG = IT_t.getString("CHARG");
+          IT_r.QTY = IT_t.getBigDecimal("QTY");
+          params.IT[i] = IT_r;
+        }
+      }
+    } catch (Exception e) {
+      return e;
     }
 
     return ret;

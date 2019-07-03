@@ -68,7 +68,7 @@ public class Z_TS_PLC3 {
     }
 
     // вызов САПовской процедуры
-    JCoException e = execute(this);
+    Exception e = execute(this);
 
     if (e == null) {
       if (TSparams.logDocLevel >= 2) {
@@ -100,57 +100,61 @@ public class Z_TS_PLC3 {
     }
   }
 
-  private static synchronized JCoException execute(Z_TS_PLC3 params) {
-    JCoException ret = null;
+  private static synchronized Exception execute(Z_TS_PLC3 params) {
+    Exception ret = null;
 
-    if (!isInit) {
-      ret = init();
-      if (ret != null) {
-        return ret;
-      }
-    }
-
-    impParams.clear();
-    expParams.clear();
-    tabParams.clear();
-
-    JCoTable TANUMS_t = tabParams.getTable("TANUMS");
-
-    impParams.setValue("DO_STORNO", params.DO_STORNO);
-    impParams.setValue("LGORT", params.LGORT);
-    impParams.setValue("PAL", params.PAL);
-    impParams.setValue("VBELN", params.VBELN);
-    impParams.setValue("LGPLA", params.LGPLA);
-    impParams.setValue("USER_CODE", params.USER_CODE);
-    impParams.setValue("DO_PM", params.DO_PM);
-    impParams.setValue("DO_PM_MAIL", params.DO_PM_MAIL);
-
-    TANUMS_t.appendRows(params.TANUMS.length);
-    for (int i = 0; i < params.TANUMS.length; i++) {
-      TANUMS_t.setRow(i);
-      TANUMS_t.setValue("LGNUM", params.TANUMS[i].LGNUM);
-      TANUMS_t.setValue("TANUM", params.TANUMS[i].TANUM);
-    }
-
-    ret = SAPconn.executeFunction(function);
-
-    if (ret == null) {
-      params.PLC_DONE = expParams.getString("PLC_DONE");
-      params.err = expParams.getString("ERR");
-      if (!params.err.isEmpty()) {
-        params.isErr = true;
-        params.errFull = params.err;
+    try {
+      if (!isInit) {
+        ret = init();
+        if (ret != null) {
+          return ret;
+        }
       }
 
-      params.TANUMS = new ZTS_TANUM_S[TANUMS_t.getNumRows()];
-      ZTS_TANUM_S TANUMS_r;
+      impParams.clear();
+      expParams.clear();
+      tabParams.clear();
+
+      JCoTable TANUMS_t = tabParams.getTable("TANUMS");
+
+      impParams.setValue("DO_STORNO", params.DO_STORNO);
+      impParams.setValue("LGORT", params.LGORT);
+      impParams.setValue("PAL", params.PAL);
+      impParams.setValue("VBELN", params.VBELN);
+      impParams.setValue("LGPLA", params.LGPLA);
+      impParams.setValue("USER_CODE", params.USER_CODE);
+      impParams.setValue("DO_PM", params.DO_PM);
+      impParams.setValue("DO_PM_MAIL", params.DO_PM_MAIL);
+
+      TANUMS_t.appendRows(params.TANUMS.length);
       for (int i = 0; i < params.TANUMS.length; i++) {
         TANUMS_t.setRow(i);
-        TANUMS_r = new ZTS_TANUM_S();
-        TANUMS_r.LGNUM = TANUMS_t.getString("LGNUM");
-        TANUMS_r.TANUM = TANUMS_t.getString("TANUM");
-        params.TANUMS[i] = TANUMS_r;
+        TANUMS_t.setValue("LGNUM", params.TANUMS[i].LGNUM);
+        TANUMS_t.setValue("TANUM", params.TANUMS[i].TANUM);
       }
+
+      ret = SAPconn.executeFunction(function);
+
+      if (ret == null) {
+        params.PLC_DONE = expParams.getString("PLC_DONE");
+        params.err = expParams.getString("ERR");
+        if (!params.err.isEmpty()) {
+          params.isErr = true;
+          params.errFull = params.err;
+        }
+
+        params.TANUMS = new ZTS_TANUM_S[TANUMS_t.getNumRows()];
+        ZTS_TANUM_S TANUMS_r;
+        for (int i = 0; i < params.TANUMS.length; i++) {
+          TANUMS_t.setRow(i);
+          TANUMS_r = new ZTS_TANUM_S();
+          TANUMS_r.LGNUM = TANUMS_t.getString("LGNUM");
+          TANUMS_r.TANUM = TANUMS_t.getString("TANUM");
+          params.TANUMS[i] = TANUMS_r;
+        }
+      }
+    } catch (Exception e) {
+      return e;
     }
 
     return ret;

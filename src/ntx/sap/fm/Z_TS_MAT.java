@@ -41,7 +41,7 @@ public class Z_TS_MAT {
     }
 
     // вызов САПовской процедуры
-    JCoException e = execute(this);
+    Exception e = execute(this);
 
     if (e == null) {
       if (TSparams.logDocLevel >= 2) {
@@ -72,27 +72,31 @@ public class Z_TS_MAT {
     }
   }
 
-  private static synchronized JCoException execute(Z_TS_MAT params) {
-    JCoException ret = null;
+  private static synchronized Exception execute(Z_TS_MAT params) {
+    Exception ret = null;
 
-    if (!isInit) {
-      ret = init();
-      if (ret != null) {
-        return ret;
+    try {
+      if (!isInit) {
+        ret = init();
+        if (ret != null) {
+          return ret;
+        }
       }
-    }
 
-    impParams.clear();
-    expParams.clear();
+      impParams.clear();
+      expParams.clear();
 
-    impParams.setValue("MATNR", params.MATNR);
+      impParams.setValue("MATNR", params.MATNR);
 
-    ret = SAPconn.executeFunction(function);
+      ret = SAPconn.executeFunction(function);
 
-    if (ret == null) {
-      params.MAKTX = expParams.getString("MAKTX");
-      params.FULL_NAME = expParams.getString("FULL_NAME");
-      params.HAVE_FOTO = expParams.getString("HAVE_FOTO");
+      if (ret == null) {
+        params.MAKTX = expParams.getString("MAKTX");
+        params.FULL_NAME = expParams.getString("FULL_NAME");
+        params.HAVE_FOTO = expParams.getString("HAVE_FOTO");
+      }
+    } catch (Exception e) {
+      return e;
     }
 
     return ret;

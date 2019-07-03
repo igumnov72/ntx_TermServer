@@ -59,7 +59,7 @@ public class Z_TS_SKL_MOVE6 {
     }
 
     // вызов САПовской процедуры
-    JCoException e = execute(this);
+    Exception e = execute(this);
 
     if (e == null) {
       if (TSparams.logDocLevel >= 2) {
@@ -90,57 +90,61 @@ public class Z_TS_SKL_MOVE6 {
     }
   }
 
-  private static synchronized JCoException execute(Z_TS_SKL_MOVE6 params) {
-    JCoException ret = null;
+  private static synchronized Exception execute(Z_TS_SKL_MOVE6 params) {
+    Exception ret = null;
 
-    if (!isInit) {
-      ret = init();
-      if (ret != null) {
-        return ret;
-      }
-    }
-
-    impParams.clear();
-    expParams.clear();
-    tabParams.clear();
-
-    JCoTable IT_t = tabParams.getTable("IT");
-
-    impParams.setValue("LGORT", params.LGORT);
-    impParams.setValue("LGPLA", params.LGPLA);
-    impParams.setValue("LGNUM", params.LGNUM);
-    impParams.setValue("LGTYP", params.LGTYP);
-    impParams.setValue("PAL", params.PAL);
-
-    IT_t.appendRows(params.IT.length);
-    for (int i = 0; i < params.IT.length; i++) {
-      IT_t.setRow(i);
-      IT_t.setValue("MATNR", params.IT[i].MATNR);
-      IT_t.setValue("MAKTX", params.IT[i].MAKTX);
-      IT_t.setValue("QTY", params.IT[i].QTY);
-      IT_t.setValue("ZABCN", params.IT[i].ZABCN);
-    }
-
-    ret = SAPconn.executeFunction(function);
-
-    if (ret == null) {
-      params.err = expParams.getString("ERR");
-      if (!params.err.isEmpty()) {
-        params.isErr = true;
-        params.errFull = params.err;
+    try {
+      if (!isInit) {
+        ret = init();
+        if (ret != null) {
+          return ret;
+        }
       }
 
-      params.IT = new ZTS_MAT_ABC_S[IT_t.getNumRows()];
-      ZTS_MAT_ABC_S IT_r;
+      impParams.clear();
+      expParams.clear();
+      tabParams.clear();
+
+      JCoTable IT_t = tabParams.getTable("IT");
+
+      impParams.setValue("LGORT", params.LGORT);
+      impParams.setValue("LGPLA", params.LGPLA);
+      impParams.setValue("LGNUM", params.LGNUM);
+      impParams.setValue("LGTYP", params.LGTYP);
+      impParams.setValue("PAL", params.PAL);
+
+      IT_t.appendRows(params.IT.length);
       for (int i = 0; i < params.IT.length; i++) {
         IT_t.setRow(i);
-        IT_r = new ZTS_MAT_ABC_S();
-        IT_r.MATNR = IT_t.getString("MATNR");
-        IT_r.MAKTX = IT_t.getString("MAKTX");
-        IT_r.QTY = IT_t.getBigDecimal("QTY");
-        IT_r.ZABCN = IT_t.getString("ZABCN");
-        params.IT[i] = IT_r;
+        IT_t.setValue("MATNR", params.IT[i].MATNR);
+        IT_t.setValue("MAKTX", params.IT[i].MAKTX);
+        IT_t.setValue("QTY", params.IT[i].QTY);
+        IT_t.setValue("ZABCN", params.IT[i].ZABCN);
       }
+
+      ret = SAPconn.executeFunction(function);
+
+      if (ret == null) {
+        params.err = expParams.getString("ERR");
+        if (!params.err.isEmpty()) {
+          params.isErr = true;
+          params.errFull = params.err;
+        }
+
+        params.IT = new ZTS_MAT_ABC_S[IT_t.getNumRows()];
+        ZTS_MAT_ABC_S IT_r;
+        for (int i = 0; i < params.IT.length; i++) {
+          IT_t.setRow(i);
+          IT_r = new ZTS_MAT_ABC_S();
+          IT_r.MATNR = IT_t.getString("MATNR");
+          IT_r.MAKTX = IT_t.getString("MAKTX");
+          IT_r.QTY = IT_t.getBigDecimal("QTY");
+          IT_r.ZABCN = IT_t.getString("ZABCN");
+          params.IT[i] = IT_r;
+        }
+      }
+    } catch (Exception e) {
+      return e;
     }
 
     return ret;

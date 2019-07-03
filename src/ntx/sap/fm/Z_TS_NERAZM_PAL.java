@@ -52,7 +52,7 @@ public class Z_TS_NERAZM_PAL {
     }
 
     // вызов САПовской процедуры
-    JCoException e = execute(this);
+    Exception e = execute(this);
 
     if (e == null) {
       if (TSparams.logDocLevel >= 2) {
@@ -81,42 +81,46 @@ public class Z_TS_NERAZM_PAL {
     }
   }
 
-  private static synchronized JCoException execute(Z_TS_NERAZM_PAL params) {
-    JCoException ret = null;
+  private static synchronized Exception execute(Z_TS_NERAZM_PAL params) {
+    Exception ret = null;
 
-    if (!isInit) {
-      ret = init();
-      if (ret != null) {
-        return ret;
+    try {
+      if (!isInit) {
+        ret = init();
+        if (ret != null) {
+          return ret;
+        }
       }
-    }
 
-    impParams.clear();
-    tabParams.clear();
+      impParams.clear();
+      tabParams.clear();
 
-    JCoTable IT_NERAZM_t = tabParams.getTable("IT_NERAZM");
+      JCoTable IT_NERAZM_t = tabParams.getTable("IT_NERAZM");
 
-    impParams.setValue("VBELN", params.VBELN);
-    impParams.setValue("LGORT", params.LGORT);
-    impParams.setValue("NO_AUTO_MAT", params.NO_AUTO_MAT);
+      impParams.setValue("VBELN", params.VBELN);
+      impParams.setValue("LGORT", params.LGORT);
+      impParams.setValue("NO_AUTO_MAT", params.NO_AUTO_MAT);
 
-    IT_NERAZM_t.appendRows(params.IT_NERAZM.length);
-    for (int i = 0; i < params.IT_NERAZM.length; i++) {
-      IT_NERAZM_t.setRow(i);
-      IT_NERAZM_t.setValue("LENUM", params.IT_NERAZM[i].LENUM);
-    }
-
-    ret = SAPconn.executeFunction(function);
-
-    if (ret == null) {
-      params.IT_NERAZM = new ZTS_LENUM_S[IT_NERAZM_t.getNumRows()];
-      ZTS_LENUM_S IT_NERAZM_r;
+      IT_NERAZM_t.appendRows(params.IT_NERAZM.length);
       for (int i = 0; i < params.IT_NERAZM.length; i++) {
         IT_NERAZM_t.setRow(i);
-        IT_NERAZM_r = new ZTS_LENUM_S();
-        IT_NERAZM_r.LENUM = IT_NERAZM_t.getString("LENUM");
-        params.IT_NERAZM[i] = IT_NERAZM_r;
+        IT_NERAZM_t.setValue("LENUM", params.IT_NERAZM[i].LENUM);
       }
+
+      ret = SAPconn.executeFunction(function);
+
+      if (ret == null) {
+        params.IT_NERAZM = new ZTS_LENUM_S[IT_NERAZM_t.getNumRows()];
+        ZTS_LENUM_S IT_NERAZM_r;
+        for (int i = 0; i < params.IT_NERAZM.length; i++) {
+          IT_NERAZM_t.setRow(i);
+          IT_NERAZM_r = new ZTS_LENUM_S();
+          IT_NERAZM_r.LENUM = IT_NERAZM_t.getString("LENUM");
+          params.IT_NERAZM[i] = IT_NERAZM_r;
+        }
+      }
+    } catch (Exception e) {
+      return e;
     }
 
     return ret;

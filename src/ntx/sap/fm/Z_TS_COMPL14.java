@@ -79,7 +79,7 @@ public class Z_TS_COMPL14 {
     }
 
     // вызов САПовской процедуры
-    JCoException e = execute(this);
+    Exception e = execute(this);
 
     if (e == null) {
       if (TSparams.logDocLevel >= 2) {
@@ -116,107 +116,111 @@ public class Z_TS_COMPL14 {
     }
   }
 
-  private static synchronized JCoException execute(Z_TS_COMPL14 params) {
-    JCoException ret = null;
+  private static synchronized Exception execute(Z_TS_COMPL14 params) {
+    Exception ret = null;
 
-    if (!isInit) {
-      ret = init();
-      if (ret != null) {
-        return ret;
-      }
-    }
-
-    impParams.clear();
-    expParams.clear();
-    tabParams.clear();
-
-    JCoTable IT_t = tabParams.getTable("IT");
-    JCoTable IT_STRICT_PRT_t = tabParams.getTable("IT_STRICT_PRT");
-    JCoTable IT_ALL_PRT_t = tabParams.getTable("IT_ALL_PRT");
-
-    impParams.setValue("LGORT", params.LGORT);
-    impParams.setValue("VBELN", params.VBELN);
-    impParams.setValue("LGPLA", params.LGPLA);
-
-    IT_t.appendRows(params.IT.length);
-    for (int i = 0; i < params.IT.length; i++) {
-      IT_t.setRow(i);
-      IT_t.setValue("LGNUM", params.IT[i].LGNUM);
-      IT_t.setValue("TANUM", params.IT[i].TANUM);
-      IT_t.setValue("TAPOS", params.IT[i].TAPOS);
-      IT_t.setValue("LGTYP", params.IT[i].LGTYP);
-      IT_t.setValue("LGPLA", params.IT[i].LGPLA);
-      IT_t.setValue("LENUM", params.IT[i].LENUM);
-      IT_t.setValue("MATNR", params.IT[i].MATNR);
-      IT_t.setValue("CHARG", params.IT[i].CHARG);
-      IT_t.setValue("ONLY_PRT", params.IT[i].ONLY_PRT);
-      IT_t.setValue("SOBKZ", params.IT[i].SOBKZ);
-      IT_t.setValue("SONUM", params.IT[i].SONUM);
-      IT_t.setValue("QTY", params.IT[i].QTY);
-    }
-
-    IT_STRICT_PRT_t.appendRows(params.IT_STRICT_PRT.length);
-    for (int i = 0; i < params.IT_STRICT_PRT.length; i++) {
-      IT_STRICT_PRT_t.setRow(i);
-      IT_STRICT_PRT_t.setValue("CHARG", params.IT_STRICT_PRT[i].CHARG);
-    }
-
-    IT_ALL_PRT_t.appendRows(params.IT_ALL_PRT.length);
-    for (int i = 0; i < params.IT_ALL_PRT.length; i++) {
-      IT_ALL_PRT_t.setRow(i);
-      IT_ALL_PRT_t.setValue("CHARG", params.IT_ALL_PRT[i].CHARG);
-    }
-
-    ret = SAPconn.executeFunction(function);
-
-    if (ret == null) {
-      params.COMPL_FROM = expParams.getString("COMPL_FROM");
-      params.TANUM1 = expParams.getString("TANUM1");
-      params.TANUM2 = expParams.getString("TANUM2");
-      params.ZCOMP_CLIENT = expParams.getString("ZCOMP_CLIENT");
-      params.err = expParams.getString("ERR");
-      if (!params.err.isEmpty()) {
-        params.isErr = true;
-        params.errFull = params.err;
+    try {
+      if (!isInit) {
+        ret = init();
+        if (ret != null) {
+          return ret;
+        }
       }
 
-      params.IT = new ZTS_COMPL_S[IT_t.getNumRows()];
-      ZTS_COMPL_S IT_r;
+      impParams.clear();
+      expParams.clear();
+      tabParams.clear();
+
+      JCoTable IT_t = tabParams.getTable("IT");
+      JCoTable IT_STRICT_PRT_t = tabParams.getTable("IT_STRICT_PRT");
+      JCoTable IT_ALL_PRT_t = tabParams.getTable("IT_ALL_PRT");
+
+      impParams.setValue("LGORT", params.LGORT);
+      impParams.setValue("VBELN", params.VBELN);
+      impParams.setValue("LGPLA", params.LGPLA);
+
+      IT_t.appendRows(params.IT.length);
       for (int i = 0; i < params.IT.length; i++) {
         IT_t.setRow(i);
-        IT_r = new ZTS_COMPL_S();
-        IT_r.LGNUM = IT_t.getString("LGNUM");
-        IT_r.TANUM = IT_t.getString("TANUM");
-        IT_r.TAPOS = IT_t.getString("TAPOS");
-        IT_r.LGTYP = IT_t.getString("LGTYP");
-        IT_r.LGPLA = IT_t.getString("LGPLA");
-        IT_r.LENUM = IT_t.getString("LENUM");
-        IT_r.MATNR = IT_t.getString("MATNR");
-        IT_r.CHARG = IT_t.getString("CHARG");
-        IT_r.ONLY_PRT = IT_t.getString("ONLY_PRT");
-        IT_r.SOBKZ = IT_t.getString("SOBKZ");
-        IT_r.SONUM = IT_t.getString("SONUM");
-        IT_r.QTY = IT_t.getBigDecimal("QTY");
-        params.IT[i] = IT_r;
+        IT_t.setValue("LGNUM", params.IT[i].LGNUM);
+        IT_t.setValue("TANUM", params.IT[i].TANUM);
+        IT_t.setValue("TAPOS", params.IT[i].TAPOS);
+        IT_t.setValue("LGTYP", params.IT[i].LGTYP);
+        IT_t.setValue("LGPLA", params.IT[i].LGPLA);
+        IT_t.setValue("LENUM", params.IT[i].LENUM);
+        IT_t.setValue("MATNR", params.IT[i].MATNR);
+        IT_t.setValue("CHARG", params.IT[i].CHARG);
+        IT_t.setValue("ONLY_PRT", params.IT[i].ONLY_PRT);
+        IT_t.setValue("SOBKZ", params.IT[i].SOBKZ);
+        IT_t.setValue("SONUM", params.IT[i].SONUM);
+        IT_t.setValue("QTY", params.IT[i].QTY);
       }
 
-      params.IT_STRICT_PRT = new ZDC_MM_SPT_PRT_S[IT_STRICT_PRT_t.getNumRows()];
-      ZDC_MM_SPT_PRT_S IT_STRICT_PRT_r;
+      IT_STRICT_PRT_t.appendRows(params.IT_STRICT_PRT.length);
       for (int i = 0; i < params.IT_STRICT_PRT.length; i++) {
         IT_STRICT_PRT_t.setRow(i);
-        IT_STRICT_PRT_r = new ZDC_MM_SPT_PRT_S();
-        IT_STRICT_PRT_r.CHARG = IT_STRICT_PRT_t.getString("CHARG");
-        params.IT_STRICT_PRT[i] = IT_STRICT_PRT_r;
+        IT_STRICT_PRT_t.setValue("CHARG", params.IT_STRICT_PRT[i].CHARG);
       }
 
-      params.IT_ALL_PRT = new ZDC_MM_SPT_PRT_S[IT_ALL_PRT_t.getNumRows()];
-      ZDC_MM_SPT_PRT_S IT_ALL_PRT_r;
+      IT_ALL_PRT_t.appendRows(params.IT_ALL_PRT.length);
       for (int i = 0; i < params.IT_ALL_PRT.length; i++) {
         IT_ALL_PRT_t.setRow(i);
-        IT_ALL_PRT_r = new ZDC_MM_SPT_PRT_S();
-        IT_ALL_PRT_r.CHARG = IT_ALL_PRT_t.getString("CHARG");
-        params.IT_ALL_PRT[i] = IT_ALL_PRT_r;
+        IT_ALL_PRT_t.setValue("CHARG", params.IT_ALL_PRT[i].CHARG);
       }
+
+      ret = SAPconn.executeFunction(function);
+
+      if (ret == null) {
+        params.COMPL_FROM = expParams.getString("COMPL_FROM");
+        params.TANUM1 = expParams.getString("TANUM1");
+        params.TANUM2 = expParams.getString("TANUM2");
+        params.ZCOMP_CLIENT = expParams.getString("ZCOMP_CLIENT");
+        params.err = expParams.getString("ERR");
+        if (!params.err.isEmpty()) {
+          params.isErr = true;
+          params.errFull = params.err;
+        }
+
+        params.IT = new ZTS_COMPL_S[IT_t.getNumRows()];
+        ZTS_COMPL_S IT_r;
+        for (int i = 0; i < params.IT.length; i++) {
+          IT_t.setRow(i);
+          IT_r = new ZTS_COMPL_S();
+          IT_r.LGNUM = IT_t.getString("LGNUM");
+          IT_r.TANUM = IT_t.getString("TANUM");
+          IT_r.TAPOS = IT_t.getString("TAPOS");
+          IT_r.LGTYP = IT_t.getString("LGTYP");
+          IT_r.LGPLA = IT_t.getString("LGPLA");
+          IT_r.LENUM = IT_t.getString("LENUM");
+          IT_r.MATNR = IT_t.getString("MATNR");
+          IT_r.CHARG = IT_t.getString("CHARG");
+          IT_r.ONLY_PRT = IT_t.getString("ONLY_PRT");
+          IT_r.SOBKZ = IT_t.getString("SOBKZ");
+          IT_r.SONUM = IT_t.getString("SONUM");
+          IT_r.QTY = IT_t.getBigDecimal("QTY");
+          params.IT[i] = IT_r;
+        }
+
+        params.IT_STRICT_PRT = new ZDC_MM_SPT_PRT_S[IT_STRICT_PRT_t.getNumRows()];
+        ZDC_MM_SPT_PRT_S IT_STRICT_PRT_r;
+        for (int i = 0; i < params.IT_STRICT_PRT.length; i++) {
+          IT_STRICT_PRT_t.setRow(i);
+          IT_STRICT_PRT_r = new ZDC_MM_SPT_PRT_S();
+          IT_STRICT_PRT_r.CHARG = IT_STRICT_PRT_t.getString("CHARG");
+          params.IT_STRICT_PRT[i] = IT_STRICT_PRT_r;
+        }
+
+        params.IT_ALL_PRT = new ZDC_MM_SPT_PRT_S[IT_ALL_PRT_t.getNumRows()];
+        ZDC_MM_SPT_PRT_S IT_ALL_PRT_r;
+        for (int i = 0; i < params.IT_ALL_PRT.length; i++) {
+          IT_ALL_PRT_t.setRow(i);
+          IT_ALL_PRT_r = new ZDC_MM_SPT_PRT_S();
+          IT_ALL_PRT_r.CHARG = IT_ALL_PRT_t.getString("CHARG");
+          params.IT_ALL_PRT[i] = IT_ALL_PRT_r;
+        }
+      }
+    } catch (Exception e) {
+      return e;
     }
 
     return ret;

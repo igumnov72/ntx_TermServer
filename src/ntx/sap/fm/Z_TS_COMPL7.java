@@ -46,7 +46,7 @@ public class Z_TS_COMPL7 {
     }
 
     // вызов САПовской процедуры
-    JCoException e = execute(this);
+    Exception e = execute(this);
 
     if (e == null) {
       if (TSparams.logDocLevel >= 2) {
@@ -76,33 +76,37 @@ public class Z_TS_COMPL7 {
     }
   }
 
-  private static synchronized JCoException execute(Z_TS_COMPL7 params) {
-    JCoException ret = null;
+  private static synchronized Exception execute(Z_TS_COMPL7 params) {
+    Exception ret = null;
 
-    if (!isInit) {
-      ret = init();
-      if (ret != null) {
-        return ret;
+    try {
+      if (!isInit) {
+        ret = init();
+        if (ret != null) {
+          return ret;
+        }
       }
-    }
 
-    impParams.clear();
-    expParams.clear();
+      impParams.clear();
+      expParams.clear();
 
-    impParams.setValue("LGORT", params.LGORT);
-    impParams.setValue("VBELN", params.VBELN);
-    impParams.setValue("LGPLA", params.LGPLA);
-    impParams.setValue("MATNR", params.MATNR);
-    impParams.setValue("CHARG", params.CHARG);
+      impParams.setValue("LGORT", params.LGORT);
+      impParams.setValue("VBELN", params.VBELN);
+      impParams.setValue("LGPLA", params.LGPLA);
+      impParams.setValue("MATNR", params.MATNR);
+      impParams.setValue("CHARG", params.CHARG);
 
-    ret = SAPconn.executeFunction(function);
+      ret = SAPconn.executeFunction(function);
 
-    if (ret == null) {
-      params.err = expParams.getString("ERR");
-      if (!params.err.isEmpty()) {
-        params.isErr = true;
-        params.errFull = params.err;
+      if (ret == null) {
+        params.err = expParams.getString("ERR");
+        if (!params.err.isEmpty()) {
+          params.isErr = true;
+          params.errFull = params.err;
+        }
       }
+    } catch (Exception e) {
+      return e;
     }
 
     return ret;

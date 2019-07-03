@@ -54,7 +54,7 @@ public class Z_TS_COMPL18 {
     }
 
     // вызов САПовской процедуры
-    JCoException e = execute(this);
+    Exception e = execute(this);
 
     if (e == null) {
       if (TSparams.logDocLevel >= 2) {
@@ -86,48 +86,52 @@ public class Z_TS_COMPL18 {
     }
   }
 
-  private static synchronized JCoException execute(Z_TS_COMPL18 params) {
-    JCoException ret = null;
+  private static synchronized Exception execute(Z_TS_COMPL18 params) {
+    Exception ret = null;
 
-    if (!isInit) {
-      ret = init();
-      if (ret != null) {
-        return ret;
-      }
-    }
-
-    impParams.clear();
-    expParams.clear();
-    tabParams.clear();
-
-    JCoTable IT_V_t = tabParams.getTable("IT_V");
-
-    impParams.setValue("SGM", params.SGM);
-
-    IT_V_t.appendRows(params.IT_V.length);
-    for (int i = 0; i < params.IT_V.length; i++) {
-      IT_V_t.setRow(i);
-      IT_V_t.setValue("VBELN", params.IT_V[i].VBELN);
-    }
-
-    ret = SAPconn.executeFunction(function);
-
-    if (ret == null) {
-      params.VBELN = expParams.getString("VBELN");
-      params.err = expParams.getString("ERR");
-      if (!params.err.isEmpty()) {
-        params.isErr = true;
-        params.errFull = params.err;
+    try {
+      if (!isInit) {
+        ret = init();
+        if (ret != null) {
+          return ret;
+        }
       }
 
-      params.IT_V = new ZTS_VBELN_S[IT_V_t.getNumRows()];
-      ZTS_VBELN_S IT_V_r;
+      impParams.clear();
+      expParams.clear();
+      tabParams.clear();
+
+      JCoTable IT_V_t = tabParams.getTable("IT_V");
+
+      impParams.setValue("SGM", params.SGM);
+
+      IT_V_t.appendRows(params.IT_V.length);
       for (int i = 0; i < params.IT_V.length; i++) {
         IT_V_t.setRow(i);
-        IT_V_r = new ZTS_VBELN_S();
-        IT_V_r.VBELN = IT_V_t.getString("VBELN");
-        params.IT_V[i] = IT_V_r;
+        IT_V_t.setValue("VBELN", params.IT_V[i].VBELN);
       }
+
+      ret = SAPconn.executeFunction(function);
+
+      if (ret == null) {
+        params.VBELN = expParams.getString("VBELN");
+        params.err = expParams.getString("ERR");
+        if (!params.err.isEmpty()) {
+          params.isErr = true;
+          params.errFull = params.err;
+        }
+
+        params.IT_V = new ZTS_VBELN_S[IT_V_t.getNumRows()];
+        ZTS_VBELN_S IT_V_r;
+        for (int i = 0; i < params.IT_V.length; i++) {
+          IT_V_t.setRow(i);
+          IT_V_r = new ZTS_VBELN_S();
+          IT_V_r.VBELN = IT_V_t.getString("VBELN");
+          params.IT_V[i] = IT_V_r;
+        }
+      }
+    } catch (Exception e) {
+      return e;
     }
 
     return ret;

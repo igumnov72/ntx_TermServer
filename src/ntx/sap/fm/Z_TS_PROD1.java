@@ -50,7 +50,7 @@ public class Z_TS_PROD1 {
     }
 
     // вызов САПовской процедуры
-    JCoException e = execute(this);
+    Exception e = execute(this);
 
     if (e == null) {
       if (TSparams.logDocLevel >= 2) {
@@ -83,35 +83,39 @@ public class Z_TS_PROD1 {
     }
   }
 
-  private static synchronized JCoException execute(Z_TS_PROD1 params) {
-    JCoException ret = null;
+  private static synchronized Exception execute(Z_TS_PROD1 params) {
+    Exception ret = null;
 
-    if (!isInit) {
-      ret = init();
-      if (ret != null) {
-        return ret;
+    try {
+      if (!isInit) {
+        ret = init();
+        if (ret != null) {
+          return ret;
+        }
       }
-    }
 
-    impParams.clear();
-    expParams.clear();
+      impParams.clear();
+      expParams.clear();
 
-    impParams.setValue("LGORT", params.LGORT);
-    impParams.setValue("CHARG", params.CHARG);
-    impParams.setValue("QTY_TOT", params.QTY_TOT);
-    impParams.setValue("EBELNS", params.EBELNS);
+      impParams.setValue("LGORT", params.LGORT);
+      impParams.setValue("CHARG", params.CHARG);
+      impParams.setValue("QTY_TOT", params.QTY_TOT);
+      impParams.setValue("EBELNS", params.EBELNS);
 
-    ret = SAPconn.executeFunction(function);
+      ret = SAPconn.executeFunction(function);
 
-    if (ret == null) {
-      params.EBELNS2 = expParams.getString("EBELNS2");
-      params.QTY_MAX = expParams.getBigDecimal("QTY_MAX");
-      params.ABC = expParams.getString("ABC");
-      params.err = expParams.getString("ERR");
-      if (!params.err.isEmpty()) {
-        params.isErr = true;
-        params.errFull = params.err;
+      if (ret == null) {
+        params.EBELNS2 = expParams.getString("EBELNS2");
+        params.QTY_MAX = expParams.getBigDecimal("QTY_MAX");
+        params.ABC = expParams.getString("ABC");
+        params.err = expParams.getString("ERR");
+        if (!params.err.isEmpty()) {
+          params.isErr = true;
+          params.errFull = params.err;
+        }
       }
+    } catch (Exception e) {
+      return e;
     }
 
     return ret;

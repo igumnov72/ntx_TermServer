@@ -49,7 +49,7 @@ public class Z_TS_VYGR1 {
     }
 
     // вызов САПовской процедуры
-    JCoException e = execute(this);
+    Exception e = execute(this);
 
     if (e == null) {
       if (TSparams.logDocLevel >= 2) {
@@ -79,34 +79,38 @@ public class Z_TS_VYGR1 {
     }
   }
 
-  private static synchronized JCoException execute(Z_TS_VYGR1 params) {
-    JCoException ret = null;
+  private static synchronized Exception execute(Z_TS_VYGR1 params) {
+    Exception ret = null;
 
-    if (!isInit) {
-      ret = init();
-      if (ret != null) {
-        return ret;
+    try {
+      if (!isInit) {
+        ret = init();
+        if (ret != null) {
+          return ret;
+        }
       }
-    }
 
-    impParams.clear();
-    expParams.clear();
+      impParams.clear();
+      expParams.clear();
 
-    impParams.setValue("TASK_ID", params.TASK_ID);
-    impParams.setValue("LGORT", params.LGORT);
-    impParams.setValue("M3_MACH", params.M3_MACH);
-    impParams.setValue("M3_GR", params.M3_GR);
-    impParams.setValue("USER_CODE", params.USER_CODE);
-    impParams.setValue("FINISHED", params.FINISHED);
+      impParams.setValue("TASK_ID", params.TASK_ID);
+      impParams.setValue("LGORT", params.LGORT);
+      impParams.setValue("M3_MACH", params.M3_MACH);
+      impParams.setValue("M3_GR", params.M3_GR);
+      impParams.setValue("USER_CODE", params.USER_CODE);
+      impParams.setValue("FINISHED", params.FINISHED);
 
-    ret = SAPconn.executeFunction(function);
+      ret = SAPconn.executeFunction(function);
 
-    if (ret == null) {
-      params.err = expParams.getString("ERR");
-      if (!params.err.isEmpty()) {
-        params.isErr = true;
-        params.errFull = params.err;
+      if (ret == null) {
+        params.err = expParams.getString("ERR");
+        if (!params.err.isEmpty()) {
+          params.isErr = true;
+          params.errFull = params.err;
+        }
       }
+    } catch (Exception e) {
+      return e;
     }
 
     return ret;

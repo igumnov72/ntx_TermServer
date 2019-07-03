@@ -41,7 +41,7 @@ public class Z_TS_IN10 {
     }
 
     // вызов САПовской процедуры
-    JCoException e = execute(this);
+    Exception e = execute(this);
 
     if (e == null) {
       if (TSparams.logDocLevel >= 2) {
@@ -70,26 +70,30 @@ public class Z_TS_IN10 {
     }
   }
 
-  private static synchronized JCoException execute(Z_TS_IN10 params) {
-    JCoException ret = null;
+  private static synchronized Exception execute(Z_TS_IN10 params) {
+    Exception ret = null;
 
-    if (!isInit) {
-      ret = init();
-      if (ret != null) {
-        return ret;
+    try {
+      if (!isInit) {
+        ret = init();
+        if (ret != null) {
+          return ret;
+        }
       }
-    }
 
-    impParams.clear();
-    expParams.clear();
+      impParams.clear();
+      expParams.clear();
 
-    impParams.setValue("LGNUM", params.LGNUM);
-    impParams.setValue("MATNR", params.MATNR);
+      impParams.setValue("LGNUM", params.LGNUM);
+      impParams.setValue("MATNR", params.MATNR);
 
-    ret = SAPconn.executeFunction(function);
+      ret = SAPconn.executeFunction(function);
 
-    if (ret == null) {
-      params.CELLS = expParams.getString("CELLS");
+      if (ret == null) {
+        params.CELLS = expParams.getString("CELLS");
+      }
+    } catch (Exception e) {
+      return e;
     }
 
     return ret;

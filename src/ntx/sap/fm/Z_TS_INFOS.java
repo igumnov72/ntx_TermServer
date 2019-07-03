@@ -64,7 +64,7 @@ public class Z_TS_INFOS {
     }
 
     // вызов САПовской процедуры
-    JCoException e = execute(this);
+    Exception e = execute(this);
 
     if (e == null) {
       if (TSparams.logDocLevel >= 2) {
@@ -96,113 +96,117 @@ public class Z_TS_INFOS {
     }
   }
 
-  private static synchronized JCoException execute(Z_TS_INFOS params) {
-    JCoException ret = null;
+  private static synchronized Exception execute(Z_TS_INFOS params) {
+    Exception ret = null;
 
-    if (!isInit) {
-      ret = init();
-      if (ret != null) {
-        return ret;
+    try {
+      if (!isInit) {
+        ret = init();
+        if (ret != null) {
+          return ret;
+        }
       }
-    }
 
-    tabParams.clear();
+      tabParams.clear();
 
-    JCoTable IT_PTYP_t = tabParams.getTable("IT_PTYP");
-    JCoTable IT_MAN_t = tabParams.getTable("IT_MAN");
-    JCoTable IT_DEL_MAN_t = tabParams.getTable("IT_DEL_MAN");
-    JCoTable IT_TEXT_t = tabParams.getTable("IT_TEXT");
+      JCoTable IT_PTYP_t = tabParams.getTable("IT_PTYP");
+      JCoTable IT_MAN_t = tabParams.getTable("IT_MAN");
+      JCoTable IT_DEL_MAN_t = tabParams.getTable("IT_DEL_MAN");
+      JCoTable IT_TEXT_t = tabParams.getTable("IT_TEXT");
 
-    IT_PTYP_t.appendRows(params.IT_PTYP.length);
-    for (int i = 0; i < params.IT_PTYP.length; i++) {
-      IT_PTYP_t.setRow(i);
-      IT_PTYP_t.setValue("PTYP_ID", params.IT_PTYP[i].PTYP_ID);
-      IT_PTYP_t.setValue("PTYP", params.IT_PTYP[i].PTYP);
-      IT_PTYP_t.setValue("PTYP_NAME", params.IT_PTYP[i].PTYP_NAME);
-      IT_PTYP_t.setValue("HAVE_MANUAL", params.IT_PTYP[i].HAVE_MANUAL);
-      IT_PTYP_t.setValue("MAX_VER", params.IT_PTYP[i].MAX_VER);
-      IT_PTYP_t.setValue("MAX_INFO_ID", params.IT_PTYP[i].MAX_INFO_ID);
-    }
-
-    IT_MAN_t.appendRows(params.IT_MAN.length);
-    for (int i = 0; i < params.IT_MAN.length; i++) {
-      IT_MAN_t.setRow(i);
-      IT_MAN_t.setValue("PTYP_ID", params.IT_MAN[i].PTYP_ID);
-      IT_MAN_t.setValue("INFO_NO", params.IT_MAN[i].INFO_NO);
-      IT_MAN_t.setValue("VER", params.IT_MAN[i].VER);
-      IT_MAN_t.setValue("NAME", params.IT_MAN[i].NAME);
-      IT_MAN_t.setValue("TXT_ID", params.IT_MAN[i].TXT_ID);
-    }
-
-    IT_DEL_MAN_t.appendRows(params.IT_DEL_MAN.length);
-    for (int i = 0; i < params.IT_DEL_MAN.length; i++) {
-      IT_DEL_MAN_t.setRow(i);
-      IT_DEL_MAN_t.setValue("PTYP_ID", params.IT_DEL_MAN[i].PTYP_ID);
-      IT_DEL_MAN_t.setValue("INFO_NO", params.IT_DEL_MAN[i].INFO_NO);
-      IT_DEL_MAN_t.setValue("VER", params.IT_DEL_MAN[i].VER);
-    }
-
-    IT_TEXT_t.appendRows(params.IT_TEXT.length);
-    for (int i = 0; i < params.IT_TEXT.length; i++) {
-      IT_TEXT_t.setRow(i);
-      IT_TEXT_t.setValue("TXT_ID", params.IT_TEXT[i].TXT_ID);
-      IT_TEXT_t.setValue("LINE_NO", params.IT_TEXT[i].LINE_NO);
-      IT_TEXT_t.setValue("TXT", params.IT_TEXT[i].TXT);
-      IT_TEXT_t.setValue("CONT_LIN", params.IT_TEXT[i].CONT_LIN);
-    }
-
-    ret = SAPconn.executeFunction(function);
-
-    if (ret == null) {
-      params.IT_PTYP = new ZTS_I_PTYP_S[IT_PTYP_t.getNumRows()];
-      ZTS_I_PTYP_S IT_PTYP_r;
+      IT_PTYP_t.appendRows(params.IT_PTYP.length);
       for (int i = 0; i < params.IT_PTYP.length; i++) {
         IT_PTYP_t.setRow(i);
-        IT_PTYP_r = new ZTS_I_PTYP_S();
-        IT_PTYP_r.PTYP_ID = IT_PTYP_t.getInt("PTYP_ID");
-        IT_PTYP_r.PTYP = IT_PTYP_t.getString("PTYP");
-        IT_PTYP_r.PTYP_NAME = IT_PTYP_t.getString("PTYP_NAME");
-        IT_PTYP_r.HAVE_MANUAL = IT_PTYP_t.getString("HAVE_MANUAL");
-        IT_PTYP_r.MAX_VER = IT_PTYP_t.getInt("MAX_VER");
-        IT_PTYP_r.MAX_INFO_ID = IT_PTYP_t.getInt("MAX_INFO_ID");
-        params.IT_PTYP[i] = IT_PTYP_r;
+        IT_PTYP_t.setValue("PTYP_ID", params.IT_PTYP[i].PTYP_ID);
+        IT_PTYP_t.setValue("PTYP", params.IT_PTYP[i].PTYP);
+        IT_PTYP_t.setValue("PTYP_NAME", params.IT_PTYP[i].PTYP_NAME);
+        IT_PTYP_t.setValue("HAVE_MANUAL", params.IT_PTYP[i].HAVE_MANUAL);
+        IT_PTYP_t.setValue("MAX_VER", params.IT_PTYP[i].MAX_VER);
+        IT_PTYP_t.setValue("MAX_INFO_ID", params.IT_PTYP[i].MAX_INFO_ID);
       }
 
-      params.IT_MAN = new ZTS_I_MAN_S[IT_MAN_t.getNumRows()];
-      ZTS_I_MAN_S IT_MAN_r;
+      IT_MAN_t.appendRows(params.IT_MAN.length);
       for (int i = 0; i < params.IT_MAN.length; i++) {
         IT_MAN_t.setRow(i);
-        IT_MAN_r = new ZTS_I_MAN_S();
-        IT_MAN_r.PTYP_ID = IT_MAN_t.getInt("PTYP_ID");
-        IT_MAN_r.INFO_NO = IT_MAN_t.getInt("INFO_NO");
-        IT_MAN_r.VER = IT_MAN_t.getInt("VER");
-        IT_MAN_r.NAME = IT_MAN_t.getString("NAME");
-        IT_MAN_r.TXT_ID = IT_MAN_t.getInt("TXT_ID");
-        params.IT_MAN[i] = IT_MAN_r;
+        IT_MAN_t.setValue("PTYP_ID", params.IT_MAN[i].PTYP_ID);
+        IT_MAN_t.setValue("INFO_NO", params.IT_MAN[i].INFO_NO);
+        IT_MAN_t.setValue("VER", params.IT_MAN[i].VER);
+        IT_MAN_t.setValue("NAME", params.IT_MAN[i].NAME);
+        IT_MAN_t.setValue("TXT_ID", params.IT_MAN[i].TXT_ID);
       }
 
-      params.IT_DEL_MAN = new ZTS_I_DEL_MAN_S[IT_DEL_MAN_t.getNumRows()];
-      ZTS_I_DEL_MAN_S IT_DEL_MAN_r;
+      IT_DEL_MAN_t.appendRows(params.IT_DEL_MAN.length);
       for (int i = 0; i < params.IT_DEL_MAN.length; i++) {
         IT_DEL_MAN_t.setRow(i);
-        IT_DEL_MAN_r = new ZTS_I_DEL_MAN_S();
-        IT_DEL_MAN_r.PTYP_ID = IT_DEL_MAN_t.getInt("PTYP_ID");
-        IT_DEL_MAN_r.INFO_NO = IT_DEL_MAN_t.getInt("INFO_NO");
-        IT_DEL_MAN_r.VER = IT_DEL_MAN_t.getInt("VER");
-        params.IT_DEL_MAN[i] = IT_DEL_MAN_r;
+        IT_DEL_MAN_t.setValue("PTYP_ID", params.IT_DEL_MAN[i].PTYP_ID);
+        IT_DEL_MAN_t.setValue("INFO_NO", params.IT_DEL_MAN[i].INFO_NO);
+        IT_DEL_MAN_t.setValue("VER", params.IT_DEL_MAN[i].VER);
       }
 
-      params.IT_TEXT = new ZTS_I_TEXT_S[IT_TEXT_t.getNumRows()];
-      ZTS_I_TEXT_S IT_TEXT_r;
+      IT_TEXT_t.appendRows(params.IT_TEXT.length);
       for (int i = 0; i < params.IT_TEXT.length; i++) {
         IT_TEXT_t.setRow(i);
-        IT_TEXT_r = new ZTS_I_TEXT_S();
-        IT_TEXT_r.TXT_ID = IT_TEXT_t.getInt("TXT_ID");
-        IT_TEXT_r.LINE_NO = IT_TEXT_t.getInt("LINE_NO");
-        IT_TEXT_r.TXT = IT_TEXT_t.getString("TXT");
-        IT_TEXT_r.CONT_LIN = IT_TEXT_t.getString("CONT_LIN");
-        params.IT_TEXT[i] = IT_TEXT_r;
+        IT_TEXT_t.setValue("TXT_ID", params.IT_TEXT[i].TXT_ID);
+        IT_TEXT_t.setValue("LINE_NO", params.IT_TEXT[i].LINE_NO);
+        IT_TEXT_t.setValue("TXT", params.IT_TEXT[i].TXT);
+        IT_TEXT_t.setValue("CONT_LIN", params.IT_TEXT[i].CONT_LIN);
       }
+
+      ret = SAPconn.executeFunction(function);
+
+      if (ret == null) {
+        params.IT_PTYP = new ZTS_I_PTYP_S[IT_PTYP_t.getNumRows()];
+        ZTS_I_PTYP_S IT_PTYP_r;
+        for (int i = 0; i < params.IT_PTYP.length; i++) {
+          IT_PTYP_t.setRow(i);
+          IT_PTYP_r = new ZTS_I_PTYP_S();
+          IT_PTYP_r.PTYP_ID = IT_PTYP_t.getInt("PTYP_ID");
+          IT_PTYP_r.PTYP = IT_PTYP_t.getString("PTYP");
+          IT_PTYP_r.PTYP_NAME = IT_PTYP_t.getString("PTYP_NAME");
+          IT_PTYP_r.HAVE_MANUAL = IT_PTYP_t.getString("HAVE_MANUAL");
+          IT_PTYP_r.MAX_VER = IT_PTYP_t.getInt("MAX_VER");
+          IT_PTYP_r.MAX_INFO_ID = IT_PTYP_t.getInt("MAX_INFO_ID");
+          params.IT_PTYP[i] = IT_PTYP_r;
+        }
+
+        params.IT_MAN = new ZTS_I_MAN_S[IT_MAN_t.getNumRows()];
+        ZTS_I_MAN_S IT_MAN_r;
+        for (int i = 0; i < params.IT_MAN.length; i++) {
+          IT_MAN_t.setRow(i);
+          IT_MAN_r = new ZTS_I_MAN_S();
+          IT_MAN_r.PTYP_ID = IT_MAN_t.getInt("PTYP_ID");
+          IT_MAN_r.INFO_NO = IT_MAN_t.getInt("INFO_NO");
+          IT_MAN_r.VER = IT_MAN_t.getInt("VER");
+          IT_MAN_r.NAME = IT_MAN_t.getString("NAME");
+          IT_MAN_r.TXT_ID = IT_MAN_t.getInt("TXT_ID");
+          params.IT_MAN[i] = IT_MAN_r;
+        }
+
+        params.IT_DEL_MAN = new ZTS_I_DEL_MAN_S[IT_DEL_MAN_t.getNumRows()];
+        ZTS_I_DEL_MAN_S IT_DEL_MAN_r;
+        for (int i = 0; i < params.IT_DEL_MAN.length; i++) {
+          IT_DEL_MAN_t.setRow(i);
+          IT_DEL_MAN_r = new ZTS_I_DEL_MAN_S();
+          IT_DEL_MAN_r.PTYP_ID = IT_DEL_MAN_t.getInt("PTYP_ID");
+          IT_DEL_MAN_r.INFO_NO = IT_DEL_MAN_t.getInt("INFO_NO");
+          IT_DEL_MAN_r.VER = IT_DEL_MAN_t.getInt("VER");
+          params.IT_DEL_MAN[i] = IT_DEL_MAN_r;
+        }
+
+        params.IT_TEXT = new ZTS_I_TEXT_S[IT_TEXT_t.getNumRows()];
+        ZTS_I_TEXT_S IT_TEXT_r;
+        for (int i = 0; i < params.IT_TEXT.length; i++) {
+          IT_TEXT_t.setRow(i);
+          IT_TEXT_r = new ZTS_I_TEXT_S();
+          IT_TEXT_r.TXT_ID = IT_TEXT_t.getInt("TXT_ID");
+          IT_TEXT_r.LINE_NO = IT_TEXT_t.getInt("LINE_NO");
+          IT_TEXT_r.TXT = IT_TEXT_t.getString("TXT");
+          IT_TEXT_r.CONT_LIN = IT_TEXT_t.getString("CONT_LIN");
+          params.IT_TEXT[i] = IT_TEXT_r;
+        }
+      }
+    } catch (Exception e) {
+      return e;
     }
 
     return ret;

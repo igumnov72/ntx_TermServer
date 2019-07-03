@@ -41,7 +41,7 @@ public class Z_TS_COMPL15 {
     }
 
     // вызов САПовской процедуры
-    JCoException e = execute(this);
+    Exception e = execute(this);
 
     if (e == null) {
       if (TSparams.logDocLevel >= 2) {
@@ -72,27 +72,31 @@ public class Z_TS_COMPL15 {
     }
   }
 
-  private static synchronized JCoException execute(Z_TS_COMPL15 params) {
-    JCoException ret = null;
+  private static synchronized Exception execute(Z_TS_COMPL15 params) {
+    Exception ret = null;
 
-    if (!isInit) {
-      ret = init();
-      if (ret != null) {
-        return ret;
+    try {
+      if (!isInit) {
+        ret = init();
+        if (ret != null) {
+          return ret;
+        }
       }
-    }
 
-    impParams.clear();
-    expParams.clear();
+      impParams.clear();
+      expParams.clear();
 
-    impParams.setValue("LGORT", params.LGORT);
+      impParams.setValue("LGORT", params.LGORT);
 
-    ret = SAPconn.executeFunction(function);
+      ret = SAPconn.executeFunction(function);
 
-    if (ret == null) {
-      params.SGM = expParams.getString("SGM");
-      params.SGM_ASK = expParams.getString("SGM_ASK");
-      params.NO_FREE_COMPL = expParams.getString("NO_FREE_COMPL");
+      if (ret == null) {
+        params.SGM = expParams.getString("SGM");
+        params.SGM_ASK = expParams.getString("SGM_ASK");
+        params.NO_FREE_COMPL = expParams.getString("NO_FREE_COMPL");
+      }
+    } catch (Exception e) {
+      return e;
     }
 
     return ret;

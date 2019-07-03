@@ -63,7 +63,7 @@ public class Z_TS_COMPL19 {
     }
 
     // вызов САПовской процедуры
-    JCoException e = execute(this);
+    Exception e = execute(this);
 
     if (e == null) {
       if (TSparams.logDocLevel >= 2) {
@@ -96,68 +96,72 @@ public class Z_TS_COMPL19 {
     }
   }
 
-  private static synchronized JCoException execute(Z_TS_COMPL19 params) {
-    JCoException ret = null;
+  private static synchronized Exception execute(Z_TS_COMPL19 params) {
+    Exception ret = null;
 
-    if (!isInit) {
-      ret = init();
-      if (ret != null) {
-        return ret;
-      }
-    }
-
-    impParams.clear();
-    expParams.clear();
-    tabParams.clear();
-
-    JCoTable IT_V_t = tabParams.getTable("IT_V");
-    JCoTable IT_TOV_t = tabParams.getTable("IT_TOV");
-
-    impParams.setValue("SGM", params.SGM);
-
-    IT_V_t.appendRows(params.IT_V.length);
-    for (int i = 0; i < params.IT_V.length; i++) {
-      IT_V_t.setRow(i);
-      IT_V_t.setValue("VBELN", params.IT_V[i].VBELN);
-    }
-
-    IT_TOV_t.appendRows(params.IT_TOV.length);
-    for (int i = 0; i < params.IT_TOV.length; i++) {
-      IT_TOV_t.setRow(i);
-      IT_TOV_t.setValue("MATNR", params.IT_TOV[i].MATNR);
-      IT_TOV_t.setValue("CHARG", params.IT_TOV[i].CHARG);
-      IT_TOV_t.setValue("QTY", params.IT_TOV[i].QTY);
-    }
-
-    ret = SAPconn.executeFunction(function);
-
-    if (ret == null) {
-      params.MSG = expParams.getString("MSG");
-      params.err = expParams.getString("ERR");
-      if (!params.err.isEmpty()) {
-        params.isErr = true;
-        params.errFull = params.err;
+    try {
+      if (!isInit) {
+        ret = init();
+        if (ret != null) {
+          return ret;
+        }
       }
 
-      params.IT_V = new ZTS_VBELN_S[IT_V_t.getNumRows()];
-      ZTS_VBELN_S IT_V_r;
+      impParams.clear();
+      expParams.clear();
+      tabParams.clear();
+
+      JCoTable IT_V_t = tabParams.getTable("IT_V");
+      JCoTable IT_TOV_t = tabParams.getTable("IT_TOV");
+
+      impParams.setValue("SGM", params.SGM);
+
+      IT_V_t.appendRows(params.IT_V.length);
       for (int i = 0; i < params.IT_V.length; i++) {
         IT_V_t.setRow(i);
-        IT_V_r = new ZTS_VBELN_S();
-        IT_V_r.VBELN = IT_V_t.getString("VBELN");
-        params.IT_V[i] = IT_V_r;
+        IT_V_t.setValue("VBELN", params.IT_V[i].VBELN);
       }
 
-      params.IT_TOV = new ZTS_MP_QTY_S[IT_TOV_t.getNumRows()];
-      ZTS_MP_QTY_S IT_TOV_r;
+      IT_TOV_t.appendRows(params.IT_TOV.length);
       for (int i = 0; i < params.IT_TOV.length; i++) {
         IT_TOV_t.setRow(i);
-        IT_TOV_r = new ZTS_MP_QTY_S();
-        IT_TOV_r.MATNR = IT_TOV_t.getString("MATNR");
-        IT_TOV_r.CHARG = IT_TOV_t.getString("CHARG");
-        IT_TOV_r.QTY = IT_TOV_t.getBigDecimal("QTY");
-        params.IT_TOV[i] = IT_TOV_r;
+        IT_TOV_t.setValue("MATNR", params.IT_TOV[i].MATNR);
+        IT_TOV_t.setValue("CHARG", params.IT_TOV[i].CHARG);
+        IT_TOV_t.setValue("QTY", params.IT_TOV[i].QTY);
       }
+
+      ret = SAPconn.executeFunction(function);
+
+      if (ret == null) {
+        params.MSG = expParams.getString("MSG");
+        params.err = expParams.getString("ERR");
+        if (!params.err.isEmpty()) {
+          params.isErr = true;
+          params.errFull = params.err;
+        }
+
+        params.IT_V = new ZTS_VBELN_S[IT_V_t.getNumRows()];
+        ZTS_VBELN_S IT_V_r;
+        for (int i = 0; i < params.IT_V.length; i++) {
+          IT_V_t.setRow(i);
+          IT_V_r = new ZTS_VBELN_S();
+          IT_V_r.VBELN = IT_V_t.getString("VBELN");
+          params.IT_V[i] = IT_V_r;
+        }
+
+        params.IT_TOV = new ZTS_MP_QTY_S[IT_TOV_t.getNumRows()];
+        ZTS_MP_QTY_S IT_TOV_r;
+        for (int i = 0; i < params.IT_TOV.length; i++) {
+          IT_TOV_t.setRow(i);
+          IT_TOV_r = new ZTS_MP_QTY_S();
+          IT_TOV_r.MATNR = IT_TOV_t.getString("MATNR");
+          IT_TOV_r.CHARG = IT_TOV_t.getString("CHARG");
+          IT_TOV_r.QTY = IT_TOV_t.getBigDecimal("QTY");
+          params.IT_TOV[i] = IT_TOV_r;
+        }
+      }
+    } catch (Exception e) {
+      return e;
     }
 
     return ret;

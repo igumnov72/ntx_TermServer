@@ -53,7 +53,7 @@ public class Z_TS_EVENT_WOK {
     }
 
     // вызов САПовской процедуры
-    JCoException e = execute(this);
+    Exception e = execute(this);
 
     if (e == null) {
       if (TSparams.logDocLevel >= 2) {
@@ -84,50 +84,54 @@ public class Z_TS_EVENT_WOK {
     }
   }
 
-  private static synchronized JCoException execute(Z_TS_EVENT_WOK params) {
-    JCoException ret = null;
+  private static synchronized Exception execute(Z_TS_EVENT_WOK params) {
+    Exception ret = null;
 
-    if (!isInit) {
-      ret = init();
-      if (ret != null) {
-        return ret;
-      }
-    }
-
-    impParams.clear();
-    expParams.clear();
-    tabParams.clear();
-
-    JCoTable IT_WOK_t = tabParams.getTable("IT_WOK");
-
-    impParams.setValue("WP_ID", params.WP_ID);
-    impParams.setValue("SOTR", params.SOTR);
-
-    IT_WOK_t.appendRows(params.IT_WOK.length);
-    for (int i = 0; i < params.IT_WOK.length; i++) {
-      IT_WOK_t.setRow(i);
-      IT_WOK_t.setValue("DOLGH_ID", params.IT_WOK[i].DOLGH_ID);
-      IT_WOK_t.setValue("SOVM", params.IT_WOK[i].SOVM);
-    }
-
-    ret = SAPconn.executeFunction(function);
-
-    if (ret == null) {
-      params.err = expParams.getString("ERR");
-      if (!params.err.isEmpty()) {
-        params.isErr = true;
-        params.errFull = params.err;
+    try {
+      if (!isInit) {
+        ret = init();
+        if (ret != null) {
+          return ret;
+        }
       }
 
-      params.IT_WOK = new ZTS_WOK_DATA1_S[IT_WOK_t.getNumRows()];
-      ZTS_WOK_DATA1_S IT_WOK_r;
+      impParams.clear();
+      expParams.clear();
+      tabParams.clear();
+
+      JCoTable IT_WOK_t = tabParams.getTable("IT_WOK");
+
+      impParams.setValue("WP_ID", params.WP_ID);
+      impParams.setValue("SOTR", params.SOTR);
+
+      IT_WOK_t.appendRows(params.IT_WOK.length);
       for (int i = 0; i < params.IT_WOK.length; i++) {
         IT_WOK_t.setRow(i);
-        IT_WOK_r = new ZTS_WOK_DATA1_S();
-        IT_WOK_r.DOLGH_ID = IT_WOK_t.getInt("DOLGH_ID");
-        IT_WOK_r.SOVM = IT_WOK_t.getInt("SOVM");
-        params.IT_WOK[i] = IT_WOK_r;
+        IT_WOK_t.setValue("DOLGH_ID", params.IT_WOK[i].DOLGH_ID);
+        IT_WOK_t.setValue("SOVM", params.IT_WOK[i].SOVM);
       }
+
+      ret = SAPconn.executeFunction(function);
+
+      if (ret == null) {
+        params.err = expParams.getString("ERR");
+        if (!params.err.isEmpty()) {
+          params.isErr = true;
+          params.errFull = params.err;
+        }
+
+        params.IT_WOK = new ZTS_WOK_DATA1_S[IT_WOK_t.getNumRows()];
+        ZTS_WOK_DATA1_S IT_WOK_r;
+        for (int i = 0; i < params.IT_WOK.length; i++) {
+          IT_WOK_t.setRow(i);
+          IT_WOK_r = new ZTS_WOK_DATA1_S();
+          IT_WOK_r.DOLGH_ID = IT_WOK_t.getInt("DOLGH_ID");
+          IT_WOK_r.SOVM = IT_WOK_t.getInt("SOVM");
+          params.IT_WOK[i] = IT_WOK_r;
+        }
+      }
+    } catch (Exception e) {
+      return e;
     }
 
     return ret;
