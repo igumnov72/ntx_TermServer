@@ -286,7 +286,7 @@ public class ProcessFromPereup extends ProcessTask {
 
     definition = "cont:Назад;" + definition;
 
-    if (RefInfo.haveInfo(ProcType.PLACEMENT)) {
+    if (RefInfo.haveInfo(ProcType.PEREUP1)) {
       definition = definition + ";manuals:Инструкции";
     }
 

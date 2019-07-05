@@ -111,7 +111,7 @@ public class ProcessVygr extends ProcessTask {
         break;
     }
 
-    if (RefInfo.haveInfo(ProcType.OPIS)) {
+    if (RefInfo.haveInfo(ProcType.VYGR)) {
       def = def + ";manuals:Инструкции";
     }
 

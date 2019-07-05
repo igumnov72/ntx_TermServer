@@ -423,7 +423,7 @@ public class ProcessPopoln extends ProcessTask {
       definition = definition + ";fin:Завершить";
     }
 
-    if (RefInfo.haveInfo(ProcType.SKL_MOVE)) {
+    if (RefInfo.haveInfo(ProcType.POPOLN)) {
       definition = definition + ";manuals:Инструкции";
     }
 
