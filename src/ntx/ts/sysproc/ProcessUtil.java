@@ -186,6 +186,14 @@ public abstract class ProcessUtil extends Process {
     }
   }
 
+  public static boolean isScanVbelnVa(String scan) {
+    if ((scan.length() <= 7) && isAllDigits(scan)) {
+      return true;
+    } else {
+      return false;
+    }
+  }
+
   public static boolean isScanJvoz(String scan) {
     if ((scan.length() == 10) && (scan.charAt(0) == 'J')
             && isAllDigits(scan.substring(1))) {

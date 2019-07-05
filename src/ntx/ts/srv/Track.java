@@ -91,6 +91,9 @@ public class Track {
       case PEREUP2:
         ret = new ProcessFromPereup(procId);
         break;
+      case OPISK:
+        ret = new ProcessOpisK(procId);
+        break;
     }
     if (ret == null) {
       throw new Exception("Ошибка программы: не создан процесс типа " + pType.text);

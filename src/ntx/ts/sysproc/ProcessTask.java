@@ -166,7 +166,8 @@ public abstract class ProcessTask extends ProcessUtil {
     } else {
       String def = "no:Отмена";
       for (int i = 0; i < f.IT.length; i++) {
-        def = def + ";" + (prefix + "_" + f.IT[i].PADEST + ":" + f.IT[i].PASTANDORT + " (" + f.IT[i].PADEST + ")").toLowerCase();
+        def = def + ";" + prefix.toLowerCase() + "_" + f.IT[i].PADEST.toLowerCase() + ":" 
+                + f.IT[i].PASTANDORT + " (" + f.IT[i].PADEST.toLowerCase() + ")";
       }
 
       HtmlPageMenu p = new HtmlPageMenu("Выбор принтера", title, def,

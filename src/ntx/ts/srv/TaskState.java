@@ -47,7 +47,8 @@ public enum TaskState {
   READY("Ожидание начала выгрузки (1 - начать):"),
   STARTED("Выгрузка начата:"),
   SEL_PEREUP("Опись исходной паллеты:"),
-  CNF_CROSSDOC("Подтверждение кроссдокинга:");
+  CNF_CROSSDOC("Подтверждение кроссдокинга:"),
+  VBELN_VA("Заказ клиента:");
   //
   public final String actionText;
 

@@ -130,7 +130,10 @@ public enum FieldType {
   ALL_CHARGS(ValType.STRING_AR), // массив всех номеров партий (по материалам в ведомости по ячейке)
   NEXT_CELL(ValType.STRING), // следующая ячейка
   NEXT_VBELN(ValType.STRING), // следующая поставка
-  ABC(ValType.STRING); // признак материала ABC
+  ABC(ValType.STRING), // признак материала ABC
+  HAVE_MAT(ValType.BOOL), // признак наличия материала в заказе
+  KOROB(ValType.STRING), // номер короба
+  LAST_MATNR(ValType.STRING); // последнее сканирование материала
   //
   public final ValType valType;
 
