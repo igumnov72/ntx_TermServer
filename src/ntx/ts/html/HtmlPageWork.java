@@ -24,6 +24,7 @@ public class HtmlPageWork extends HtmlPage {
           String[] hist,
           String deflt) {
     init(a_title, a_sound, task, err, msg, stateText, action, hist, deflt);
+    refreshByEnter = true;
   }
 
   public HtmlPageWork(
@@ -36,6 +37,7 @@ public class HtmlPageWork extends HtmlPage {
           String action,
           String[] hist) {
     init(a_title, a_sound, task, err, msg, stateText, action, hist, null);
+    refreshByEnter = true;
   }
 
   private void init(

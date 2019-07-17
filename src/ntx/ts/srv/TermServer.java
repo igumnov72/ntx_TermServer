@@ -3,7 +3,9 @@ package ntx.ts.srv;
 import ntx.ts.http.FileData;
 import ntx.ts.html.HtmlPage;
 import java.io.*;
+import java.net.Inet4Address;
 import java.util.Date;
+import ntx.sap.fm.Z_TS_SRV_PARAMS;
 import ntx.sap.fm.Z_TS_WP_BY_ID;
 import ntx.sap.refs.RefMat;
 import ntx.sap.refs.RefMatStruct;
@@ -57,9 +59,20 @@ public class TermServer {
       return ret;
     } else if ((tq.sf.length == 2) && (tq.sf[1].equalsIgnoreCase("jpg"))
             && (tq.sf[0].equalsIgnoreCase("no_foto") || tq.sf[0].equalsIgnoreCase("err_foto"))) {
-      // выдача звукового файла
+      // выдача фото из локального файла
       FileData ret = getFile(tq);
       return ret;
+    } else if ((tq.sf.length == 2) && tq.sf[0].equalsIgnoreCase("set_msg") && tq.sf[1].equalsIgnoreCase("html")) {
+      // установка сообщения
+      if (tq.params != null) {
+        for (int i = 0; i < tq.params.length(); i++) {
+          if (tq.params.getNam(i).equalsIgnoreCase("term_msg")) {
+            ProcessContext.setTermMsg(tq.params.getVal(i));
+            return new FileData("+");
+          }
+        }
+      }
+      return new FileData("-");
     } else if ((tq.sf.length > 2) && tq.sf[0].equalsIgnoreCase("login")) {
       // регистрация в системе
       return getLoginPage(tq);
@@ -388,6 +401,32 @@ public class TermServer {
                 "ошибка в программе, обратитесь к администратору", null, null);
         return p.getPage();
       }
+    }
+  }
+
+  public static void paramsToSAP() {
+    Z_TS_SRV_PARAMS f = new Z_TS_SRV_PARAMS();
+    f.SRV_NAME = TSparams.srvName;
+    try {
+      f.IP = Inet4Address.getLocalHost().getHostAddress();
+    } catch (Exception e) {
+    }
+    f.PORT = "" + TSparams.port;
+
+    f.execute();
+
+    if (f.isErr) {
+      Admin.termMsgErr = "ошибка при вызове Z_TS_SRV_PARAMS: " + f.err;
+      ProcessContext.setTermMsg("");
+    } else if (f.TERM_MSG.isEmpty() && !ProcessContext.getTermMsg().equals("test")) {
+      Admin.termMsgErr = "при отправке параметров сервера в САП получено неправильное сообщение (не 'test'): " + ProcessContext.getTermMsg();
+      ProcessContext.setTermMsg("");
+    } else {
+      ProcessContext.setTermMsg(f.TERM_MSG);
+    }
+
+    if (!Admin.termMsgErr.isEmpty()) {
+      System.err.println(Admin.termMsgErr);
     }
   }
 }

@@ -5,6 +5,7 @@ import java.io.DataInputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.math.BigDecimal;
+import java.net.Inet4Address;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -45,6 +46,7 @@ public class Admin {
   private static LogType[] logTypes = LogType.values();
   private static final DateFormat df = new SimpleDateFormat("dd.MM.yyyy HH:mm:ss.SSS");
   private static final DateFormat df2 = new SimpleDateFormat("dd.MM.yyyy HH:mm:ss");
+  public static String termMsgErr = "";
 
   public static FileData getPage(TermQuery tq, ProcessUser user) throws Exception {
     FileData ret;
@@ -277,6 +279,15 @@ public class Admin {
       }
     }
     p.addNewLine();
+
+    p.addLine("local IP: " + Inet4Address.getLocalHost().getHostAddress());
+    p.addLine("term msg: " + ProcessContext.getTermMsg());
+    p.addNewLine();
+
+    if (!termMsgErr.isEmpty()) {
+      p.addLine("term msg err: <div style=\"color:red\">" + termMsgErr + "</div>");
+      p.addNewLine();
+    }
 
     p.addLine("Последний запуск автоматического сжатия файла данных: "
             + (TermServer.ctx.track.lastComprDate == null ? "нет" : df2.format(TermServer.ctx.track.lastComprDate)));

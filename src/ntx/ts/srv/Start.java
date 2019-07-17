@@ -13,13 +13,13 @@ public class Start {
 
     System.setErr(new PrintStream(
             new BufferedOutputStream(
-            new DateTimeLogger(
-            new FileOutputStream("ts.err.log", true))), false));
+                    new DateTimeLogger(
+                            new FileOutputStream("ts.err.log", true))), false));
 
     System.setOut(new PrintStream(
             new BufferedOutputStream(
-            new DateTimeLogger(
-            new FileOutputStream("ts.out.log", true))), false));
+                    new DateTimeLogger(
+                            new FileOutputStream("ts.out.log", true))), false));
 
     System.out.println("Server starting ...");
     System.out.flush();
@@ -44,6 +44,7 @@ public class Start {
         (new Thread(httpSrv, "main http server loop UDP " + TSparams.port_scan_udp)).start();
       }
 
+      TermServer.paramsToSAP();
     } catch (Exception e) {
       System.err.println("Error starting terminal server:");
       e.printStackTrace();
