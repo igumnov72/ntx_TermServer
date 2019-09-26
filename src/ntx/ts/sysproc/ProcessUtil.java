@@ -194,6 +194,14 @@ public abstract class ProcessUtil extends Process {
     }
   }
 
+  public static boolean isScanEbeln(String scan) {
+    if ((scan.length() == 10) && isAllDigits(scan) && scan.startsWith("45")) {
+      return true;
+    } else {
+      return false;
+    }
+  }
+
   public static boolean isScanJvoz(String scan) {
     if ((scan.length() == 10) && (scan.charAt(0) == 'J')
             && isAllDigits(scan.substring(1))) {
