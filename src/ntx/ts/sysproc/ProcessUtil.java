@@ -231,6 +231,14 @@ public abstract class ProcessUtil extends Process {
     }
   }
 
+  public static boolean isScanZone(String scan) {
+    if ((scan.length() > 2) && scan.substring(0, 2).equals("ZZ")) {
+      return true;
+    } else {
+      return false;
+    }
+  }
+
   public static boolean isScanTov(String scan) {
     int n = scan.length();
     if ((n == 7) && isAllDigits(scan)) {
@@ -367,6 +375,14 @@ public abstract class ProcessUtil extends Process {
   public static String getScanPal(String scan) {
     if (scan.length() == 11) {
       return scan.substring(1);
+    } else {
+      return scan;
+    }
+  }
+
+  public static String getScanZone(String scan) {
+    if ((scan.length() > 2) && scan.substring(0, 2).equals("ZZ")) {
+      return scan.substring(2);
     } else {
       return scan;
     }

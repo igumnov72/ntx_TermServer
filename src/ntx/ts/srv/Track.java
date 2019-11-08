@@ -94,6 +94,9 @@ public class Track {
       case OPISK:
         ret = new ProcessOpisK(procId);
         break;
+      case COMPL_MOVE:
+        ret = new ProcessComplMove(procId);
+        break;
     }
     if (ret == null) {
       throw new Exception("Ошибка программы: не создан процесс типа " + pType.text);

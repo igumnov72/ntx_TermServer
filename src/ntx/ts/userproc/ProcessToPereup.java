@@ -159,7 +159,7 @@ public class ProcessToPereup extends ProcessTask {
       definition = "cont:Назад;later:Отложить;fin:Завершить";
     }
 
-    if (RefInfo.haveInfo(ProcType.PEREUP2)) {
+    if (RefInfo.haveInfo(ProcType.PEREUP1)) {
       definition = definition + ";manuals:Инструкции";
     }
 

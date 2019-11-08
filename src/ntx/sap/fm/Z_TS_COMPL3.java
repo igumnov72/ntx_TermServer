@@ -22,7 +22,8 @@ public class Z_TS_COMPL3 {
   //
   // table params
   public ZTS_COMPL_S[] IT1 = new ZTS_COMPL_S[0]; // Исходные данные ведомости на комплектацию
-  public ZTS_COMPL_DONE_S[] IT_DONE = new ZTS_COMPL_DONE_S[0]; // Скомплектованный товар
+  public ZTS_COMPL_DONE_TO_PAL_S[] IT_DONE1 = new ZTS_COMPL_DONE_TO_PAL_S[0]; // Скомплектованный товар (с указанием паллеты)
+  public ZTSM_PAL_ZONE_S[] IT_PAL_ZONE = new ZTSM_PAL_ZONE_S[0]; // Расположение паллеты в зоне
   //
   // переменные для работы с ошибками
   public boolean isErr;
@@ -44,10 +45,17 @@ public class Z_TS_COMPL3 {
     }
   }
 
-  public void IT_DONE_create(int n) {
-    IT_DONE = new ZTS_COMPL_DONE_S[n];
+  public void IT_DONE1_create(int n) {
+    IT_DONE1 = new ZTS_COMPL_DONE_TO_PAL_S[n];
     for (int i = 0; i < n; i++) {
-      IT_DONE[i] = new ZTS_COMPL_DONE_S();
+      IT_DONE1[i] = new ZTS_COMPL_DONE_TO_PAL_S();
+    }
+  }
+
+  public void IT_PAL_ZONE_create(int n) {
+    IT_PAL_ZONE = new ZTSM_PAL_ZONE_S[n];
+    for (int i = 0; i < n; i++) {
+      IT_PAL_ZONE[i] = new ZTSM_PAL_ZONE_S();
     }
   }
 
@@ -70,7 +78,8 @@ public class Z_TS_COMPL3 {
       System.out.println("  TANUM1=" + TANUM1);
       System.out.println("  TANUM2=" + TANUM2);
       System.out.println("  IT1.length=" + IT1.length);
-      System.out.println("  IT_DONE.length=" + IT_DONE.length);
+      System.out.println("  IT_DONE1.length=" + IT_DONE1.length);
+      System.out.println("  IT_PAL_ZONE.length=" + IT_PAL_ZONE.length);
     }
 
     // вызов САПовской процедуры
@@ -81,7 +90,8 @@ public class Z_TS_COMPL3 {
         System.out.println("Возврат из ФМ Z_TS_COMPL3:");
         System.out.println("  err=" + err);
         System.out.println("  IT1.length=" + IT1.length);
-        System.out.println("  IT_DONE.length=" + IT_DONE.length);
+        System.out.println("  IT_DONE1.length=" + IT_DONE1.length);
+        System.out.println("  IT_PAL_ZONE.length=" + IT_PAL_ZONE.length);
       }
     } else {
       // обработка ошибки
@@ -122,7 +132,8 @@ public class Z_TS_COMPL3 {
       tabParams.clear();
 
       JCoTable IT1_t = tabParams.getTable("IT1");
-      JCoTable IT_DONE_t = tabParams.getTable("IT_DONE");
+      JCoTable IT_DONE1_t = tabParams.getTable("IT_DONE1");
+      JCoTable IT_PAL_ZONE_t = tabParams.getTable("IT_PAL_ZONE");
 
       impParams.setValue("LGORT", params.LGORT);
       impParams.setValue("VBELN", params.VBELN);
@@ -150,14 +161,22 @@ public class Z_TS_COMPL3 {
         IT1_t.setValue("QTY", params.IT1[i].QTY);
       }
 
-      IT_DONE_t.appendRows(params.IT_DONE.length);
-      for (int i = 0; i < params.IT_DONE.length; i++) {
-        IT_DONE_t.setRow(i);
-        IT_DONE_t.setValue("SGM", params.IT_DONE[i].SGM);
-        IT_DONE_t.setValue("LENUM", params.IT_DONE[i].LENUM);
-        IT_DONE_t.setValue("MATNR", params.IT_DONE[i].MATNR);
-        IT_DONE_t.setValue("CHARG", params.IT_DONE[i].CHARG);
-        IT_DONE_t.setValue("QTY", params.IT_DONE[i].QTY);
+      IT_DONE1_t.appendRows(params.IT_DONE1.length);
+      for (int i = 0; i < params.IT_DONE1.length; i++) {
+        IT_DONE1_t.setRow(i);
+        IT_DONE1_t.setValue("SGM", params.IT_DONE1[i].SGM);
+        IT_DONE1_t.setValue("LENUM", params.IT_DONE1[i].LENUM);
+        IT_DONE1_t.setValue("TO_PAL", params.IT_DONE1[i].TO_PAL);
+        IT_DONE1_t.setValue("MATNR", params.IT_DONE1[i].MATNR);
+        IT_DONE1_t.setValue("CHARG", params.IT_DONE1[i].CHARG);
+        IT_DONE1_t.setValue("QTY", params.IT_DONE1[i].QTY);
+      }
+
+      IT_PAL_ZONE_t.appendRows(params.IT_PAL_ZONE.length);
+      for (int i = 0; i < params.IT_PAL_ZONE.length; i++) {
+        IT_PAL_ZONE_t.setRow(i);
+        IT_PAL_ZONE_t.setValue("LENUM", params.IT_PAL_ZONE[i].LENUM);
+        IT_PAL_ZONE_t.setValue("PLACE", params.IT_PAL_ZONE[i].PLACE);
       }
 
       ret = SAPconn.executeFunction(function);
@@ -189,17 +208,28 @@ public class Z_TS_COMPL3 {
           params.IT1[i] = IT1_r;
         }
 
-        params.IT_DONE = new ZTS_COMPL_DONE_S[IT_DONE_t.getNumRows()];
-        ZTS_COMPL_DONE_S IT_DONE_r;
-        for (int i = 0; i < params.IT_DONE.length; i++) {
-          IT_DONE_t.setRow(i);
-          IT_DONE_r = new ZTS_COMPL_DONE_S();
-          IT_DONE_r.SGM = IT_DONE_t.getInt("SGM");
-          IT_DONE_r.LENUM = IT_DONE_t.getString("LENUM");
-          IT_DONE_r.MATNR = IT_DONE_t.getString("MATNR");
-          IT_DONE_r.CHARG = IT_DONE_t.getString("CHARG");
-          IT_DONE_r.QTY = IT_DONE_t.getBigDecimal("QTY");
-          params.IT_DONE[i] = IT_DONE_r;
+        params.IT_DONE1 = new ZTS_COMPL_DONE_TO_PAL_S[IT_DONE1_t.getNumRows()];
+        ZTS_COMPL_DONE_TO_PAL_S IT_DONE1_r;
+        for (int i = 0; i < params.IT_DONE1.length; i++) {
+          IT_DONE1_t.setRow(i);
+          IT_DONE1_r = new ZTS_COMPL_DONE_TO_PAL_S();
+          IT_DONE1_r.SGM = IT_DONE1_t.getInt("SGM");
+          IT_DONE1_r.LENUM = IT_DONE1_t.getString("LENUM");
+          IT_DONE1_r.TO_PAL = IT_DONE1_t.getString("TO_PAL");
+          IT_DONE1_r.MATNR = IT_DONE1_t.getString("MATNR");
+          IT_DONE1_r.CHARG = IT_DONE1_t.getString("CHARG");
+          IT_DONE1_r.QTY = IT_DONE1_t.getBigDecimal("QTY");
+          params.IT_DONE1[i] = IT_DONE1_r;
+        }
+
+        params.IT_PAL_ZONE = new ZTSM_PAL_ZONE_S[IT_PAL_ZONE_t.getNumRows()];
+        ZTSM_PAL_ZONE_S IT_PAL_ZONE_r;
+        for (int i = 0; i < params.IT_PAL_ZONE.length; i++) {
+          IT_PAL_ZONE_t.setRow(i);
+          IT_PAL_ZONE_r = new ZTSM_PAL_ZONE_S();
+          IT_PAL_ZONE_r.LENUM = IT_PAL_ZONE_t.getString("LENUM");
+          IT_PAL_ZONE_r.PLACE = IT_PAL_ZONE_t.getString("PLACE");
+          params.IT_PAL_ZONE[i] = IT_PAL_ZONE_r;
         }
       }
     } catch (Exception e) {

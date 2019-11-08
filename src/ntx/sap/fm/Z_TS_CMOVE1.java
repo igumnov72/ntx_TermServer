@@ -5,23 +5,18 @@ import ntx.sap.sys.*;
 import com.sap.conn.jco.*;
 
 /**
- * Получение настроек СГМ по складу
+ * отсканирована СГМ
  */
-public class Z_TS_COMPL15 {
+public class Z_TS_CMOVE1 {
 
   // importing params
-  public String LGORT = ""; // Склад
-  //
-  // exporting params
-  public String SGM = ""; // Сканировать СГМ (коробки)
-  public String SGM_ASK = ""; // Спрашивать о сканировании СГМ (коробок)
-  public String NO_FREE_COMPL = ""; // Запрет доступа к свободной комплектации
-  public String COMPL_TO_PAL = ""; // Признак указания паллеты, на которую идет комплектация
+  public int SGM = 0; // Номер СГМ
   //
   // переменные для работы с ошибками
   public boolean isErr;
   public String err;
   public String errFull;
+  public boolean isSapErr;
   //
   // вспомогательные переменные
   private static volatile JCoFunction function;
@@ -31,14 +26,15 @@ public class Z_TS_COMPL15 {
 
   public void execute() {
     isErr = false;
+    isSapErr = false;
     err = "";
     errFull = "";
 
     if (TSparams.logDocLevel == 1) {
-      System.out.println("Вызов ФМ Z_TS_COMPL15");
+      System.out.println("Вызов ФМ Z_TS_CMOVE1");
     } else if (TSparams.logDocLevel >= 2) {
-      System.out.println("Вызов ФМ Z_TS_COMPL15:");
-      System.out.println("  LGORT=" + LGORT);
+      System.out.println("Вызов ФМ Z_TS_CMOVE1:");
+      System.out.println("  SGM=" + SGM);
     }
 
     // вызов САПовской процедуры
@@ -46,20 +42,18 @@ public class Z_TS_COMPL15 {
 
     if (e == null) {
       if (TSparams.logDocLevel >= 2) {
-        System.out.println("Возврат из ФМ Z_TS_COMPL15:");
-        System.out.println("  SGM=" + SGM);
-        System.out.println("  SGM_ASK=" + SGM_ASK);
-        System.out.println("  NO_FREE_COMPL=" + NO_FREE_COMPL);
-        System.out.println("  COMPL_TO_PAL=" + COMPL_TO_PAL);
+        System.out.println("Возврат из ФМ Z_TS_CMOVE1:");
+        System.out.println("  err=" + err);
       }
     } else {
       // обработка ошибки
       isErr = true;
+      isSapErr = true;
       errFull = e.toString();
       ErrDescr ed = SAPconn.describeErr(errFull);
       err = ed.err;
 
-      System.err.println("Error calling SAP procedure Z_TS_COMPL15:");
+      System.err.println("Error calling SAP procedure Z_TS_CMOVE1:");
       if (ed.isShort || !err.equals(errFull)) {
         System.err.println(err);
       }
@@ -69,12 +63,12 @@ public class Z_TS_COMPL15 {
       System.err.flush();
 
       if (errFull.startsWith("com.sap.conn.jco.JCoException: (104) JCO_ERROR_SYSTEM_FAILURE:")) {
-        System.out.println("!!! Error in Z_TS_COMPL15: " + err);
+        System.out.println("!!! Error in Z_TS_CMOVE1: " + err);
       }
     }
   }
 
-  private static synchronized Exception execute(Z_TS_COMPL15 params) {
+  private static synchronized Exception execute(Z_TS_CMOVE1 params) {
     Exception ret = null;
 
     try {
@@ -88,15 +82,16 @@ public class Z_TS_COMPL15 {
       impParams.clear();
       expParams.clear();
 
-      impParams.setValue("LGORT", params.LGORT);
+      impParams.setValue("SGM", params.SGM);
 
       ret = SAPconn.executeFunction(function);
 
       if (ret == null) {
-        params.SGM = expParams.getString("SGM");
-        params.SGM_ASK = expParams.getString("SGM_ASK");
-        params.NO_FREE_COMPL = expParams.getString("NO_FREE_COMPL");
-        params.COMPL_TO_PAL = expParams.getString("COMPL_TO_PAL");
+        params.err = expParams.getString("ERR");
+        if (!params.err.isEmpty()) {
+          params.isErr = true;
+          params.errFull = params.err;
+        }
       }
     } catch (Exception e) {
       return e;
@@ -107,13 +102,13 @@ public class Z_TS_COMPL15 {
 
   private static JCoException init() {
     try {
-      function = SAPconn.getFunction("Z_TS_COMPL15");
+      function = SAPconn.getFunction("Z_TS_CMOVE1");
     } catch (JCoException e) {
       return e;
     }
 
     if (function == null) {
-      return new JCoException(0, "Z_TS_COMPL15 not found in SAP.");
+      return new JCoException(0, "Z_TS_CMOVE1 not found in SAP.");
     }
 
     impParams = function.getImportParameterList();

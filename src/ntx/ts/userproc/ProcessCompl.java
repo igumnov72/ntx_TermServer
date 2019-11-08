@@ -27,7 +27,8 @@ import ntx.ts.sysproc.UserContext;
 
 /**
  * Комплектация поставки Состояния: START SEL_SKL SEL_SGM VBELN CELL_VBELN
- * CNF_CROSSDOC VBELN_CELL, SEL_CELL FROM_PAL_CELL TOV_CELL QTY SGM FIN_MSG
+ * CNF_CROSSDOC VBELN_CELL SEL_CELL FROM_PAL_CELL TOV_CELL QTY SGM FIN_MSG
+ * COMPL_TO_PAL SEL_ZONE
  */
 public class ProcessCompl extends ProcessTask {
 
@@ -122,13 +123,13 @@ public class ProcessCompl extends ProcessTask {
       }
 
       if (!f.SGM.equalsIgnoreCase("X")) {
-        d.callSetLgort(lgorts[0], f.NO_FREE_COMPL, TaskState.VBELN, ctx);
+        d.callSetLgort(lgorts[0], f.NO_FREE_COMPL, f.COMPL_TO_PAL, TaskState.VBELN, ctx);
         callTaskNameChange(ctx);
       } else if (f.SGM_ASK.equalsIgnoreCase("X")) {
-        d.callSetLgort(lgorts[0], f.NO_FREE_COMPL, TaskState.ASK_SEL_SGM, ctx);
+        d.callSetLgort(lgorts[0], f.NO_FREE_COMPL, f.COMPL_TO_PAL, TaskState.ASK_SEL_SGM, ctx);
         callTaskNameChange(ctx);
       } else {
-        d.callSetLgort(lgorts[0], f.NO_FREE_COMPL, TaskState.VBELN, ctx);
+        d.callSetLgort(lgorts[0], f.NO_FREE_COMPL, f.COMPL_TO_PAL, TaskState.VBELN, ctx);
         d.callSetIsSGM(true, TaskState.VBELN, ctx);
         callTaskNameChange(ctx);
       }
@@ -176,6 +177,12 @@ public class ProcessCompl extends ProcessTask {
 
       case MOD_SGM_QTY:
         return handleScanSgmModQty(scan, ctx);
+
+      case COMPL_TO_PAL:
+        return handleScanToPal(scan, ctx);
+
+      case SEL_ZONE:
+        return handleScanZone(scan, ctx);
 
       default:
         callSetErr("Ошибка программы: недопустимое состояние "
@@ -826,6 +833,10 @@ public class ProcessCompl extends ProcessTask {
   private FileData handleScanTov(String scan, TaskContext ctx) throws Exception {
     // тип ШК уже проверен
     try {
+      if (!checkHaveToPal(ctx)) {
+        return htmlGet(true, ctx);
+      }
+
       String charg = getScanCharg(scan);
       RefChargStruct c = RefCharg.get(charg, null);
       if (c == null) {
@@ -872,6 +883,10 @@ public class ProcessCompl extends ProcessTask {
   }
 
   private FileData handleScanQty(String scan, TaskContext ctx) throws Exception {
+    if (!checkHaveToPal(ctx)) {
+      return htmlGet(true, ctx);
+    }
+
     if (scan.isEmpty() || isScanCell(scan) || isScanPal(scan)
             || isScanTov(scan) || !isNumber(scan)) {
       callSetErr("Требуется ввести кол-во (сканирование " + scan + " не принято)", ctx);
@@ -896,6 +911,10 @@ public class ProcessCompl extends ProcessTask {
   }
 
   private FileData handleScanSgm(String scan, TaskContext ctx) throws Exception {
+    if (!checkHaveToPal(ctx)) {
+      return htmlGet(true, ctx);
+    }
+
     if (scan.isEmpty() || !isScanSgm(scan)) {
       callSetErr("Требуется отсканировать номер коробки (СГМ) или 0 (сканирование " + scan + " не принято)", ctx);
       return htmlGet(true, ctx);
@@ -904,8 +923,20 @@ public class ProcessCompl extends ProcessTask {
     return handleScanTovDo(d.getLastCharg(), getScanSgm(scan), d.getLastQty(), ctx);
   }
 
+  private boolean checkHaveToPal(TaskContext ctx) throws Exception {
+    if (d.getComplToPal() && d.getToPal().isEmpty()) {
+      callSetErr("Сначала нужно указать паллету, на которую складывается скомплектованный товар (сканирование не принято)", ctx);
+      return false;
+    }
+    return true;
+  }
+
   private FileData handleScanTovDo(String charg, int sgm, BigDecimal qty, TaskContext ctx) throws Exception {
     try {
+      if (!checkHaveToPal(ctx)) {
+        return htmlGet(true, ctx);
+      }
+
       if (qty.signum() == 0) {
         callSetMsg("Сканирование товара отменено (введено кол-во 0)", ctx);
         callSetTaskState(TaskState.TOV_CELL, ctx);
@@ -1017,7 +1048,8 @@ public class ProcessCompl extends ProcessTask {
     f.LGPLA = cell;
     f.USER_SHK = ctx.user.getUserSHK();
     f.IT1 = d.getCellVK();
-    f.IT_DONE = d.getScanDataArray();
+    f.IT_DONE1 = d.getScanDataArray();
+    f.IT_PAL_ZONE = d.getPalZoneArray();
     f.INF_COMPL = d.getInfCompl();
     if (canScanPal()) {
       f.COMPL_FROM = "X";
@@ -1026,7 +1058,7 @@ public class ProcessCompl extends ProcessTask {
       f.TANUM1 = d.getTanum1();
       f.TANUM2 = d.getTanum2();
     }
-    int n_save = f.IT_DONE.length;
+    int n_save = f.IT_DONE1.length;
 
     f.execute();
 
@@ -1059,6 +1091,7 @@ public class ProcessCompl extends ProcessTask {
 
     String freeCompl = d.isFreeCompl() ? "show_sk_cells:Показать наличие;exit_sk:Выход из своб компл;" : "";
     String toModSGM = d.isSGM() && (d.getScanDataSize() == 0) ? "to_mod_sgm:Пересканировать СГМ;" : "";
+    String toPalMenu = d.getComplToPal() ? "to_pal:Компл на паллету;" : "";
 
     switch (getTaskState()) {
       case VBELN:
@@ -1071,14 +1104,14 @@ public class ProcessCompl extends ProcessTask {
 
       case VBELN_CELL:
         definition = "cont:Продолжить;later:Отложить;" + freeCompl
-                + "foto:Фото материалов в ячейке;"
+                + "foto:Фото материалов в ячейке;" + toPalMenu
                 + "show:Показать ведомость на комплектацию;"
                 + "showcell:Ведомость по ячейке;" + freeComplEnter
                 + toModSGM + "fin1:Завершить;" + askQtyMenu;
         break;
 
       case SEL_CELL:
-        definition = "cont:Продолжить;later:Отложить;" + freeCompl
+        definition = "cont:Продолжить;later:Отложить;" + toPalMenu + freeCompl
                 + "show:Показать ведомость на комплектацию;" + freeComplEnter
                 + toModSGM + "fin1:Завершить;" + askQtyMenu;
         break;
@@ -1087,14 +1120,14 @@ public class ProcessCompl extends ProcessTask {
       case TOV_CELL:
         if (d.getScanDataSize() == 0) {
           definition = "cont:Продолжить;later:Отложить;"
-                  + "foto:Фото материалов в ячейке;"
+                  + "foto:Фото материалов в ячейке;" + toPalMenu
                   + "show:Показать ведомость на комплектацию;"
                   + "showcell:Ведомость по ячейке;" + delVed
                   + "showdone:Выполненная компл по ячейке;" + freeComplEnter
                   + toModSGM + "fin1:Завершить;" + askQtyMenu;
         } else {
           definition = "cont:Продолжить;later:Отложить;"
-                  + "foto:Фото материалов в ячейке;"
+                  + "foto:Фото материалов в ячейке;" + toPalMenu
                   + "show:Показать ведомость на комплектацию;"
                   + "showcell:Ведомость по ячейке;showdone:Выполненная компл по ячейке;"
                   + "dellast:Отменить последнее сканирование товара;"
@@ -1161,13 +1194,13 @@ public class ProcessCompl extends ProcessTask {
           }
 
           if (!f.SGM.equalsIgnoreCase("X")) {
-            d.callSetLgort(lg, f.NO_FREE_COMPL, TaskState.VBELN, ctx);
+            d.callSetLgort(lg, f.NO_FREE_COMPL, f.COMPL_TO_PAL, TaskState.VBELN, ctx);
             callTaskNameChange(ctx);
           } else if (f.SGM_ASK.equalsIgnoreCase("X")) {
-            d.callSetLgort(lg, f.NO_FREE_COMPL, TaskState.ASK_SEL_SGM, ctx);
+            d.callSetLgort(lg, f.NO_FREE_COMPL, f.COMPL_TO_PAL, TaskState.ASK_SEL_SGM, ctx);
             callTaskNameChange(ctx);
           } else {
-            d.callSetLgort(lg, f.NO_FREE_COMPL, TaskState.VBELN, ctx);
+            d.callSetLgort(lg, f.NO_FREE_COMPL, f.COMPL_TO_PAL, TaskState.VBELN, ctx);
             d.callSetIsSGM(true, TaskState.VBELN, ctx);
             callTaskNameChange(ctx);
           }
@@ -1231,6 +1264,9 @@ public class ProcessCompl extends ProcessTask {
     } else if (menu.equals("foto")) {
       callClearErrMsg(ctx);
       return htmlShowFoto(ctx);
+    } else if (menu.equals("to_pal")) {
+      callClearErrMsg(ctx);
+      return handleMenuToPal(ctx);
     } else if (menu.startsWith("foto_")) {
       callClearErrMsg(ctx);
       return htmlShowMatFoto(menu.substring(5), ctx);
@@ -1284,6 +1320,55 @@ public class ProcessCompl extends ProcessTask {
     }
   }
 
+  private FileData handleMenuToPal(TaskContext ctx) throws Exception {
+    // переход к сканированию паллеты комплектации
+
+    TaskState st = ctx.task.getTaskState();
+    if ((st == TaskState.COMPL_TO_PAL) || (st == TaskState.SEL_ZONE)) {
+      st = null;
+    }
+
+    if (d.getToPal().isEmpty()) {
+      d.callSetToPalPrevState(st, TaskState.COMPL_TO_PAL, ctx);
+    } else {
+      d.callSetToPalPrevState(st, TaskState.SEL_ZONE, ctx);
+    }
+    return htmlGet(false, ctx);
+  }
+
+  private FileData handleScanZone(String scan, TaskContext ctx) throws Exception {
+    if (!isScanZone(scan)) {
+      callSetErr("Требуется отсканировать зону склада, в которую помещена паллета "
+              + d.getToPal() + " (сканирование " + scan + " не принято)", ctx);
+      return htmlGet(true, ctx);
+    }
+
+    String zone = getScanZone(scan);
+
+    String s1 = "Паллета " + d.getToPal() + " размещена в зоне " + zone;
+    String s2 = "пал " + d.getToPal() + " -> зона " + zone;
+
+    d.callSetZone(zone, TaskState.values()[d.getToPalPrevState()], ctx);
+    callSetMsg2(s1, s2, ctx);
+
+    return htmlGet(true, ctx);
+  }
+
+  private FileData handleScanToPal(String scan, TaskContext ctx) throws Exception {
+    if (!isScanPal(scan)) {
+      callSetErr("Требуется отсканировать паллету, на которую будет идти комплектация (сканирование " + scan + " не принято)", ctx);
+      return htmlGet(true, ctx);
+    }
+
+    String pal = getScanPal(scan);
+
+    d.callSetToPal(pal, TaskState.values()[d.getToPalPrevState()], ctx);
+
+    callSetMsg2("Комплектация на паллету: " + pal, "НА ПАЛЛЕТУ: " + pal, ctx);
+
+    return htmlGet(true, ctx);
+  }
+
   private FileData handleMenuToModSGM(TaskContext ctx) throws Exception {
     // переход к пересканированию СГМ
 
@@ -1306,7 +1391,7 @@ public class ProcessCompl extends ProcessTask {
   }
 
   private FileData handleMenuModSgmSave(TaskContext ctx) throws Exception {
-    // отмена пересканирования СГМ
+    // сохранение пересканирования СГМ
 
     int sgm = d.getModSgmNo();
     String q = d.getModSgmQty();
@@ -2180,6 +2265,14 @@ public class ProcessCompl extends ProcessTask {
     if (d.isFreeCompl()) {
       addName = addName + "; <font color=green><b>СВОБ КОМПЛ</b></font>";
     }
+    if (d.getComplToPal()) {
+      addName += "\r\n<br>на пал: <b>";
+      if (d.getToPal().isEmpty()) {
+        addName += "НЕТ</b>";
+      } else {
+        addName += d.getToPal() + "</b>";
+      }
+    }
 
     if (!d.getLgort().isEmpty()) {
       return d.getLgort() + " " + RefLgort.getNoNull(d.getLgort()).name + "; " + addName;
@@ -2199,14 +2292,16 @@ class ComplVCqty {
 class ComplScanData {  // отсканированные позиции (по текущей поставке и ячейке)
 
   public String pal;
+  public String toPal;
   public String matnr;
   public String charg;
   public int sgm;
   public BigDecimal qtyP; // кол-во связано (с ведомостью) по партии
   public BigDecimal qtyM; // кол-во связано (с ведомостью) по материалу
 
-  public ComplScanData(String pal, String matnr, String charg, int sgm, BigDecimal qty) {
+  public ComplScanData(String pal, String toPal, String matnr, String charg, int sgm, BigDecimal qty) {
     this.pal = pal;
+    this.toPal = toPal;
     this.matnr = matnr;
     this.charg = charg;
     this.sgm = sgm;
@@ -2291,10 +2386,25 @@ class ComplRetSave {
   }
 }
 
+class ComplPalZone {
+
+  public String pal;
+  public String zone;
+
+  public ComplPalZone(String pal, String zone) {
+    this.pal = pal;
+    this.zone = zone;
+  }
+}
+
 class ComplData extends ProcData {
 
   private String lgort = ""; // склад
   private boolean noFreeCompl = false; // признак запрета свободной комплектации
+  private boolean complToPal = false; // признак указания паллеты, на которую идет комплектация
+  private String toPal = ""; // паллета, на которую комплектуем
+  private int toPalPrevState = 0; // предыдущее состояние
+  private final ArrayList<ComplPalZone> palZone = new ArrayList<ComplPalZone>(); // размещение паллет по зонам
   private String cell = null; // ячейка, из которой берем
   private String nextCellScan = null;
   private String nextVbelnScan = null;
@@ -2346,6 +2456,39 @@ class ComplData extends ProcData {
 
   public boolean getNoFreeCompl() {
     return noFreeCompl;
+  }
+
+  public boolean getComplToPal() {
+    return complToPal;
+  }
+
+  public String getToPal() {
+    return toPal;
+  }
+
+  public int getToPalPrevState() {
+    return toPalPrevState;
+  }
+
+  public ArrayList<ComplPalZone> getPalZone() {
+    return palZone;
+  }
+
+  public ZTSM_PAL_ZONE_S[] getPalZoneArray() throws Exception {
+    ZTSM_PAL_ZONE_S[] ret = new ZTSM_PAL_ZONE_S[palZone.size()];
+    ComplPalZone pz;
+    ZTSM_PAL_ZONE_S rec;
+    for (int i = 0; i < ret.length; i++) {
+      rec = new ZTSM_PAL_ZONE_S();
+      pz = palZone.get(i);
+      rec.LENUM = pz.pal;
+      if (rec.LENUM.length() == 10) {
+        rec.LENUM = ProcessTask.fillZeros(rec.LENUM, 20);
+      }
+      rec.PLACE = pz.zone;
+      ret[i] = rec;
+    }
+    return ret;
   }
 
   public String getTanum1() {
@@ -2437,16 +2580,20 @@ class ComplData extends ProcData {
     return checkCompl;
   }
 
-  public ZTS_COMPL_DONE_S[] getScanDataArray() throws Exception {
-    ZTS_COMPL_DONE_S[] ret = new ZTS_COMPL_DONE_S[scanData.size()];
+  public ZTS_COMPL_DONE_TO_PAL_S[] getScanDataArray() throws Exception {
+    ZTS_COMPL_DONE_TO_PAL_S[] ret = new ZTS_COMPL_DONE_TO_PAL_S[scanData.size()];
     ComplScanData sd;
-    ZTS_COMPL_DONE_S cd;
+    ZTS_COMPL_DONE_TO_PAL_S cd;
     for (int i = 0; i < ret.length; i++) {
-      cd = new ZTS_COMPL_DONE_S();
+      cd = new ZTS_COMPL_DONE_TO_PAL_S();
       sd = scanData.get(i);
       cd.LENUM = sd.pal;
       if (cd.LENUM.length() == 10) {
         cd.LENUM = ProcessTask.fillZeros(cd.LENUM, 20);
+      }
+      cd.TO_PAL = sd.toPal;
+      if (cd.TO_PAL.length() == 10) {
+        cd.TO_PAL = ProcessTask.fillZeros(cd.TO_PAL, 20);
       }
       cd.MATNR = ProcessTask.fillZeros(sd.matnr, 18);
       cd.CHARG = ProcessTask.fillZeros(sd.charg, 10);
@@ -2812,7 +2959,7 @@ class ComplData extends ProcData {
     Track.saveProcessChange(dr, ctx.task, ctx);
   }
 
-  public void callSetLgort(String lgort, String noFreeCompl, TaskState state, TaskContext ctx) throws Exception {
+  public void callSetLgort(String lgort, String noFreeCompl, String complToPal, TaskState state, TaskContext ctx) throws Exception {
     DataRecord dr = new DataRecord();
     dr.procId = ctx.task.getProcId();
     if (!strEq(lgort, this.lgort)) {
@@ -2822,6 +2969,31 @@ class ComplData extends ProcData {
     if (this.noFreeCompl != strEq(noFreeCompl, "X")) {
       dr.setB(FieldType.NO_FREE_COMPL, strEq(noFreeCompl, "X"));
     }
+    if (this.complToPal != strEq(complToPal, "X")) {
+      dr.setB(FieldType.COMPL_TO_PAL, strEq(complToPal, "X"));
+    }
+    if ((state != null) && (state != ctx.task.getTaskState())) {
+      dr.setI(FieldType.TASK_STATE, state.ordinal());
+    }
+    Track.saveProcessChange(dr, ctx.task, ctx);
+  }
+
+  public void callSetToPal(String toPal, TaskState state, TaskContext ctx) throws Exception {
+    DataRecord dr = new DataRecord();
+    dr.procId = ctx.task.getProcId();
+    if (!strEq(toPal, this.toPal)) {
+      dr.setS(FieldType.TO_PAL, toPal);
+    }
+    if ((state != null) && (state != ctx.task.getTaskState())) {
+      dr.setI(FieldType.TASK_STATE, state.ordinal());
+    }
+    Track.saveProcessChange(dr, ctx.task, ctx);
+  }
+
+  public void callSetZone(String zone, TaskState state, TaskContext ctx) throws Exception {
+    DataRecord dr = new DataRecord();
+    dr.procId = ctx.task.getProcId();
+    dr.setS(FieldType.ZONE, zone);
     if ((state != null) && (state != ctx.task.getTaskState())) {
       dr.setI(FieldType.TASK_STATE, state.ordinal());
     }
@@ -2880,6 +3052,18 @@ class ComplData extends ProcData {
     if (sgm != modSgmNo) {
       dr.setI(FieldType.MOD_SGM, sgm);
       dr.setI(FieldType.LOG, LogType.SET_MOD_SGM.ordinal());
+    }
+    if ((state != null) && (state != ctx.task.getTaskState())) {
+      dr.setI(FieldType.TASK_STATE, state.ordinal());
+    }
+    Track.saveProcessChange(dr, ctx.task, ctx);
+  }
+
+  public void callSetToPalPrevState(TaskState prevState, TaskState state, TaskContext ctx) throws Exception {
+    DataRecord dr = new DataRecord();
+    dr.procId = ctx.task.getProcId();
+    if (prevState != null) {
+      dr.setI(FieldType.TO_PAL_PREV_STATE, prevState.ordinal());
     }
     if ((state != null) && (state != ctx.task.getTaskState())) {
       dr.setI(FieldType.TASK_STATE, state.ordinal());
@@ -3167,7 +3351,7 @@ class ComplData extends ProcData {
   }
 
   private void hdAddTov(DataRecord dr) {
-    ComplScanData sd = new ComplScanData(lenum, dr.getValStr(FieldType.MATNR),
+    ComplScanData sd = new ComplScanData(lenum, toPal, dr.getValStr(FieldType.MATNR),
             dr.getValStr(FieldType.CHARG), (Integer) dr.getVal(FieldType.SGM),
             (BigDecimal) dr.getVal(FieldType.QTY));
     if (vedVC != null) {
@@ -3327,6 +3511,26 @@ class ComplData extends ProcData {
 
         if (dr.haveVal(FieldType.NO_FREE_COMPL)) {
           noFreeCompl = (Boolean) dr.getVal(FieldType.NO_FREE_COMPL);
+        }
+
+        if (dr.haveVal(FieldType.COMPL_TO_PAL)) {
+          complToPal = (Boolean) dr.getVal(FieldType.COMPL_TO_PAL);
+        }
+
+        if (dr.haveVal(FieldType.TO_PAL)) {
+          toPal = (String) dr.getVal(FieldType.TO_PAL);
+        }
+
+        if (dr.haveVal(FieldType.TO_PAL_PREV_STATE)) {
+          toPalPrevState = (Integer) dr.getVal(FieldType.TO_PAL_PREV_STATE);
+        }
+
+        if (dr.haveVal(FieldType.ZONE)) {
+          String zone = dr.getValStr(FieldType.ZONE);
+          if (!toPal.isEmpty() && !zone.isEmpty()) {
+            palZone.add(new ComplPalZone(toPal, zone));
+          }
+          toPal = "";
         }
 
         if (dr.haveVal(FieldType.CELL)) {

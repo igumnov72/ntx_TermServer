@@ -48,7 +48,9 @@ public enum TaskState {
   STARTED("Выгрузка начата:"),
   SEL_PEREUP("Опись исходной паллеты:"),
   CNF_CROSSDOC("Подтверждение кроссдокинга:"),
-  VBELN_VA("Заказ клиента:");
+  VBELN_VA("Заказ клиента:"),
+  COMPL_TO_PAL("Комплектация на паллету:"),
+  SEL_ZONE("Зона склада:");
   //
   public final String actionText;
 

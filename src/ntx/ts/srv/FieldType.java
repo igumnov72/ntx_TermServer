@@ -133,7 +133,11 @@ public enum FieldType {
   ABC(ValType.STRING), // признак материала ABC
   HAVE_MAT(ValType.BOOL), // признак наличия материала в заказе
   KOROB(ValType.STRING), // номер короба
-  LAST_MATNR(ValType.STRING); // последнее сканирование материала
+  LAST_MATNR(ValType.STRING), // последнее сканирование материала
+  COMPL_TO_PAL(ValType.BOOL), // признак указания паллеты, на которую идет комплектация
+  TO_PAL(ValType.STRING), // паллета, на которую идет комплектация
+  TO_PAL_PREV_STATE(ValType.INT), // предыдущее состояние выполнения процесса
+  ZONE(ValType.STRING); // зона склада, в которую размещена скомплектованная паллета
   //
   public final ValType valType;
 
