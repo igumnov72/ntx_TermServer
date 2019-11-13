@@ -102,7 +102,7 @@ public class ProcessCompl extends ProcessTask {
   public FileData htmlCnfCrossDoc(UserContext ctx) throws Exception {
     // подтверждение кроссдокинга
     HtmlPageMenu p = new HtmlPageMenu("Подтверждение кроссдокинга", "Эта поставка помечена как кроссдокинговая, подтверждаете?",
-            "нет, не кроссдокинг:cnfcrossdoc1:да, кроссдокинг;cnfcrossdoc0", "cnfcrossdoc1", getLastErr(), getLastMsg(), true);
+            "cnfcrossdoc0:нет, не кроссдокинг;cnfcrossdoc1:да, кроссдокинг", "cnfcrossdoc1", getLastErr(), getLastMsg(), true);
     return p.getPage();
   }
 
@@ -1093,7 +1093,15 @@ public class ProcessCompl extends ProcessTask {
     String toModSGM = d.isSGM() && (d.getScanDataSize() == 0) ? "to_mod_sgm:Пересканировать СГМ;" : "";
     String toPalMenu = d.getComplToPal() ? "to_pal:Компл на паллету;" : "";
 
-    switch (getTaskState()) {
+    TaskState st;
+    int sti = d.getToPalPrevState();
+    if (sti == 0) {
+      st = getTaskState();
+    } else {
+      st = TaskState.values()[sti];
+    }
+
+    switch (st) {
       case VBELN:
       case CELL_VBELN:
         definition = "cont:Продолжить;later:Отложить;" + freeCompl
@@ -1345,11 +1353,23 @@ public class ProcessCompl extends ProcessTask {
 
     String zone = getScanZone(scan);
 
-    String s1 = "Паллета " + d.getToPal() + " размещена в зоне " + zone;
-    String s2 = "пал " + d.getToPal() + " -> зона " + zone;
+    Z_TS_CMOVE4 f = new Z_TS_CMOVE4();
+    f.LENUM = d.getToPal();
+    f.PLACE = zone;
+    f.USER_SHK = ctx.user.getUserSHK();
+    f.execute();
 
-    d.callSetZone(zone, TaskState.values()[d.getToPalPrevState()], ctx);
-    callSetMsg2(s1, s2, ctx);
+    if (f.isErr) {
+      callSetErr(f.err, ctx);
+      return htmlGet(true, ctx);
+    }
+
+    String s1 = "Паллета " + d.getToPal() + " помещена в зону \"" + f.PLACE_NAME + "\"";
+    String s2 = "пал " + d.getToPal() + " -> \"" + f.PLACE_NAME + "\"";
+
+    d.callSetZone(zone, TaskState.COMPL_TO_PAL, ctx);
+    callSetMsg(s1, ctx);
+    callAddHist(s2, ctx);
 
     return htmlGet(true, ctx);
   }
@@ -1364,7 +1384,8 @@ public class ProcessCompl extends ProcessTask {
 
     d.callSetToPal(pal, TaskState.values()[d.getToPalPrevState()], ctx);
 
-    callSetMsg2("Комплектация на паллету: " + pal, "НА ПАЛЛЕТУ: " + pal, ctx);
+    callSetMsg("Комплектация на паллету: " + pal, ctx);
+    callAddHist("НА ПАЛЛЕТУ: " + pal, ctx);
 
     return htmlGet(true, ctx);
   }

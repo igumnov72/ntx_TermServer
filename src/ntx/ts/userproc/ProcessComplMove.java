@@ -138,7 +138,8 @@ public class ProcessComplMove extends ProcessTask {
     String s1 = "Паллета " + d.getPal() + " помещена в зону \"" + f.PLACE_NAME + "\"";
     String s2 = "пал " + d.getPal() + " -> \"" + f.PLACE_NAME + "\"";
 
-    callSetMsg2(s1, s2, ctx);
+    callSetMsg(s1, ctx);
+    callAddHist(s2, ctx);
     d.callSetPal("", TaskState.SGM_PAL, ctx);
     return htmlGet(true, ctx);
   }
@@ -183,7 +184,8 @@ public class ProcessComplMove extends ProcessTask {
     String s1 = "СГМ " + d.getSgm() + " помещена на паллету " + pal;
     String s2 = "СГМ " + d.getSgm() + " -> пал " + pal;
 
-    callSetMsg2(s1, s2, ctx);
+    callSetMsg(s1, ctx);
+    callAddHist(s2, ctx);
     d.callSetSgm(0, TaskState.SGM_PAL, ctx);
     return htmlGet(true, ctx);
   }
