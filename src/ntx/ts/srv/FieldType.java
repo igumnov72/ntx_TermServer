@@ -137,7 +137,9 @@ public enum FieldType {
   COMPL_TO_PAL(ValType.BOOL), // признак указания паллеты, на которую идет комплектация
   TO_PAL(ValType.STRING), // паллета, на которую идет комплектация
   TO_PAL_PREV_STATE(ValType.INT), // предыдущее состояние выполнения процесса
-  ZONE(ValType.STRING); // зона склада, в которую размещена скомплектованная паллета
+  ZONE(ValType.STRING), // зона склада, в которую размещена скомплектованная паллета
+  LGORT1(ValType.STRING), // склад отпускающий
+  LGORT1_LIST(ValType.STRING); // список складов
   //
   public final ValType valType;
 

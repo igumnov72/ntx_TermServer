@@ -15,6 +15,7 @@ public class Z_TS_IN1 {
   public String TASK_ID = ""; // ID задачи
   public String TASK_DT = ""; // Дата/время задачи
   public String TASK_USER = ""; // Пользователь, выполняющий задачу
+  public String IGNORE_ZTS28 = ""; // не проверять zts28
   //
   // exporting params
   public String VBELN2 = ""; // Номер документа сбыта
@@ -52,6 +53,7 @@ public class Z_TS_IN1 {
       System.out.println("  TASK_ID=" + TASK_ID);
       System.out.println("  TASK_DT=" + TASK_DT);
       System.out.println("  TASK_USER=" + TASK_USER);
+      System.out.println("  IGNORE_ZTS28=" + IGNORE_ZTS28);
     }
 
     // вызов САПовской процедуры
@@ -117,6 +119,7 @@ public class Z_TS_IN1 {
       impParams.setValue("TASK_ID", params.TASK_ID);
       impParams.setValue("TASK_DT", params.TASK_DT);
       impParams.setValue("TASK_USER", params.TASK_USER);
+      impParams.setValue("IGNORE_ZTS28", params.IGNORE_ZTS28);
 
       ret = SAPconn.executeFunction(function);
 

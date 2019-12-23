@@ -7,6 +7,8 @@ import java.util.HashMap;
 import java.util.Map.Entry;
 import ntx.sap.fm.Z_TS_DPDT1;
 import ntx.sap.fm.Z_TS_DPDT2;
+import ntx.sap.fm.Z_TS_DPDT3;
+import ntx.sap.fm.Z_TS_DPDT4;
 import ntx.sap.refs.RefCharg;
 import ntx.sap.refs.RefChargStruct;
 import ntx.sap.refs.RefInfo;
@@ -32,14 +34,14 @@ import ntx.ts.sysproc.TaskContext;
 import ntx.ts.sysproc.UserContext;
 
 /**
- * Отгрузка ДПДТ Состояния: START SEL_SKL TOV
+ * Перемещение с Прогресса Состояния: START SEL_SKL SEL_SKL1 TOV TOV_PAL
  */
-public class ProcessDpdt extends ProcessTask {
+public class ProcessProgres extends ProcessTask {
 
-  private final DpdtData d = new DpdtData();
+  private final ProgresData d = new ProgresData();
 
-  public ProcessDpdt(long procId) throws Exception {
-    super(ProcType.DPDT, procId);
+  public ProcessProgres(long procId) throws Exception {
+    super(ProcType.PROGRES, procId);
   }
 
   @Override
@@ -80,20 +82,80 @@ public class ProcessDpdt extends ProcessTask {
           return (new HtmlPageMessage(getLastErr(), null, null, null)).getPage();
         }
 
+      case SEL_SKL1:
+        try {
+          return htmlSelLgort1(playSound, ctx);
+        } catch (Exception e) {
+          callSetErr(e.getMessage(), ctx);
+          return (new HtmlPageMessage(getLastErr(), null, null, null)).getPage();
+        }
+
       default:
-        return htmlWork("Отгрузка ДПДТ", playSound, ctx);
+        return htmlWork("Перемещение с Прогресса", playSound, ctx);
     }
+  }
+
+  public FileData htmlSelLgort1(boolean showErr, UserContext ctx) throws Exception {
+    // страница выбора отпускающего склада
+
+    String[] lgs = d.getLgorts1().split(",");
+    String def = null;
+    for (int i = 0; i < lgs.length; i++) {
+      if (def == null) {
+        def = "selolgort" + lgs[i] + ":" + lgs[i] + " " + RefLgort.getNoNull(lgs[i]).name;
+      } else {
+        def = def + ";selolgort" + lgs[i] + ":" + lgs[i] + " " + RefLgort.getNoNull(lgs[i]).name;
+      }
+    }
+
+    HtmlPageMenu p = new HtmlPageMenu("Выбор склада", "Выберите отпускающий склад:", def,
+            "selolgort" + lgs[0],
+            showErr ? getLastErr() : null, null,
+            (showErr && (getLastErr() != null)));
+    return p.getPage();
   }
 
   private FileData init(TaskContext ctx) throws Exception {
     // запуск задачи
     String[] lgorts = getLgorts(ctx);
     if (lgorts.length == 1) {
-      d.callSetLgort(lgorts[0], TaskState.TOV, ctx);
-      callTaskNameChange(ctx);
+      return setLgort(lgorts[0], ctx);
     } else {
       callSetTaskState(TaskState.SEL_SKL, ctx);
     }
+    return htmlGet(false, ctx);
+  }
+
+  private FileData setLgort(String lgort, TaskContext ctx) throws Exception {
+    d.callSetLgort(lgort, TaskState.SEL_SKL1, ctx);
+    callTaskNameChange(ctx);
+
+    Z_TS_DPDT3 f = new Z_TS_DPDT3();
+    f.LGORT2 = lgort;
+
+    f.execute();
+
+    if (f.isErr) {
+      callSetErr(f.err, ctx);
+      return htmlGet(true, ctx);
+    }
+
+    if (f.IT_LG.length == 1) {
+      return setLgort1(f.IT_LG[0].LGORT1, ctx);
+    }
+
+    String lgorts1 = "";
+    for (int i = 0; i < f.IT_LG.length; i++) {
+      lgorts1 = (lgorts1.isEmpty() ? "" : lgorts1 + ",") + f.IT_LG[i].LGORT1;
+    }
+    d.callSetLgort1List(lgorts1, ctx);
+
+    return htmlGet(false, ctx);
+  }
+
+  private FileData setLgort1(String lgort1, TaskContext ctx) throws Exception {
+    d.callSetLgort1(lgort1, TaskState.TOV, ctx);
+    callTaskNameChange(ctx);
     return htmlGet(false, ctx);
   }
 
@@ -105,6 +167,9 @@ public class ProcessDpdt extends ProcessTask {
     switch (getTaskState()) {
       case TOV:
         return handleScanTov(scan, ctx);
+
+      case TOV_PAL:
+        return handleScanTovPal(scan, ctx);
 
       default:
         callSetErr("Ошибка программы: недопустимое состояние "
@@ -118,6 +183,17 @@ public class ProcessDpdt extends ProcessTask {
       return handleScanTovDo(scan, ctx);
     } else {
       callSetErr("Требуется отсканировать ШК товара (сканирование " + scan + " не принято)", ctx);
+      return htmlGet(true, ctx);
+    }
+  }
+
+  private FileData handleScanTovPal(String scan, TaskContext ctx) throws Exception {
+    if (isScanTov(scan)) {
+      return handleScanTovDo(scan, ctx);
+    } else if (isScanPal(scan)) {
+      return handleScanPalDo(scan, ctx);
+    } else {
+      callSetErr("Требуется отсканировать ШК товара или паллеты (сканирование " + scan + " не принято)", ctx);
       return htmlGet(true, ctx);
     }
   }
@@ -136,11 +212,11 @@ public class ProcessDpdt extends ProcessTask {
       return htmlGet(true, ctx);
     }
 
-    DpdtTotData r = d.getPrtQtyNull(charg);
+    ProgresTotData r = d.getPrtQtyNull(charg);
     if (r == null) {
       // партия еще не сканировалась, её нужно проверить
       Z_TS_DPDT1 f = new Z_TS_DPDT1();
-      f.LGORT = d.getLgort();
+      f.LGORT = d.getLgort1();
       f.CHARG = fillZeros(charg, 10);
 
       f.execute();
@@ -148,10 +224,13 @@ public class ProcessDpdt extends ProcessTask {
       if (f.isErr) {
         callSetErr(f.err, ctx);
         return htmlGet(true, ctx);
+      } else if (!f.LGORT2.equals(d.getLgort())) {
+        callSetErr("Заказ на поставку сделан на склад " + f.LGORT2, ctx);
+        return htmlGet(true, ctx);
       }
     }
 
-    d.callAddTov(charg, q, ctx);
+    d.callAddTov(charg, q, TaskState.TOV_PAL, ctx);
     r = d.getPrtQtyNull(charg);
     String s = c.matnr + "/" + charg + " " + RefMat.getFullName(c.matnr)
             + ": " + delDecZeros(q.toString()) + " ед";
@@ -164,11 +243,47 @@ public class ProcessDpdt extends ProcessTask {
     return htmlGet(true, ctx);
   }
 
+  private FileData handleScanPalDo(String scan, TaskContext ctx) throws Exception {
+    // тип ШК уже проверен
+    String pal = getScanPal(scan);
+
+    Z_TS_DPDT4 f = new Z_TS_DPDT4();
+    f.LGORT1 = d.getLgort1();
+    f.LGORT2 = d.getLgort();
+    f.LENUM = fillZeros(pal, 20);
+    f.TASK_ID = Long.toString(getProcId());
+    f.TASK_DT = df.format(new Date(getProcId()));
+    f.USER_SHK = ctx.user.getUserSHK();
+    f.IT_DONE = d.getScanData();
+
+    f.execute();
+
+    if (f.isErr) {
+      callSetErr(f.err, ctx);
+      return htmlGet(true, ctx);
+    }
+
+    callAddHist("паллета " + pal + ", журнал " + f.ID, ctx);
+
+    String s;
+    if (f.IS_DOC_ERR.equals("X")) {
+      s = "Данные паллеты " + pal + " сохранены (сообщите оператору: при создании документов в журнале zts28 возникла ошибка, запись: " + f.ID + ")";
+    } else {
+      s = "Данные паллеты " + pal + " сохранены; запись журнала zts28: " + f.ID;
+    }
+
+    callSetMsg(s, ctx);
+    callSetTaskState(TaskState.TOV, ctx);
+    d.callClearTovData(ctx);
+
+    return htmlGet(true, ctx);
+  }
+
   private FileData htmlMenu(TaskContext ctx) throws Exception {
     String definition;
 
     switch (getTaskState()) {
-      case TOV:
+      case TOV_PAL:
         definition = "cont:Продолжить;later:Отложить;dellast:Отменить последнее сканирование;"
                 + "delall:Отменить всё;showtov:Показать общее кол-во;fin:Завершить";
         break;
@@ -178,11 +293,11 @@ public class ProcessDpdt extends ProcessTask {
         break;
     }
 
-    if (RefInfo.haveInfo(ProcType.DPDT)) {
+    if (RefInfo.haveInfo(ProcType.PROGRES)) {
       definition = definition + ";manuals:Инструкции";
     }
 
-    HtmlPageMenu p = new HtmlPageMenu("Отгрузка ДПДТ", "Выберите действие",
+    HtmlPageMenu p = new HtmlPageMenu("Перемещение с Прогресса", "Выберите действие",
             definition, null, null, null);
 
     return p.getPage();
@@ -198,14 +313,22 @@ public class ProcessDpdt extends ProcessTask {
           callSetErr("Нет прав по складу " + lg, ctx);
           return htmlGet(true, ctx);
         } else {
-          d.callSetLgort(lg, TaskState.TOV, ctx);
-          callTaskNameChange(ctx);
+          return setLgort(lg, ctx);
         }
       } else {
         callSetErr("Ошибка программы: неверный выбор склада: " + menu, ctx);
         return htmlGet(true, ctx);
       }
-      return htmlGet(false, ctx);
+    } else if (getTaskState() == TaskState.SEL_SKL1) {
+      // обработка выбора отпускающего склада
+      callClearErrMsg(ctx);
+      if ((menu.length() == 13) && menu.startsWith("selolgort")) {
+        String lg = menu.substring(9);
+        return setLgort1(lg, ctx);
+      } else {
+        callSetErr("Ошибка программы: неверный выбор отпускающего склада: " + menu, ctx);
+        return htmlGet(true, ctx);
+      }
     } else if (menu.equals("no")) {
       callClearErr(ctx);
       callSetMsg("Операция отменена", ctx);
@@ -257,7 +380,7 @@ public class ProcessDpdt extends ProcessTask {
   }
 
   private FileData htmlShowTov(TaskContext ctx) throws Exception {
-    HashMap<String, DpdtTotData> pq = d.getPQ();
+    HashMap<String, ProgresTotData> pq = d.getPQ();
 
     int n = pq.size();
 
@@ -275,10 +398,10 @@ public class ProcessDpdt extends ProcessTask {
 
     p.addLine("<b>Отсканированный товар:</b>");
     p.addNewLine();
-    DpdtTotData dt;
+    ProgresTotData dt;
     RefChargStruct c;
     String charg;
-    for (Entry<String, DpdtTotData> i : pq.entrySet()) {
+    for (Entry<String, ProgresTotData> i : pq.entrySet()) {
       dt = i.getValue();
       charg = i.getKey();
       c = RefCharg.getNoNull(charg);
@@ -297,7 +420,7 @@ public class ProcessDpdt extends ProcessTask {
   }
 
   private FileData handleMenuDelLast(TaskContext ctx) throws Exception {
-    DpdtScanData sd = d.getLastScan();
+    ProgresScanData sd = d.getLastScan();
     if (sd == null) {
       callSetErr("Нет отсканированных позиций (для отмены)", ctx);
       return htmlGet(true, ctx);
@@ -305,7 +428,7 @@ public class ProcessDpdt extends ProcessTask {
 
     d.callDelLast(ctx);
     String matnr = RefCharg.getNoNull(sd.charg).matnr;
-    DpdtTotData r = d.getPrtQty(sd.charg);
+    ProgresTotData r = d.getPrtQty(sd.charg);
     String s = "Отменено: " + delDecZeros(sd.qty.toString())
             + " ед: " + matnr + "/" + sd.charg + " "
             + RefMat.getFullName(matnr);
@@ -319,7 +442,7 @@ public class ProcessDpdt extends ProcessTask {
   }
 
   private FileData htmlCnfDelAll() throws Exception {
-    HtmlPageMenu p = new HtmlPageMenu("Отгрузка ДПДТ",
+    HtmlPageMenu p = new HtmlPageMenu("Перемещение с Прогресса",
             "Удалить все отсканированные данные?",
             "no:Нет;do_cnf_delall:Да", "no", null, null, false);
     return p.getPage();
@@ -339,39 +462,47 @@ public class ProcessDpdt extends ProcessTask {
 
   @Override
   public String getAddTaskName(UserContext ctx) throws Exception {
-    return d.getLgort() + " " + RefLgort.getNoNull(d.getLgort()).name;
+    if (d.getLgort().isEmpty()) {
+      return "";
+    } else if (d.getLgort1().isEmpty()) {
+      return d.getLgort() + " " + RefLgort.getNoNull(d.getLgort()).name;
+    } else {
+      return d.getLgort1() + "->" + d.getLgort();
+    }
   }
 }
 
-class DpdtScanData {  // отсканированные позиции
+class ProgresScanData {  // отсканированные позиции
 
   public String charg;
   public BigDecimal qty;
 
-  public DpdtScanData(String charg, BigDecimal qty) {
+  public ProgresScanData(String charg, BigDecimal qty) {
     this.charg = charg;
     this.qty = qty;
   }
 }
 
-class DpdtTotData {  // данные сканирования товара по партиям
+class ProgresTotData {  // данные сканирования товара по партиям
 
   public int n; // число сканирований
   public BigDecimal qty;
 
-  public DpdtTotData(int n, BigDecimal qty) {
+  public ProgresTotData(int n, BigDecimal qty) {
     this.n = n;
     this.qty = qty;
   }
 }
 
-class DpdtData extends ProcData {
+class ProgresData extends ProcData {
 
-  private String lgort = ""; // склад
-  private final ArrayList<DpdtScanData> scanData
-          = new ArrayList<DpdtScanData>(); // отсканированный товар (партия, кол-во)
-  private final HashMap<String, DpdtTotData> pq
-          = new HashMap<String, DpdtTotData>(); // кол-во и число сканирований по партиям
+  private String lgort = ""; // склад принимающий
+  private String lgort1 = ""; // склад отпускающий
+  private String lgorts1 = ""; // список складов
+  private final ArrayList<ProgresScanData> scanData
+          = new ArrayList<ProgresScanData>(); // отсканированный товар (партия, кол-во)
+  private final HashMap<String, ProgresTotData> pq
+          = new HashMap<String, ProgresTotData>(); // кол-во и число сканирований по партиям
   private BigDecimal qtyTot = new BigDecimal(0);
 
   public int getNScan() {
@@ -386,11 +517,19 @@ class DpdtData extends ProcData {
     return lgort;
   }
 
-  public HashMap<String, DpdtTotData> getPQ() {
+  public String getLgort1() {
+    return lgort1;
+  }
+
+  public String getLgorts1() {
+    return lgorts1;
+  }
+
+  public HashMap<String, ProgresTotData> getPQ() {
     return pq;
   }
 
-  public DpdtScanData getLastScan() {
+  public ProgresScanData getLastScan() {
     int n = scanData.size();
     if (n == 0) {
       return null;
@@ -402,7 +541,7 @@ class DpdtData extends ProcData {
   public ZTS_PRT_QTY_S[] getScanData() {
     int n = scanData.size();
     ZTS_PRT_QTY_S[] ret = new ZTS_PRT_QTY_S[n];
-    DpdtScanData sd;
+    ProgresScanData sd;
     ZTS_PRT_QTY_S s;
     for (int i = 0; i < n; i++) {
       sd = scanData.get(i);
@@ -414,15 +553,15 @@ class DpdtData extends ProcData {
     return ret;
   }
 
-  public DpdtTotData getPrtQty(String charg) {
-    DpdtTotData ret = pq.get(charg);
+  public ProgresTotData getPrtQty(String charg) {
+    ProgresTotData ret = pq.get(charg);
     if (ret == null) {
-      ret = new DpdtTotData(0, BigDecimal.ZERO);
+      ret = new ProgresTotData(0, BigDecimal.ZERO);
     }
     return ret;
   }
 
-  public DpdtTotData getPrtQtyNull(String charg) {
+  public ProgresTotData getPrtQtyNull(String charg) {
     return pq.get(charg);
   }
 
@@ -439,12 +578,37 @@ class DpdtData extends ProcData {
     Track.saveProcessChange(dr, ctx.task, ctx);
   }
 
-  public void callAddTov(String charg, BigDecimal qty, TaskContext ctx) throws Exception {
+  public void callSetLgort1(String lgort1, TaskState state, TaskContext ctx) throws Exception {
+    DataRecord dr = new DataRecord();
+    dr.procId = ctx.task.getProcId();
+    if (!strEq(lgort1, this.lgort1)) {
+      dr.setS(FieldType.LGORT1, lgort1);
+//      dr.setI(FieldType.LOG, LogType.SET_LGORT.ordinal());
+    }
+    if ((state != null) && (state != ctx.task.getTaskState())) {
+      dr.setI(FieldType.TASK_STATE, state.ordinal());
+    }
+    Track.saveProcessChange(dr, ctx.task, ctx);
+  }
+
+  public void callSetLgort1List(String lgorts1, TaskContext ctx) throws Exception {
+    DataRecord dr = new DataRecord();
+    dr.procId = ctx.task.getProcId();
+    if (!strEq(lgorts1, this.lgorts1)) {
+      dr.setS(FieldType.LGORT1_LIST, lgorts1);
+    }
+    Track.saveProcessChange(dr, ctx.task, ctx);
+  }
+
+  public void callAddTov(String charg, BigDecimal qty, TaskState state, TaskContext ctx) throws Exception {
     DataRecord dr = new DataRecord();
     dr.procId = ctx.task.getProcId();
     dr.setS(FieldType.CHARG, charg);
     dr.setN(FieldType.QTY, qty);
     dr.setI(FieldType.LOG, LogType.ADD_TOV.ordinal());
+    if ((state != null) && (state != ctx.task.getTaskState())) {
+      dr.setI(FieldType.TASK_STATE, state.ordinal());
+    }
     Track.saveProcessChange(dr, ctx.task, ctx);
   }
 
@@ -466,15 +630,15 @@ class DpdtData extends ProcData {
   }
 
   private void hdAddTov(DataRecord dr) {
-    DpdtScanData sd = new DpdtScanData(dr.getValStr(FieldType.CHARG),
+    ProgresScanData sd = new ProgresScanData(dr.getValStr(FieldType.CHARG),
             (BigDecimal) dr.getVal(FieldType.QTY));
 
     if (sd.qty.signum() > 0) {
       scanData.add(sd);
       qtyTot = qtyTot.add(sd.qty);
-      DpdtTotData r = pq.get(sd.charg);
+      ProgresTotData r = pq.get(sd.charg);
       if (r == null) {
-        r = new DpdtTotData(1, sd.qty);
+        r = new ProgresTotData(1, sd.qty);
         pq.put(sd.charg, r);
       } else {
         r.qty = r.qty.add(sd.qty);
@@ -488,10 +652,10 @@ class DpdtData extends ProcData {
     if (i < 0) {
       return;
     }
-    DpdtScanData sd = scanData.get(i);
+    ProgresScanData sd = scanData.get(i);
     scanData.remove(i);
     qtyTot = qtyTot.subtract(sd.qty);
-    DpdtTotData r = pq.get(sd.charg);
+    ProgresTotData r = pq.get(sd.charg);
     if (r != null) {
       r.qty = r.qty.subtract(sd.qty);
       r.n--;
@@ -508,6 +672,14 @@ class DpdtData extends ProcData {
       case 1:
         if (dr.haveVal(FieldType.LGORT)) {
           lgort = (String) dr.getVal(FieldType.LGORT);
+        }
+
+        if (dr.haveVal(FieldType.LGORT1)) {
+          lgort1 = (String) dr.getVal(FieldType.LGORT1);
+        }
+
+        if (dr.haveVal(FieldType.LGORT1_LIST)) {
+          lgorts1 = (String) dr.getVal(FieldType.LGORT1_LIST);
         }
 
         if (dr.haveVal(FieldType.CHARG) && dr.haveVal(FieldType.QTY)) {

@@ -13,6 +13,7 @@ public class Z_TS_IN2 {
   // importing params
   public String VBELN = ""; // Номер документа сбыта
   public String VBELN2 = ""; // Номер документа сбыта
+  public String IGNORE_ZTS28 = ""; // не проверять zts28
   //
   // exporting params
   public ZTS_QTY_DIF_S QTY_DIF = new ZTS_QTY_DIF_S(); // Расхождения по кол-ву при приемке
@@ -43,6 +44,7 @@ public class Z_TS_IN2 {
       System.out.println("Вызов ФМ Z_TS_IN2:");
       System.out.println("  VBELN=" + VBELN);
       System.out.println("  VBELN2=" + VBELN2);
+      System.out.println("  IGNORE_ZTS28=" + IGNORE_ZTS28);
     }
 
     // вызов САПовской процедуры
@@ -101,6 +103,7 @@ public class Z_TS_IN2 {
 
       impParams.setValue("VBELN", params.VBELN);
       impParams.setValue("VBELN2", params.VBELN2);
+      impParams.setValue("IGNORE_ZTS28", params.IGNORE_ZTS28);
 
       ret = SAPconn.executeFunction(function);
 

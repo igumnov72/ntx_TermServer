@@ -50,7 +50,8 @@ public enum TaskState {
   CNF_CROSSDOC("Подтверждение кроссдокинга:"),
   VBELN_VA("Заказ клиента:"),
   COMPL_TO_PAL("Комплектация на паллету:"),
-  SEL_ZONE("Зона склада:");
+  SEL_ZONE("Зона склада:"),
+  SEL_SKL1("Выберите отпускающий склад:");
   //
   public final String actionText;
 

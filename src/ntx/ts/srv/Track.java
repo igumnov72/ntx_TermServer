@@ -97,6 +97,9 @@ public class Track {
       case COMPL_MOVE:
         ret = new ProcessComplMove(procId);
         break;
+      case PROGRES:
+        ret = new ProcessProgres(procId);
+        break;
     }
     if (ret == null) {
       throw new Exception("Ошибка программы: не создан процесс типа " + pType.text);
