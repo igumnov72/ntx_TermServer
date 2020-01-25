@@ -9,6 +9,7 @@ import ntx.sap.fm.Z_TS_DPDT1;
 import ntx.sap.fm.Z_TS_DPDT2;
 import ntx.sap.fm.Z_TS_DPDT3;
 import ntx.sap.fm.Z_TS_DPDT4;
+import ntx.sap.fm.Z_TS_DPDT5;
 import ntx.sap.refs.RefCharg;
 import ntx.sap.refs.RefChargStruct;
 import ntx.sap.refs.RefInfo;
@@ -35,6 +36,7 @@ import ntx.ts.sysproc.UserContext;
 
 /**
  * Перемещение с Прогресса Состояния: START SEL_SKL SEL_SKL1 TOV TOV_PAL
+ * SEL_CELL
  */
 public class ProcessProgres extends ProcessTask {
 
@@ -171,6 +173,9 @@ public class ProcessProgres extends ProcessTask {
       case TOV_PAL:
         return handleScanTovPal(scan, ctx);
 
+      case SEL_CELL:
+        return handleScanCell(scan, ctx);
+
       default:
         callSetErr("Ошибка программы: недопустимое состояние "
                 + getTaskState().name() + " (сканирование не принято)", ctx);
@@ -243,14 +248,19 @@ public class ProcessProgres extends ProcessTask {
     return htmlGet(true, ctx);
   }
 
-  private FileData handleScanPalDo(String scan, TaskContext ctx) throws Exception {
-    // тип ШК уже проверен
-    String pal = getScanPal(scan);
+  private FileData handleScanCell(String scan, TaskContext ctx) throws Exception {
+    if (!isScanCell(scan)) {
+      callSetErr("Требуется отсканировать ШК ячейки (сканирование " + scan + " не принято)", ctx);
+      return htmlGet(true, ctx);
+    }
 
-    Z_TS_DPDT4 f = new Z_TS_DPDT4();
+    String cell = scan.substring(1);
+
+    Z_TS_DPDT5 f = new Z_TS_DPDT5();
     f.LGORT1 = d.getLgort1();
     f.LGORT2 = d.getLgort();
-    f.LENUM = fillZeros(pal, 20);
+    f.LENUM = fillZeros(d.getPal(), 20);
+    f.LGPLA = cell;
     f.TASK_ID = Long.toString(getProcId());
     f.TASK_DT = df.format(new Date(getProcId()));
     f.USER_SHK = ctx.user.getUserSHK();
@@ -263,18 +273,41 @@ public class ProcessProgres extends ProcessTask {
       return htmlGet(true, ctx);
     }
 
-    callAddHist("паллета " + pal + ", журнал " + f.ID, ctx);
+    callAddHist(d.getPal() + " -> " + cell + " (журнал " + f.ID + ")", ctx);
 
     String s;
     if (f.IS_DOC_ERR.equals("X")) {
-      s = "Данные паллеты " + pal + " сохранены (сообщите оператору: при создании документов в журнале zts28 возникла ошибка, запись: " + f.ID + ")";
+      s = "Данные паллеты " + d.getPal() + " сохранены (сообщите оператору: при создании документов в журнале zts28 возникла ошибка, запись: " + f.ID + ")";
     } else {
-      s = "Данные паллеты " + pal + " сохранены; запись журнала zts28: " + f.ID;
+      s = "Данные паллеты " + d.getPal() + " сохранены; запись журнала zts28: " + f.ID;
     }
 
     callSetMsg(s, ctx);
     callSetTaskState(TaskState.TOV, ctx);
     d.callClearTovData(ctx);
+
+    return htmlGet(true, ctx);
+  }
+
+  private FileData handleScanPalDo(String scan, TaskContext ctx) throws Exception {
+    // тип ШК уже проверен
+    String pal = getScanPal(scan);
+
+    Z_TS_DPDT4 f = new Z_TS_DPDT4();
+    f.LGORT1 = d.getLgort1();
+    f.LGORT2 = d.getLgort();
+    f.LENUM = fillZeros(pal, 20);
+    f.IT_DONE = d.getScanData();
+
+    f.execute();
+
+    if (f.isErr) {
+      callSetErr(f.err, ctx);
+      return htmlGet(true, ctx);
+    }
+
+    d.callSetPal(pal, TaskState.SEL_CELL, ctx);
+    callSetMsg("Просканирована паллета " + pal, ctx);
 
     return htmlGet(true, ctx);
   }
@@ -285,7 +318,12 @@ public class ProcessProgres extends ProcessTask {
     switch (getTaskState()) {
       case TOV_PAL:
         definition = "cont:Продолжить;later:Отложить;dellast:Отменить последнее сканирование;"
-                + "delall:Отменить всё;showtov:Показать общее кол-во;fin:Завершить";
+                + "delall:Отменить всё;showtov:Показать общее кол-во";
+        break;
+
+      case SEL_CELL:
+        definition = "cont:Продолжить;later:Отложить;dellast:Отменить последнее сканирование;"
+                + "delall:Отменить всё;showtov:Показать общее кол-во";
         break;
 
       default:
@@ -419,7 +457,7 @@ public class ProcessProgres extends ProcessTask {
     return p.getPage();
   }
 
-  private FileData handleMenuDelLast(TaskContext ctx) throws Exception {
+  private FileData handleMenuDelLastTovPal(TaskContext ctx) throws Exception {
     ProgresScanData sd = d.getLastScan();
     if (sd == null) {
       callSetErr("Нет отсканированных позиций (для отмены)", ctx);
@@ -441,6 +479,24 @@ public class ProcessProgres extends ProcessTask {
     return htmlGet(true, ctx);
   }
 
+  private FileData handleMenuDelLastSelCell(TaskContext ctx) throws Exception {
+    d.callSetPal("", TaskState.TOV_PAL, ctx);
+    callSetMsg("Сканирование номера паллеты отменено", ctx);
+    return htmlGet(false, ctx);
+  }
+
+  private FileData handleMenuDelLast(TaskContext ctx) throws Exception {
+    switch (getTaskState()) {
+      case TOV_PAL:
+        return handleMenuDelLastTovPal(ctx);
+      case SEL_CELL:
+        return handleMenuDelLastSelCell(ctx);
+      default:
+        callSetErr("Неподходящее состояние для отмены последнего сканирования", ctx);
+        return htmlGet(true, ctx);
+    }
+  }
+
   private FileData htmlCnfDelAll() throws Exception {
     HtmlPageMenu p = new HtmlPageMenu("Перемещение с Прогресса",
             "Удалить все отсканированные данные?",
@@ -450,6 +506,7 @@ public class ProcessProgres extends ProcessTask {
 
   private FileData handleMenuDelAll(TaskContext ctx) throws Exception {
     d.callClearTovData(ctx);
+    callSetTaskState(TaskState.TOV, ctx);
     callSetMsg("Все отсканированные данные удалены", ctx);
     callAddHist("Все отсканированные данные удалены", ctx);
     return htmlGet(true, ctx);
@@ -499,6 +556,7 @@ class ProgresData extends ProcData {
   private String lgort = ""; // склад принимающий
   private String lgort1 = ""; // склад отпускающий
   private String lgorts1 = ""; // список складов
+  private String pal = ""; // паллета
   private final ArrayList<ProgresScanData> scanData
           = new ArrayList<ProgresScanData>(); // отсканированный товар (партия, кол-во)
   private final HashMap<String, ProgresTotData> pq
@@ -523,6 +581,10 @@ class ProgresData extends ProcData {
 
   public String getLgorts1() {
     return lgorts1;
+  }
+
+  public String getPal() {
+    return pal;
   }
 
   public HashMap<String, ProgresTotData> getPQ() {
@@ -629,6 +691,19 @@ class ProgresData extends ProcData {
     Track.saveProcessChange(dr, ctx.task, ctx);
   }
 
+  public void callSetPal(String pal, TaskState state, TaskContext ctx) throws Exception {
+    DataRecord dr = new DataRecord();
+    dr.procId = ctx.task.getProcId();
+    if (!strEq(pal, this.pal)) {
+      dr.setS(FieldType.PAL, pal);
+      dr.setI(FieldType.LOG, LogType.SET_PAL.ordinal());
+    }
+    if ((state != null) && (state != ctx.task.getTaskState())) {
+      dr.setI(FieldType.TASK_STATE, state.ordinal());
+    }
+    Track.saveProcessChange(dr, ctx.task, ctx);
+  }
+
   private void hdAddTov(DataRecord dr) {
     ProgresScanData sd = new ProgresScanData(dr.getValStr(FieldType.CHARG),
             (BigDecimal) dr.getVal(FieldType.QTY));
@@ -678,6 +753,10 @@ class ProgresData extends ProcData {
           lgort1 = (String) dr.getVal(FieldType.LGORT1);
         }
 
+        if (dr.haveVal(FieldType.PAL)) {
+          pal = (String) dr.getVal(FieldType.PAL);
+        }
+
         if (dr.haveVal(FieldType.LGORT1_LIST)) {
           lgorts1 = (String) dr.getVal(FieldType.LGORT1_LIST);
         }
@@ -694,6 +773,7 @@ class ProgresData extends ProcData {
           scanData.clear();
           pq.clear();
           qtyTot = new BigDecimal(0);
+          pal = "";
         }
         break;
     }
