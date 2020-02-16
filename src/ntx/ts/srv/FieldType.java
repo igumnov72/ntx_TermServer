@@ -139,7 +139,9 @@ public enum FieldType {
   TO_PAL_PREV_STATE(ValType.INT), // предыдущее состояние выполнения процесса
   ZONE(ValType.STRING), // зона склада, в которую размещена скомплектованная паллета
   LGORT1(ValType.STRING), // склад отпускающий
-  LGORT1_LIST(ValType.STRING); // список складов
+  LGORT1_LIST(ValType.STRING), // список складов
+  KOR_SHK_S(ValType.STRING_AR), // массив штрихкодов коробов
+  KOR_N_S(ValType.INT_AR); // массив числа коробов
   //
   public final ValType valType;
 

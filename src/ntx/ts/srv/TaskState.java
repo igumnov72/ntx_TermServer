@@ -51,7 +51,9 @@ public enum TaskState {
   VBELN_VA("Заказ клиента:"),
   COMPL_TO_PAL("Комплектация на паллету:"),
   SEL_ZONE("Зона склада:"),
-  SEL_SKL1("Выберите отпускающий склад:");
+  SEL_SKL1("Выберите отпускающий склад:"),
+  KOROB("Короб:"),
+  KOROB_PAL("Короб или паллета:");
   //
   public final String actionText;
 
