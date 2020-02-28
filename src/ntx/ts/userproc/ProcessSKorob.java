@@ -402,7 +402,6 @@ class SKorobData extends ProcData {
   }
 
   private void hdSetKorob(DataRecord dr) {
-    zakData.clear();
     String kor = dr.getValStr(FieldType.KOROB);
 
     SKorobShk zak = zakData.get(kor);
