@@ -1,6 +1,5 @@
 package ntx.ts.userproc;
 
-import java.math.BigDecimal;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
@@ -11,7 +10,6 @@ import ntx.ts.html.*;
 import ntx.ts.http.FileData;
 import ntx.ts.srv.DataRecord;
 import ntx.ts.srv.FieldType;
-import ntx.ts.srv.LogType;
 import ntx.ts.srv.TaskState;
 import ntx.ts.srv.ProcType;
 import ntx.ts.srv.TermQuery;
@@ -19,7 +17,6 @@ import ntx.ts.srv.Track;
 import ntx.ts.sysproc.ProcData;
 import ntx.ts.sysproc.ProcessContext;
 import ntx.ts.sysproc.ProcessTask;
-import static ntx.ts.sysproc.ProcessUtil.delDecZeros;
 import static ntx.ts.sysproc.ProcessUtil.fillZeros;
 import ntx.ts.sysproc.TaskContext;
 import ntx.ts.sysproc.UserContext;
@@ -230,6 +227,7 @@ public class ProcessSKorob extends ProcessTask {
         if (nn > 0) { // отменяем сканирование товара
           String s = "Отменено " + d.getNKorob() + " коробов (все отсканированные на паллету)";
           d.callClearTov(ctx);
+          callSetTaskState(TaskState.KOROB, ctx);
           callSetMsg(s, ctx);
           callAddHist(s, ctx);
         } else {
