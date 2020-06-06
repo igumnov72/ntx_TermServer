@@ -58,7 +58,8 @@ public class Logger {
       procs.remove(dr.procId);
     } else {
       if ((p.procType == ProcType.USER) && (dr.haveVal(FieldType.SHK))) {
-        p.sotr = dr.getValStr(FieldType.SHK).substring(0, 10);
+        p.sotr = dr.getValStr(FieldType.SHK);
+        if (p.sotr.length() > 10) p.sotr = p.sotr.substring(0, 10);
       }
 
       if (dr.haveVal(FieldType.PARENT)) {
