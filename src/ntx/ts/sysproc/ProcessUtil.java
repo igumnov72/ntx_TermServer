@@ -5,12 +5,16 @@ import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
+import ntx.sap.refs.RefMat;
+import ntx.sap.refs.RefMatStruct;
+import ntx.ts.html.HtmlPage;
 import ntx.ts.html.HtmlPageWork;
 import ntx.ts.http.FileData;
 import ntx.ts.srv.DataRecord;
 import ntx.ts.srv.FieldType;
 import ntx.ts.srv.TaskState;
 import ntx.ts.srv.ProcType;
+import ntx.ts.srv.TSparams;
 import ntx.ts.srv.Track;
 
 /**
@@ -638,4 +642,37 @@ public abstract class ProcessUtil extends Process {
 
     return new String(c2, 0, c2.length);
   }
+
+  public static FileData htmlMatFoto(String matnr) throws Exception {
+    // формирование страницы с фото материала
+
+    RefMatStruct m = RefMat.getNoNull(matnr);
+
+    HtmlPage p = new HtmlPage();
+    p.title = "Фото материала";
+    p.fontSize = TSparams.fontSize2;
+    p.scrollToTop = true;
+
+    p.addText("<b>Фото материала ");
+    p.addText(matnr);
+    p.addText("</b> ");
+    p.addNewLine();
+    p.addText(" <font color=blue>");
+    p.addText(m.name);
+    p.addLine("</font>:");
+    if (m.haveFoto) {
+      p.addText("<img src=\"mat" + matnr + ".jpg\" ");
+    } else {
+      p.addText("<img src=\"no_foto.jpg\" ");
+    }
+    p.addText("onload=\"var wr=window.innerWidth*0.9; var wr2=window.innerHeight*naturalWidth/naturalHeight; if(wr>wr2){wr=wr2;} if(wr<200){wr=200;} this.width=wr;\">");
+    p.addNewLine();
+
+    p.addFormStart("work.html", "f");
+    p.addFormButtonSubmitGo("Продолжить");
+    p.addFormEnd();
+
+    return p.getPage();
+  }
+
 }

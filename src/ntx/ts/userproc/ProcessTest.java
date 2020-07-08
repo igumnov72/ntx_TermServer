@@ -2,6 +2,8 @@ package ntx.ts.userproc;
 
 import java.util.Date;
 import ntx.sap.fm.Z_TS_DESCR;
+import ntx.sap.refs.RefCharg;
+import ntx.sap.refs.RefChargStruct;
 import ntx.sap.refs.RefInfo;
 import ntx.ts.html.*;
 import ntx.ts.http.FileData;
@@ -13,6 +15,8 @@ import ntx.ts.srv.Track;
 import ntx.ts.sysproc.ProcData;
 import ntx.ts.sysproc.ProcessContext;
 import ntx.ts.sysproc.ProcessTask;
+import static ntx.ts.sysproc.ProcessUtil.getScanCharg;
+import ntx.ts.sysproc.TaskContext;
 import ntx.ts.sysproc.UserContext;
 
 /**
@@ -61,6 +65,11 @@ public class ProcessTest extends ProcessTask {
       callAddHist(f.DESCR, ctx);
       callSetMsg(f.DESCR, ctx);
       d.callAddNScan(this, ctx);
+      if (isScanTov(scan)) {
+        String charg = getScanCharg(scan);
+        RefChargStruct c = RefCharg.get(charg, null);
+        d.callSetMatnr(c.matnr, this, ctx);
+      }
       callTaskNameChange(ctx);
     } else {
       callSetErr(f.err, ctx);
@@ -76,6 +85,11 @@ public class ProcessTest extends ProcessTask {
       definition = definition + ";manuals:Инструкции";
     }
 
+    String m = d.getMatnr();
+    if (!m.isEmpty() && isAllDigits(m)) {
+      definition = definition + ";foto:Фото";
+    }
+
     HtmlPageMenu p = new HtmlPageMenu("Меню", "Тестовая задача",
             definition, null, null, null);
     return p.getPage();
@@ -88,6 +102,8 @@ public class ProcessTest extends ProcessTask {
     } else if (menu.equals("later")) {
       callTaskDeactivate(ctx);
       return null;
+    } else if (menu.equals("foto")) {
+      return htmlMatFoto(d.getMatnr());
     }
     return htmlWork("Тестовая задача", false, ctx);
   }
@@ -110,15 +126,27 @@ public class ProcessTest extends ProcessTask {
 class TestData extends ProcData {
 
   private int nScan = 0;
+  private String matnr = "";
 
   public int getNScan() {
     return nScan;
+  }
+
+  public String getMatnr() {
+    return matnr;
   }
 
   public void callAddNScan(ProcessTask p, UserContext ctx) throws Exception {
     DataRecord dr = new DataRecord();
     dr.procId = p.getProcId();
     dr.setI(FieldType.N_SCAN, nScan + 1);
+    Track.saveProcessChange(dr, p, ctx);
+  }
+
+  public void callSetMatnr(String matnr, ProcessTask p, UserContext ctx) throws Exception {
+    DataRecord dr = new DataRecord();
+    dr.procId = p.getProcId();
+    dr.setS(FieldType.MATNR, matnr);
     Track.saveProcessChange(dr, p, ctx);
   }
 
@@ -129,6 +157,9 @@ class TestData extends ProcData {
       case 1:
         if (dr.haveVal(FieldType.N_SCAN)) {
           nScan = (Integer) dr.getVal(FieldType.N_SCAN);
+        }
+        if (dr.haveVal(FieldType.MATNR)) {
+          matnr = (String) dr.getVal(FieldType.MATNR);
         }
         break;
     }

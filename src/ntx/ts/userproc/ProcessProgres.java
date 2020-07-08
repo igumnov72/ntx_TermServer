@@ -60,7 +60,7 @@ public class ProcessProgres extends ProcessTask {
     String menu = (tq.params == null ? null : tq.params.getParNull("menu"));
     TaskContext ctx = new TaskContext(ctxUser, this);
 
-    if (getTaskState() == TaskState.START) {
+    if (getTaskState() == TaskState.START && scan == null && menu == null) {
       return init(ctx);
     } else if (scan != null) {
       if (!scan.equals("00")) {
@@ -129,9 +129,6 @@ public class ProcessProgres extends ProcessTask {
   }
 
   private FileData setLgort(String lgort, TaskContext ctx) throws Exception {
-    d.callSetLgort(lgort, TaskState.SEL_SKL1, ctx);
-    callTaskNameChange(ctx);
-
     Z_TS_DPDT3 f = new Z_TS_DPDT3();
     f.LGORT2 = lgort;
 
@@ -141,6 +138,9 @@ public class ProcessProgres extends ProcessTask {
       callSetErr(f.err, ctx);
       return htmlGet(true, ctx);
     }
+
+    d.callSetLgort(lgort, TaskState.SEL_SKL1, ctx);
+    callTaskNameChange(ctx);
 
     if (f.IT_LG.length == 1) {
       return setLgort1(f.IT_LG[0].LGORT1, ctx);
