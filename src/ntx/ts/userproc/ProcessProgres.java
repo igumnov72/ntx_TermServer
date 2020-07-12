@@ -10,6 +10,7 @@ import ntx.sap.fm.Z_TS_DPDT2;
 import ntx.sap.fm.Z_TS_DPDT3;
 import ntx.sap.fm.Z_TS_DPDT4;
 import ntx.sap.fm.Z_TS_DPDT5;
+import ntx.sap.fm.ZSHK_INFO;
 import ntx.sap.refs.RefCharg;
 import ntx.sap.refs.RefChargStruct;
 import ntx.sap.refs.RefInfo;
@@ -184,7 +185,7 @@ public class ProcessProgres extends ProcessTask {
   }
 
   private FileData handleScanTov(String scan, TaskContext ctx) throws Exception {
-    if (isScanTov(scan)) {
+    if (isScanTovMk(scan)) {
       return handleScanTovDo(scan, ctx);
     } else {
       callSetErr("Требуется отсканировать ШК товара (сканирование " + scan + " не принято)", ctx);
@@ -193,7 +194,7 @@ public class ProcessProgres extends ProcessTask {
   }
 
   private FileData handleScanTovPal(String scan, TaskContext ctx) throws Exception {
-    if (isScanTov(scan)) {
+    if (isScanTovMk(scan)) {
       return handleScanTovDo(scan, ctx);
     } else if (isScanPal(scan)) {
       return handleScanPalDo(scan, ctx);
@@ -205,13 +206,36 @@ public class ProcessProgres extends ProcessTask {
 
   private FileData handleScanTovDo(String scan, TaskContext ctx) throws Exception {
     // тип ШК уже проверен
-    String charg = getScanCharg(scan);
+    String charg;
+    BigDecimal q;
+
+    if (isScanTov(scan)) {
+      charg = getScanCharg(scan);
+      q = getScanQty(scan);
+    } else if (isScanMkSn(scan)) {
+      charg = delZeros(scan.substring(1, 8));
+      q = new BigDecimal(1);
+    } else if (isScanMkPb(scan)) {
+        ZSHK_INFO f = new ZSHK_INFO();
+        f.SHK = scan;
+        f.execute();
+        if (f.isErr) {
+          callSetErr(f.err, ctx);
+          return htmlGet(true, ctx);
+        }
+        charg = f.CHARG;
+        q = f.QTY;
+    } else {
+        charg = "???";
+        q = new BigDecimal(0);
+    }
+
     RefChargStruct c = RefCharg.get(charg, null);
     if (c == null) {
       callSetErr("Нет такой партии (сканирование " + scan + " не принято)", ctx);
       return htmlGet(true, ctx);
     }
-    BigDecimal q = getScanQty(scan);
+    
     if (q.signum() <= 0) {
       callSetErr("Кол-во в штрих-коде должно быть больше нуля (сканирование " + scan + " не принято)", ctx);
       return htmlGet(true, ctx);
@@ -235,7 +259,7 @@ public class ProcessProgres extends ProcessTask {
       }
     }
 
-    d.callAddTov(charg, q, TaskState.TOV_PAL, ctx);
+    d.callAddTov(charg, q, scan, TaskState.TOV_PAL, ctx);
     r = d.getPrtQtyNull(charg);
     String s = c.matnr + "/" + charg + " " + RefMat.getFullName(c.matnr)
             + ": " + delDecZeros(q.toString()) + " ед";
@@ -533,10 +557,12 @@ class ProgresScanData {  // отсканированные позиции
 
   public String charg;
   public BigDecimal qty;
+  public String shk;
 
-  public ProgresScanData(String charg, BigDecimal qty) {
+  public ProgresScanData(String charg, BigDecimal qty, String shk) {
     this.charg = charg;
     this.qty = qty;
+    this.shk = shk;
   }
 }
 
@@ -610,6 +636,7 @@ class ProgresData extends ProcData {
       s = new ZTS_PRT_QTY_S();
       s.CHARG = ProcessTask.fillZeros(sd.charg, 10);
       s.QTY = sd.qty;
+      s.SHK = sd.shk;
       ret[i] = s;
     }
     return ret;
@@ -662,11 +689,13 @@ class ProgresData extends ProcData {
     Track.saveProcessChange(dr, ctx.task, ctx);
   }
 
-  public void callAddTov(String charg, BigDecimal qty, TaskState state, TaskContext ctx) throws Exception {
+  public void callAddTov(String charg, BigDecimal qty, String shk,
+          TaskState state, TaskContext ctx) throws Exception {
     DataRecord dr = new DataRecord();
     dr.procId = ctx.task.getProcId();
     dr.setS(FieldType.CHARG, charg);
     dr.setN(FieldType.QTY, qty);
+    dr.setS(FieldType.SHK, shk);
     dr.setI(FieldType.LOG, LogType.ADD_TOV.ordinal());
     if ((state != null) && (state != ctx.task.getTaskState())) {
       dr.setI(FieldType.TASK_STATE, state.ordinal());
@@ -706,7 +735,7 @@ class ProgresData extends ProcData {
 
   private void hdAddTov(DataRecord dr) {
     ProgresScanData sd = new ProgresScanData(dr.getValStr(FieldType.CHARG),
-            (BigDecimal) dr.getVal(FieldType.QTY));
+      (BigDecimal) dr.getVal(FieldType.QTY), dr.getValStr(FieldType.SHK));
 
     if (sd.qty.signum() > 0) {
       scanData.add(sd);
@@ -761,7 +790,8 @@ class ProgresData extends ProcData {
           lgorts1 = (String) dr.getVal(FieldType.LGORT1_LIST);
         }
 
-        if (dr.haveVal(FieldType.CHARG) && dr.haveVal(FieldType.QTY)) {
+        if (dr.haveVal(FieldType.CHARG) && dr.haveVal(FieldType.QTY)
+                && dr.haveVal(FieldType.SHK)) {
           hdAddTov(dr); // логика перенесена в процедуру
         }
 

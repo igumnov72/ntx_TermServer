@@ -130,6 +130,7 @@ public class Z_TS_DPDT5 {
         IT_DONE_t.setRow(i);
         IT_DONE_t.setValue("CHARG", params.IT_DONE[i].CHARG);
         IT_DONE_t.setValue("QTY", params.IT_DONE[i].QTY);
+        IT_DONE_t.setValue("SHK", params.IT_DONE[i].SHK);
       }
 
       ret = SAPconn.executeFunction(function);
@@ -150,6 +151,7 @@ public class Z_TS_DPDT5 {
           IT_DONE_r = new ZTS_PRT_QTY_S();
           IT_DONE_r.CHARG = IT_DONE_t.getString("CHARG");
           IT_DONE_r.QTY = IT_DONE_t.getBigDecimal("QTY");
+          IT_DONE_r.SHK = IT_DONE_t.getString("SHK");
           params.IT_DONE[i] = IT_DONE_r;
         }
       }

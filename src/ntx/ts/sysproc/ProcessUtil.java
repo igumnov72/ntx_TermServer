@@ -257,6 +257,31 @@ public abstract class ProcessUtil extends Process {
     return false;
   }
 
+  public static boolean isScanMkSn(String scan) {
+    int n = scan.length();
+    char c = scan.charAt(0);
+    if ((n == 14) && c == 'S' && isAllDigits(scan.substring(1))) {
+      return true;
+    }
+    return false;
+  }
+
+  public static boolean isScanMkPb(String scan) {
+    int n = scan.length();
+    if ((n == 12) && scan.startsWith("YN") && isAllDigits(scan.substring(2))) {
+      return true;
+    }
+    return false;
+  }
+
+  public static boolean isScanMk(String scan) {
+    return isScanMkSn(scan) || isScanMkPb(scan);
+  }
+
+  public static boolean isScanTovMk(String scan) {
+    return isScanTov(scan) || isScanMk(scan);
+  }
+
   public static boolean isScanVbeln(String scan) {
     int n = scan.length();
     if ((n >= 8) && (n <= 10) && isAllDigits(scan)) {
