@@ -282,6 +282,24 @@ public abstract class ProcessUtil extends Process {
     return isScanTov(scan) || isScanMk(scan);
   }
 
+  public static boolean isScanSsccBox(String scan) {
+    int n = scan.length();
+    char c = scan.charAt(0);
+    if ((n == 18) && c == '0' && isAllDigits(scan)) {
+      return true;
+    }
+    return false;
+  }
+
+  public static boolean isScanSsccPal(String scan) {
+    int n = scan.length();
+    char c = scan.charAt(0);
+    if ((n == 18) && c == '1' && isAllDigits(scan)) {
+      return true;
+    }
+    return false;
+  }
+  
   public static boolean isScanVbeln(String scan) {
     int n = scan.length();
     if ((n >= 8) && (n <= 10) && isAllDigits(scan)) {

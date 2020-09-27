@@ -99,7 +99,7 @@ public class ProcessSKorob extends ProcessTask {
       String s = "заказ " + scan + " дебитор " + f.NAME1 + " (склад " + f.LGORT + ")";
       callSetMsg("Сборный короб: " + s, ctx);
       callAddHist(s, ctx);
-      d.callSetVbelnVa(scan, f.LGORT, f.IT, TaskState.KOROB, ctx);
+      d.callSetVbelnVa(scan, f.LGORT, f.IT, f.MARKED, TaskState.KOROB, ctx);
 
       callTaskNameChange(ctx);
     } else {
@@ -112,6 +112,18 @@ public class ProcessSKorob extends ProcessTask {
   private FileData handleScanKorob(String scan, TaskContext ctx) throws Exception {
     if (!isAllDigits(scan)) {
       callSetErr("Требуется отсканировать ШК короба (сканирование " + scan + " не принято)", ctx);
+      return htmlGet(true, ctx);
+    }
+    
+    if (!d.isMarked() && (scan.length() == 18)) 
+    {
+      callSetErr("Требуется ШК короба из матрицы (сканирование " + scan + " не принято)", ctx);
+      return htmlGet(true, ctx);
+    }
+    
+    if (d.isMarked() && (scan.length() != 18) && (scan.charAt(0) == '0')) 
+    {
+      callSetErr("Требуется SSCC ШК короба (сканирование " + scan + " не принято)", ctx);
       return htmlGet(true, ctx);
     }
 
@@ -166,7 +178,7 @@ public class ProcessSKorob extends ProcessTask {
       f1.ZV = d.getVbelnVa();
       f1.execute();
       if (!f1.isErr) {
-        d.callSetVbelnVa(f1.ZV, f1.LGORT, f1.IT, TaskState.KOROB, ctx);
+        d.callSetVbelnVa(f1.ZV, f1.LGORT, f1.IT, f1.MARKED, TaskState.KOROB, ctx);
       } else {
         callSetTaskState(TaskState.KOROB, ctx);
       }
@@ -293,6 +305,7 @@ class SKorobData extends ProcData {
 
   private String vbelnVa = ""; // номер заказа
   private String lgort = ""; // склад (из заказа)
+  private String marked = "";
   private final HashMap<String, SKorobShk> zakData
           = new HashMap<String, SKorobShk>(); // короба по заказу
 
@@ -302,6 +315,11 @@ class SKorobData extends ProcData {
 
   public String getLgort() {
     return lgort;
+  }
+
+  public boolean isMarked() {
+    if (marked == null) return false;
+    return !marked.isEmpty();
   }
 
   public HashMap<String, SKorobShk> getZakData() {
@@ -347,11 +365,13 @@ class SKorobData extends ProcData {
     return ret;
   }
 
-  public void callSetVbelnVa(String vbelnVa, String lgort, ZTS_SKOROB_SHK_S[] it, TaskState state, TaskContext ctx) throws Exception {
+  public void callSetVbelnVa(String vbelnVa, String lgort, ZTS_SKOROB_SHK_S[] it, 
+          String marked, TaskState state, TaskContext ctx) throws Exception {
     DataRecord dr = new DataRecord();
     dr.procId = ctx.task.getProcId();
     dr.setS(FieldType.VBELN, ProcessTask.delZeros(vbelnVa));
     dr.setS(FieldType.LGORT, lgort);
+    dr.setS(FieldType.MARKED, marked);
 
     String[] t1 = new String[it.length];
     int[] t2 = new int[it.length];
@@ -378,7 +398,7 @@ class SKorobData extends ProcData {
   public void callSetKorob(String korob, TaskState state, TaskContext ctx) throws Exception {
     DataRecord dr = new DataRecord();
     dr.procId = ctx.task.getProcId();
-    dr.setS(FieldType.KOROB, ProcessTask.delZeros(korob));
+    dr.setS(FieldType.KOROB, korob); //ProcessTask.delZeros(korob));
     if ((state != null) && (state != ctx.task.getTaskState())) {
       dr.setI(FieldType.TASK_STATE, state.ordinal());
     }
@@ -422,6 +442,10 @@ class SKorobData extends ProcData {
 
         if (dr.haveVal(FieldType.LGORT)) {
           lgort = dr.getValStr(FieldType.LGORT);
+        }
+
+        if (dr.haveVal(FieldType.MARKED)) {
+          marked = dr.getValStr(FieldType.MARKED);
         }
 
         if (dr.haveVal(FieldType.CLEAR_TOV_DATA)) {

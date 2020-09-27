@@ -16,6 +16,8 @@ public class Z_TS_SKOROB1 {
   // exporting params
   public String NAME1 = ""; // Имя 1
   public String LGORT = ""; // Склад
+  public String MARKED = ""; // Индикатор из одной позиции
+  public String NUM_TYP = ""; // Индикатор из одной позиции
   //
   // table params
   public ZTS_SKOROB_SHK_S[] IT = new ZTS_SKOROB_SHK_S[0]; // Число коробов по ШК короба
@@ -62,6 +64,8 @@ public class Z_TS_SKOROB1 {
         System.out.println("Возврат из ФМ Z_TS_SKOROB1:");
         System.out.println("  NAME1=" + NAME1);
         System.out.println("  LGORT=" + LGORT);
+        System.out.println("  MARKED=" + MARKED);
+        System.out.println("  NUM_TYP=" + NUM_TYP);
         System.out.println("  err=" + err);
         System.out.println("  IT.length=" + IT.length);
       }
@@ -119,6 +123,8 @@ public class Z_TS_SKOROB1 {
       if (ret == null) {
         params.NAME1 = expParams.getString("NAME1");
         params.LGORT = expParams.getString("LGORT");
+        params.MARKED = expParams.getString("MARKED");
+        params.NUM_TYP = expParams.getString("NUM_TYP");
         params.err = expParams.getString("ERR");
         if (!params.err.isEmpty()) {
           params.isErr = true;

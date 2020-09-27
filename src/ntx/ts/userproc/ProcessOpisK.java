@@ -106,7 +106,7 @@ public class ProcessOpisK extends ProcessTask {
       String s = "заказ " + scan + " дебитор " + f.KUNNR + " " + f.NAME1 + " (склад " + f.LGORT + ")";
       callSetMsg("Покоробочная опись: " + s, ctx);
       callAddHist(s, ctx);
-      d.callSetVbelnVa(scan, f.LGORT, TaskState.TOV, ctx);
+      d.callSetVbelnVa(scan, f.LGORT, f.MARKED, TaskState.TOV, ctx);
     } else {
       callSetErr(f.err, ctx);
     }
@@ -115,8 +115,43 @@ public class ProcessOpisK extends ProcessTask {
   }
 
   private FileData handleScanTov(String scan, TaskContext ctx) throws Exception {
+    String charg;
+    BigDecimal q;
+
+    if (isScanTov(scan)) {
+      if (d.isMarked()) {
+        callSetErr("Корп ШК не принимаются по маркированному заказу", ctx);
+        return htmlGet(true, ctx);
+      }
+      charg = getScanCharg(scan);
+      q = getScanQty(scan);
+    } else if (isScanMkSn(scan)) {
+      if (!d.isMarked()) {
+        callSetErr("Маркированные ШК не принимаются по немаркированному заказу", ctx);
+        return htmlGet(true, ctx);
+      }
+      charg = delZeros(scan.substring(1, 9));
+      q = new BigDecimal(1);
+    } else if (isScanMkPb(scan)) {
+      if (!d.isMarked()) {
+        callSetErr("Маркированные ШК не принимаются по немаркированному заказу", ctx);
+        return htmlGet(true, ctx);
+      }
+      ZSHK_INFO f = new ZSHK_INFO();
+      f.SHK = scan;
+      f.execute();
+      if (f.isErr) {
+        callSetErr(f.err, ctx);
+        return htmlGet(true, ctx);
+      }
+      charg = f.CHARG;
+      q = f.QTY;
+    } else {
+        callSetErr("ШК неизвестного типа (сканирование " + scan + " не принято)", ctx);
+        return htmlGet(true, ctx);
+    }
+    
     try {
-      String charg = getScanCharg(scan);
       RefChargStruct c = RefCharg.get(charg, null);
       if (c == null) {
         callSetErr("Нет такой партии (сканирование " + scan + " не принято)", ctx);
@@ -131,14 +166,16 @@ public class ProcessOpisK extends ProcessTask {
         return htmlGet(true, ctx);
       }
 
-      if (ctx.user.getAskQtyCompl(d.getLgort())) {
+/*
+    if (ctx.user.getAskQtyCompl(d.getLgort())) {
         String s = c.matnr + " " + RefMat.getFullName(c.matnr);
         callSetMsg(s, ctx);
         d.callSetLastMatnr(c.matnr, getScanQty(scan), TaskState.QTY, ctx);
         return htmlGet(true, ctx);
       }
+*/
 
-      return handleScanTovDo(c.matnr, getScanQty(scan), ctx);
+      return handleScanTovDo(c.matnr, q, scan, ctx);
     } catch (Exception e) {
       String s = e.getMessage();
       if (s == null) {
@@ -149,8 +186,9 @@ public class ProcessOpisK extends ProcessTask {
     }
   }
 
-  private FileData handleScanTovDo(String matnr, BigDecimal qty, TaskContext ctx) throws Exception {
-    d.callAddTov(matnr, qty, TaskState.TOV, ctx);
+  private FileData handleScanTovDo(String matnr, BigDecimal qty, 
+          String shk, TaskContext ctx) throws Exception {
+    d.callAddTov(matnr, qty, shk, TaskState.TOV, ctx);
     String s = delDecZeros(qty.toString()) + "ед " + matnr + " " + RefMat.getName(matnr);
     callAddHist(s, ctx);
     s += " (всего " + d.getQtyTotStr() + " ед)";
@@ -174,7 +212,9 @@ public class ProcessOpisK extends ProcessTask {
       return htmlGet(true, ctx);
     }
 
-    return handleScanTovDo(d.getLastMatnr(), qty, ctx);
+    callSetErr("Режим прямого ввода количества не реализован", ctx);
+    return htmlGet(true, ctx);
+    //return handleScanTovDo(d.getLastMatnr(), qty, ctx);
   }
 
   private boolean getHaveMat(String matnr, TaskContext ctx) throws Exception {
@@ -213,7 +253,10 @@ public class ProcessOpisK extends ProcessTask {
       case TOV:
         definition = "later:Отложить";
         if (d.getScanCount() > 0) {
-          definition += ";opis:Печать описи;save:Сохранить без печати;del_last:Отменить последнее сканирование;del_all:Удалить весь товар";
+          if (d.isMarked()) 
+            definition += ";save:Сохранить;del_last:Отменить последнее сканирование;del_all:Удалить весь товар";
+          else
+            definition += ";opis:Печать описи;save:Сохранить без печати;del_last:Отменить последнее сканирование;del_all:Удалить весь товар";
         } else {
           definition += ";vbel:Другой заказ;fin:Завершить";
         }
@@ -292,6 +335,7 @@ public class ProcessOpisK extends ProcessTask {
         sd = d.getTov(i);
         f.IT[i].MATNR = fillZeros(sd.matnr, 18);
         f.IT[i].QTY = sd.qty;
+        f.IT[i].SHK = sd.shk;
       }
     }
 
@@ -373,10 +417,12 @@ class OpisKScanData {  // отсканированные позиции
 
   public String matnr;
   public BigDecimal qty;
+  public String shk;
 
-  public OpisKScanData(String matnr, BigDecimal qty) {
+  public OpisKScanData(String matnr, BigDecimal qty, String shk) {
     this.matnr = matnr;
     this.qty = qty;
+    this.shk = shk;
   }
 }
 
@@ -385,6 +431,7 @@ class OpisKData extends ProcData {
   private String vbelnVa = ""; // номер заказа
   private String lgort = ""; // склад (из заказа)
   private String lastMatnr = "";
+  private String marked = "";
   private BigDecimal lastQty = BigDecimal.ZERO;
   private final ArrayList<OpisKScanData> scanData
           = new ArrayList<OpisKScanData>(); // отсканированный товар
@@ -405,6 +452,11 @@ class OpisKData extends ProcData {
 
   public String getLgort() {
     return lgort;
+  }
+
+  public boolean isMarked() {
+    if (marked == null) return false;
+    return !marked.isEmpty();
   }
 
   public ArrayList<OpisKScanData> getScanData() {
@@ -447,11 +499,13 @@ class OpisKData extends ProcData {
     Track.saveProcessChange(dr, ctx.task, ctx);
   }
 
-  public void callSetVbelnVa(String vbelnVa, String lgort, TaskState state, TaskContext ctx) throws Exception {
+  public void callSetVbelnVa(String vbelnVa, String lgort, String marked,
+          TaskState state, TaskContext ctx) throws Exception {
     DataRecord dr = new DataRecord();
     dr.procId = ctx.task.getProcId();
     dr.setS(FieldType.VBELN, ProcessTask.delZeros(vbelnVa));
     dr.setS(FieldType.LGORT, lgort);
+    dr.setS(FieldType.MARKED, marked);
     if ((state != null) && (state != ctx.task.getTaskState())) {
       dr.setI(FieldType.TASK_STATE, state.ordinal());
     }
@@ -482,11 +536,13 @@ class OpisKData extends ProcData {
     Track.saveProcessChange(dr, ctx.task, ctx);
   }
 
-  public void callAddTov(String matnr, BigDecimal qty, TaskState state, TaskContext ctx) throws Exception {
+  public void callAddTov(String matnr, BigDecimal qty, String shk,
+          TaskState state, TaskContext ctx) throws Exception {
     DataRecord dr = new DataRecord();
     dr.procId = ctx.task.getProcId();
     dr.setS(FieldType.MATNR, matnr);
     dr.setN(FieldType.QTY, qty);
+    dr.setS(FieldType.SHK, shk);
     if ((state != null) && (state != ctx.task.getTaskState())) {
       dr.setI(FieldType.TASK_STATE, state.ordinal());
     }
@@ -521,6 +577,10 @@ class OpisKData extends ProcData {
           lgort = dr.getValStr(FieldType.LGORT);
         }
 
+        if (dr.haveVal(FieldType.MARKED)) {
+          marked = dr.getValStr(FieldType.MARKED);
+        }
+
         if (dr.haveVal(FieldType.HAVE_MAT) && dr.haveVal(FieldType.MATNR)) {
           haveMat.put(dr.getValStr(FieldType.MATNR), (Boolean) dr.getVal(FieldType.HAVE_MAT));
         }
@@ -548,10 +608,12 @@ class OpisKData extends ProcData {
           lastQty = (BigDecimal) dr.getVal(FieldType.LAST_QTY);
         }
 
-        if (dr.haveVal(FieldType.QTY) && dr.haveVal(FieldType.MATNR)) {
+        if (dr.haveVal(FieldType.QTY) && dr.haveVal(FieldType.MATNR) 
+                && dr.haveVal(FieldType.SHK)) {
           String matnr = dr.getValStr(FieldType.MATNR);
           BigDecimal qty = (BigDecimal) dr.getVal(FieldType.QTY);
-          scanData.add(new OpisKScanData(matnr, qty));
+          String shk = dr.getValStr(FieldType.SHK);
+          scanData.add(new OpisKScanData(matnr, qty, shk));
         }
 
         break;

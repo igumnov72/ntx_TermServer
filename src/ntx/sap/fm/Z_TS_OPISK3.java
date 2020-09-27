@@ -118,6 +118,7 @@ public class Z_TS_OPISK3 {
         IT_t.setRow(i);
         IT_t.setValue("MATNR", params.IT[i].MATNR);
         IT_t.setValue("QTY", params.IT[i].QTY);
+        IT_t.setValue("SHK", params.IT[i].SHK);
       }
 
       ret = SAPconn.executeFunction(function);
@@ -139,6 +140,7 @@ public class Z_TS_OPISK3 {
           IT_r = new ZTS_MAT_QTY_S();
           IT_r.MATNR = IT_t.getString("MATNR");
           IT_r.QTY = IT_t.getBigDecimal("QTY");
+          IT_r.SHK = IT_t.getString("SHK");
           params.IT[i] = IT_r;
         }
       }

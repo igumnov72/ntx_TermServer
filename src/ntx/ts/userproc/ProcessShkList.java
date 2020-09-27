@@ -1,0 +1,202 @@
+package ntx.ts.userproc;
+
+import java.util.ArrayList;
+import java.util.Date;
+import ntx.sap.fm.Z_TS_SHKLIST1;
+import ntx.sap.refs.RefCharg;
+import ntx.sap.refs.RefChargStruct;
+import ntx.sap.refs.RefInfo;
+import ntx.ts.html.*;
+import ntx.ts.http.FileData;
+import ntx.ts.srv.DataRecord;
+import ntx.ts.srv.FieldType;
+import ntx.ts.srv.ProcType;
+import ntx.ts.srv.TermQuery;
+import ntx.ts.srv.Track;
+import ntx.ts.sysproc.ProcData;
+import ntx.ts.sysproc.ProcessContext;
+import ntx.ts.sysproc.ProcessTask;
+import static ntx.ts.sysproc.ProcessUtil.getScanCharg;
+import ntx.ts.sysproc.TaskContext;
+import ntx.ts.sysproc.UserContext;
+
+/**
+ * список ШК
+ */
+public class ProcessShkList extends ProcessTask {
+
+  private final ShkListData d = new ShkListData();
+
+  public ProcessShkList(long procId) throws Exception {
+    super(ProcType.SHK_LIST, procId);
+  }
+
+  @Override
+  public FileData handleQuery(TermQuery tq, UserContext ctx) throws Exception {
+    // обработка инф с терминала
+
+    String scan = (tq.params == null ? null : tq.params.getParNull("scan"));
+    String menu = (tq.params == null ? null : tq.params.getParNull("menu"));
+
+    if (scan != null) {
+      if (!scan.equals("00")) {
+        callClearErrMsg(ctx);
+      }
+      return handleScan(scan, false, ctx);
+    } else if (menu != null) {
+      return handleMenu(menu, ctx);
+    }
+
+    return htmlWork("Список ШК", false, ctx);
+  }
+
+  public FileData handleScan(String scan, boolean isHtext, UserContext ctx) throws Exception {
+    if (scan.equals("00")) {
+      return htmlMenu();
+    }
+
+    callAddHist(scan, ctx);
+    callSetMsg(scan, ctx);
+    d.callAddNScan(this, ctx);
+    d.callAddScan(scan, this, ctx);
+    callTaskNameChange(ctx);
+    return htmlWork("Список ШК", true, ctx);
+  }
+
+  public FileData htmlMenu() throws Exception {
+    String definition = "cont:Назад;later:Отложить;fin:Завершить";
+
+    if (d.getNScan() > 0)
+      definition = definition + ";save:Сохранить";
+
+    HtmlPageMenu p = new HtmlPageMenu("Меню", "Список ШК",
+            definition, null, null, null);
+    return p.getPage();
+  }
+
+  public FileData handleMenu(String menu, UserContext ctx) throws Exception {
+    if (menu.equals("fin")) {
+      callTaskFinish(ctx);
+      return null;
+    } else if (menu.equals("later")) {
+      callTaskDeactivate(ctx);
+      return null;
+    } else if (menu.equals("save")) {
+      //Z_TS_SHKLIST1
+      
+        Z_TS_SHKLIST1 f = new Z_TS_SHKLIST1();
+        f.USER_SHK = ctx.user.getUserSHK();
+
+        int nn = d.getScanDataCount();
+        String sd;
+        if (nn > 0) {
+          f.IT_create(nn);
+          for (int i = 0; i < nn; i++) {
+            sd = d.getScanDataItem(i);
+            f.IT[i].SHK = sd;
+          }
+        }
+
+        f.execute();
+
+        if (f.isErr) {
+          callSetErr(f.err, ctx);
+          return htmlWork("Список ШК", true, ctx);
+        }
+
+        d.callClearScanData(this, ctx);
+        String s = "Сохранен список " + delZeros(f.SHKLIST);
+        callAddHist(s, ctx);
+        callSetMsg(s, ctx);
+      
+    }
+    return htmlWork("Список ШК", false, ctx);
+  }
+
+  @Override
+  public void handleData(DataRecord dr, ProcessContext ctx) throws Exception {
+    super.handleData(dr, ctx);
+    d.handleData(dr, ctx);
+  }
+
+  @Override
+  public String procName() {
+    if (d.getNScan() == 0) {
+      return super.procName();
+    }
+    return getProcType().text + " (" + d.getNScan() + ") " + df2.format(new Date(getProcId()));
+  }
+}
+
+class ShkListData extends ProcData {
+
+  private int nScan = 0;
+  private final ArrayList<String> scanData
+          = new ArrayList<String>(); // отсканированные ШК
+
+  public int getNScan() {
+    return nScan;
+  }
+
+  public int getScanDataCount() {
+    return scanData.size();
+  }
+
+  public String getScanDataItem(int idx) {
+    return scanData.get(idx);
+  }
+
+  public String[] getScanData() {
+    int n = scanData.size();
+    String[] ret = new String[n];
+    for (int i = 0; i < n; i++) ret[i] = scanData.get(i);
+    return ret;
+  }
+  
+  public void clearScanData() {
+    nScan = 0;
+    scanData.clear();
+  }
+  
+  public void callClearScanData(ProcessTask p, UserContext ctx) throws Exception {
+    DataRecord dr = new DataRecord();
+    dr.procId = p.getProcId();
+    dr.setV(FieldType.CLEAR_TOV_DATA);
+    Track.saveProcessChange(dr, p, ctx);
+  }
+  
+  
+  public void callAddNScan(ProcessTask p, UserContext ctx) throws Exception {
+    DataRecord dr = new DataRecord();
+    dr.procId = p.getProcId();
+    dr.setI(FieldType.N_SCAN, nScan + 1);
+    Track.saveProcessChange(dr, p, ctx);
+  }
+
+  public void callAddScan(String scan, ProcessTask p, UserContext ctx) throws Exception {
+    DataRecord dr = new DataRecord();
+    dr.procId = p.getProcId();
+    dr.setS(FieldType.SHK, scan);
+    Track.saveProcessChange(dr, p, ctx);
+  }
+
+  @Override
+  public void handleData(DataRecord dr, ProcessContext ctx) throws Exception {
+    switch (dr.recType) {
+      case 0:
+      case 1:
+        if (dr.haveVal(FieldType.N_SCAN)) {
+          nScan = (Integer) dr.getVal(FieldType.N_SCAN);
+        }
+        if (dr.haveVal(FieldType.SHK)) {
+          String shk;
+          shk = (String) dr.getVal(FieldType.SHK);
+          scanData.add(shk);
+        }
+        if (dr.haveVal(FieldType.CLEAR_TOV_DATA)) {
+          clearScanData();
+        }
+        break;
+    }
+  }
+}

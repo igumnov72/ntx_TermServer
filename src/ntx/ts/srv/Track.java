@@ -103,6 +103,9 @@ public class Track {
       case SKOROB:
         ret = new ProcessSKorob(procId);
         break;
+      case SHK_LIST:
+        ret = new ProcessShkList(procId);
+        break;
     }
     if (ret == null) {
       throw new Exception("Ошибка программы: не создан процесс типа " + pType.text);
