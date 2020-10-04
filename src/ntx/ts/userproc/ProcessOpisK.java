@@ -93,10 +93,12 @@ public class ProcessOpisK extends ProcessTask {
   }
 
   private FileData handleScanVbelnVa(String scan, TaskContext ctx) throws Exception {
+    /*
     if (!isScanVbelnVa(scan) && !isScanEbeln(scan)) {
       callSetErr("Требуется ввести номер заказа (ввод " + scan + " не принят)", ctx);
       return htmlGet(true, ctx);
     }
+    */
 
     Z_TS_OPISK1 f = new Z_TS_OPISK1();
     f.VBELN = fillZeros(scan, 10);

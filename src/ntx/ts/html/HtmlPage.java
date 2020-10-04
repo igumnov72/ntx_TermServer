@@ -376,10 +376,17 @@ public class HtmlPage {
 
     sb.append("<meta http-equiv=\"Content-Type\" content=\"text/HTML; charset=utf-8\">\r\n");
     sb.append("<meta http-equiv=\"Cache-Control\" content=\"no-cache\" />\r\n");
+    
+    sb.append("<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">\r\n");
+    
     if (sound != null) {
       sb.append("<bgsound src=\"");
       sb.append(sound);
       sb.append("\">\r\n");
+
+      sb.append("<audio autoplay><source src=\"");
+      sb.append(sound);
+      sb.append("\" type=\"audio/wav\"></audio>\r\n");
     }
     sb.append("</head>\r\n<body link=blue vlink=blue ");
     if (fontSize > 0) {

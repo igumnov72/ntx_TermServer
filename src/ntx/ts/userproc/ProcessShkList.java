@@ -54,20 +54,27 @@ public class ProcessShkList extends ProcessTask {
     if (scan.equals("00")) {
       return htmlMenu();
     }
-
-    callAddHist(scan, ctx);
-    callSetMsg(scan, ctx);
-    d.callAddNScan(this, ctx);
-    d.callAddScan(scan, this, ctx);
-    callTaskNameChange(ctx);
-    return htmlWork("Список ШК", true, ctx);
+    
+    if (isScanMkSn(scan) || isScanMkPb(scan) || isScanSsccBox(scan) || 
+            isScanSsccPal(scan) ) {
+      callAddHist(scan, ctx);
+      callSetMsg(scan, ctx);
+      //d.callAddNScan(this, ctx);
+      d.callAddScan(scan, this, ctx);
+      callTaskNameChange(ctx);
+      return htmlWork("Список ШК", true, ctx);
+    } else {
+      callSetErr("Неизвестный тип ШК (сканирование " + scan + " не принято)", ctx);
+      return htmlWork("Список ШК", true, ctx);
+    }
   }
 
   public FileData htmlMenu() throws Exception {
     String definition = "cont:Назад;later:Отложить;fin:Завершить";
 
-    if (d.getNScan() > 0)
-      definition = definition + ";save:Сохранить";
+    if (d.getNScan() > 0) {
+      definition = definition + ";save:Сохранить;del_last:Отменить последнее сканирование";
+    }
 
     HtmlPageMenu p = new HtmlPageMenu("Меню", "Список ШК",
             definition, null, null, null);
@@ -82,7 +89,6 @@ public class ProcessShkList extends ProcessTask {
       callTaskDeactivate(ctx);
       return null;
     } else if (menu.equals("save")) {
-      //Z_TS_SHKLIST1
       
         Z_TS_SHKLIST1 f = new Z_TS_SHKLIST1();
         f.USER_SHK = ctx.user.getUserSHK();
@@ -108,8 +114,18 @@ public class ProcessShkList extends ProcessTask {
         String s = "Сохранен список " + delZeros(f.SHKLIST);
         callAddHist(s, ctx);
         callSetMsg(s, ctx);
-      
+    } else if (menu.equals("del_last")) {
+
+        int nn = d.getScanDataCount();
+        if (nn > 0) { // отменяем сканирование товара
+          String shk = d.getScanDataItem(nn-1);
+          String s = "Отменено сканирование ШК " + shk;
+          d.callDelLast(this, ctx);
+          callSetMsg(s, ctx);
+          callAddHist(s, ctx);
+        }      
     }
+    
     return htmlWork("Список ШК", false, ctx);
   }
 
@@ -130,12 +146,13 @@ public class ProcessShkList extends ProcessTask {
 
 class ShkListData extends ProcData {
 
-  private int nScan = 0;
+  //private int nScan = 0;
   private final ArrayList<String> scanData
           = new ArrayList<String>(); // отсканированные ШК
 
   public int getNScan() {
-    return nScan;
+    //return nScan;
+    return scanData.size();
   }
 
   public int getScanDataCount() {
@@ -154,7 +171,7 @@ class ShkListData extends ProcData {
   }
   
   public void clearScanData() {
-    nScan = 0;
+    //nScan = 0;
     scanData.clear();
   }
   
@@ -165,18 +182,27 @@ class ShkListData extends ProcData {
     Track.saveProcessChange(dr, p, ctx);
   }
   
-  
+/*  
   public void callAddNScan(ProcessTask p, UserContext ctx) throws Exception {
     DataRecord dr = new DataRecord();
     dr.procId = p.getProcId();
     dr.setI(FieldType.N_SCAN, nScan + 1);
     Track.saveProcessChange(dr, p, ctx);
   }
-
+*/
   public void callAddScan(String scan, ProcessTask p, UserContext ctx) throws Exception {
     DataRecord dr = new DataRecord();
     dr.procId = p.getProcId();
     dr.setS(FieldType.SHK, scan);
+    Track.saveProcessChange(dr, p, ctx);
+  }
+  
+  public void callDelLast(ProcessTask p, UserContext ctx) throws Exception {
+    DataRecord dr = new DataRecord();
+    dr.procId = p.getProcId();
+    if (scanData.size() > 0) {
+      dr.setV(FieldType.DEL_LAST);
+    }
     Track.saveProcessChange(dr, p, ctx);
   }
 
@@ -185,17 +211,29 @@ class ShkListData extends ProcData {
     switch (dr.recType) {
       case 0:
       case 1:
+          /*
         if (dr.haveVal(FieldType.N_SCAN)) {
           nScan = (Integer) dr.getVal(FieldType.N_SCAN);
         }
+          */
+
         if (dr.haveVal(FieldType.SHK)) {
           String shk;
           shk = (String) dr.getVal(FieldType.SHK);
           scanData.add(shk);
         }
+
         if (dr.haveVal(FieldType.CLEAR_TOV_DATA)) {
           clearScanData();
         }
+
+        if (dr.haveVal(FieldType.DEL_LAST)) {
+          int n = scanData.size();
+          if (n > 0) {
+            scanData.remove(n - 1);
+          }
+        }
+
         break;
     }
   }
