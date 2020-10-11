@@ -1,5 +1,6 @@
 package ntx.ts.sysproc;
 
+import java.math.BigDecimal;
 import ntx.ts.srv.DataRecord;
 
 /**
@@ -21,3 +22,4 @@ public abstract class ProcData {
     }
   }
 }
+

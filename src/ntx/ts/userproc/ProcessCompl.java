@@ -16,6 +16,7 @@ import ntx.ts.srv.FieldType;
 import ntx.ts.srv.LogType;
 import ntx.ts.srv.TaskState;
 import ntx.ts.srv.ProcType;
+import ntx.ts.srv.ScanChargQty;
 import ntx.ts.srv.TSparams;
 import ntx.ts.srv.TermQuery;
 import ntx.ts.srv.Track;
@@ -698,7 +699,7 @@ public class ProcessCompl extends ProcessTask {
 
     if (isScanCell(scan)) {
       return handleScanCell(scan, ctx, false);
-    } else if (isScanTov(scan)) {
+    } else if (isScanTovMk(scan)) {
       return handleScanTov(scan, ctx);
     } else if (sPal && isScanPal(scan)) {
       return handleScanPal(scan, ctx);
@@ -723,13 +724,20 @@ public class ProcessCompl extends ProcessTask {
   private FileData handleScanSgmModTov(String scan, TaskContext ctx) throws Exception {
     // сканирование товара при пересканировании СГМ
 
-    if (!isScanTov(scan)) {
+    if (!isScanTovMk(scan)) {
       callSetErr("Требуется отсканировать ШК товара (в СГМ) (сканирование " + scan + " не принято)", ctx);
       return htmlGet(true, ctx);
     }
 
+    ScanChargQty scanInf; 
+    scanInf = getScanChargQty(scan);
+    if (!scanInf.err.isEmpty()) {
+      callSetErr(scanInf.err + " (сканирование " + scan + " не принято)", ctx);
+      return htmlGet(true, ctx);
+    }
+    
     try {
-      String charg = getScanCharg(scan);
+      String charg = scanInf.charg;// getScanCharg(scan);
       RefChargStruct c = RefCharg.get(charg, null);
       if (c == null) {
         callSetErr("Нет такой партии (сканирование " + scan + " не принято)", ctx);
@@ -738,10 +746,12 @@ public class ProcessCompl extends ProcessTask {
       if (ctx.user.getAskQtyCompl(d.getLgort())) {
         String s = c.matnr + "/" + charg + " " + RefMat.getFullName(c.matnr);
         callSetMsg(s, ctx);
-        d.callSetLastCharg(charg, getScanQty(scan), TaskState.MOD_SGM_QTY, ctx);
+        d.callSetLastCharg(charg, scanInf.qty,// getScanQty(scan), 
+                scan, TaskState.MOD_SGM_QTY, ctx);
         return htmlGet(true, ctx);
       } else {
-        return handleScanSgmModTovDo(charg, getScanQty(scan), ctx);
+        return handleScanSgmModTovDo(charg, scanInf.qty,//getScanQty(scan), 
+                ctx);
       }
     } catch (Exception e) {
       String s = e.getMessage();
@@ -837,7 +847,14 @@ public class ProcessCompl extends ProcessTask {
         return htmlGet(true, ctx);
       }
 
-      String charg = getScanCharg(scan);
+      ScanChargQty scanInf; 
+      scanInf = getScanChargQty(scan);
+      if (!scanInf.err.isEmpty()) {
+        callSetErr(scanInf.err + " (сканирование " + scan + " не принято)", ctx);
+        return htmlGet(true, ctx);
+      }
+      
+      String charg = scanInf.charg;// getScanCharg(scan);
       RefChargStruct c = RefCharg.get(charg, null);
       if (c == null) {
         callSetErr("Нет такой партии (сканирование " + scan + " не принято)", ctx);
@@ -857,17 +874,20 @@ public class ProcessCompl extends ProcessTask {
         callSetErr("Уже скомплектовано: " + s, ctx);
         return htmlGet(true, ctx);
       }
-      if (ctx.user.getAskQtyCompl(d.getLgort())) {
+      if (ctx.user.getAskQtyCompl(d.getLgort()) && !isScanMk(scan)) {
         String s = c.matnr + "/" + charg + " " + RefMat.getFullName(c.matnr)
                 + ";\r\nвзять: " + delDecZeros(tq.qty.toString()) + " ед";
         callSetMsg(s, ctx);
-        d.callSetLastCharg(charg, getScanQty(scan), TaskState.QTY, ctx);
+        d.callSetLastCharg(charg, scanInf.qty,// getScanQty(scan), 
+                scan, TaskState.QTY, ctx);
         return htmlGet(true, ctx);
       } else if (d.isSGM()) {
-        d.callSetLastCharg(charg, getScanQty(scan), TaskState.SGM, ctx);
+        d.callSetLastCharg(charg, scanInf.qty,//getScanQty(scan), 
+                scan, TaskState.SGM, ctx);
         return htmlGet(true, ctx);
       } else {
-        return handleScanTovDo(charg, 0, getScanQty(scan), ctx);
+        return handleScanTovDo(charg, 0, scanInf.qty, //getScanQty(scan), 
+                scan, ctx);
       }
     } catch (Exception e) {
       String s = e.getMessage();
@@ -906,7 +926,7 @@ public class ProcessCompl extends ProcessTask {
       d.callSetLastQty(qty, TaskState.SGM, ctx);
       return htmlGet(true, ctx);
     } else {
-      return handleScanTovDo(d.getLastCharg(), 0, qty, ctx);
+      return handleScanTovDo(d.getLastCharg(), 0, qty, "", ctx);
     }
   }
 
@@ -920,7 +940,7 @@ public class ProcessCompl extends ProcessTask {
       return htmlGet(true, ctx);
     }
 
-    return handleScanTovDo(d.getLastCharg(), getScanSgm(scan), d.getLastQty(), ctx);
+    return handleScanTovDo(d.getLastCharg(), getScanSgm(scan), d.getLastQty(), d.getLastScan(), ctx);
   }
 
   private boolean checkHaveToPal(TaskContext ctx) throws Exception {
@@ -931,7 +951,8 @@ public class ProcessCompl extends ProcessTask {
     return true;
   }
 
-  private FileData handleScanTovDo(String charg, int sgm, BigDecimal qty, TaskContext ctx) throws Exception {
+  private FileData handleScanTovDo(String charg, int sgm, BigDecimal qty, 
+          String scan, TaskContext ctx) throws Exception {
     try {
       if (!checkHaveToPal(ctx)) {
         return htmlGet(true, ctx);
@@ -961,8 +982,9 @@ public class ProcessCompl extends ProcessTask {
       } else if (tq.qty.compareTo(BigDecimal.ZERO) == 0) {
         callSetErr("Уже полностью здесь скомплектовано: " + s, ctx);
       } else if (tq.qty.compareTo(qty) < 0) {
-        if ((d.getCheckCompl().equals("X")) && (tq.qty.signum() > 0)) {
-          d.callAddTov(c.matnr, charg, sgm, tq.qty, ctx);
+        if ((d.getCheckCompl().equals("X")) && (tq.qty.signum() > 0) &&
+                !isScanMk(scan)) {
+          d.callAddTov(c.matnr, charg, sgm, tq.qty, "", ctx);
           s = s + ": отсканировано " + delDecZeros(qty.toString())
                   + " ед, принято " + delDecZeros(tq.qty.toString()) + " ед ("
                   + d.getPalQtyScan() + ")";
@@ -973,7 +995,7 @@ public class ProcessCompl extends ProcessTask {
                   + delDecZeros(tq.qty.toString()) + " ед\r\n" + s, ctx);
         }
       } else {
-        d.callAddTov(c.matnr, charg, sgm, qty, ctx);
+        d.callAddTov(c.matnr, charg, sgm, qty, scan, ctx);
         s = s + ": " + delDecZeros(qty.toString()) + " ед ("
                 + d.getPalQtyScan() + ")";
         callSetMsg(s, ctx);
@@ -2319,8 +2341,10 @@ class ComplScanData {  // отсканированные позиции (по т
   public int sgm;
   public BigDecimal qtyP; // кол-во связано (с ведомостью) по партии
   public BigDecimal qtyM; // кол-во связано (с ведомостью) по материалу
+  public String shk;
 
-  public ComplScanData(String pal, String toPal, String matnr, String charg, int sgm, BigDecimal qty) {
+  public ComplScanData(String pal, String toPal, String matnr, String charg, 
+          int sgm, BigDecimal qty, String shk) {
     this.pal = pal;
     this.toPal = toPal;
     this.matnr = matnr;
@@ -2328,6 +2352,7 @@ class ComplScanData {  // отсканированные позиции (по т
     this.sgm = sgm;
     this.qtyP = qty;
     this.qtyM = qty;
+    this.shk = shk;
   }
 }
 
@@ -2450,6 +2475,7 @@ class ComplData extends ProcData {
   private int modSgmNo = 0; // номер пересканируемой СГМ
   private final ArrayList<TovPos> modSgmTov = new ArrayList<TovPos>(); // отсканированный товар (при пересканировании СГМ)
   private int modSgmPrevState = 0;
+  private String lastScan = "";
 
   public String getNextCellScan() {
     return nextCellScan;
@@ -2620,6 +2646,7 @@ class ComplData extends ProcData {
       cd.CHARG = ProcessTask.fillZeros(sd.charg, 10);
       cd.QTY = sd.qtyP.add(sd.qtyM);
       cd.SGM = sd.sgm;
+      cd.SHK = sd.shk;
       ret[i] = cd;
     }
     return ret;
@@ -2701,6 +2728,9 @@ class ComplData extends ProcData {
     return lastCharg;
   }
 
+  public String getLastScan() {
+    return lastScan;
+  }
   public BigDecimal getLastQty() {
     return lastQty;
   }
@@ -3116,11 +3146,15 @@ class ComplData extends ProcData {
     Track.saveProcessChange(dr, ctx.task, ctx);
   }
 
-  public void callSetLastCharg(String charg, BigDecimal qty, TaskState state, TaskContext ctx) throws Exception {
+  public void callSetLastCharg(String charg, BigDecimal qty, 
+          String scan, TaskState state, TaskContext ctx) throws Exception {
     DataRecord dr = new DataRecord();
     dr.procId = ctx.task.getProcId();
     if (!strEq(this.lastCharg, charg)) {
       dr.setS(FieldType.LAST_CHARG, charg);
+    }
+    if (!strEq(this.lastScan, scan)) {
+      dr.setS(FieldType.LAST_SCAN, charg);
     }
     if (this.lastQty.compareTo(qty) != 0) {
       dr.setN(FieldType.LAST_QTY, qty);
@@ -3161,7 +3195,8 @@ class ComplData extends ProcData {
     Track.saveProcessChange(dr, ctx.task, ctx);
   }
 
-  public void callAddTov(String matnr, String charg, int sgm, BigDecimal qty, TaskContext ctx) throws Exception {
+  public void callAddTov(String matnr, String charg, int sgm, BigDecimal qty, 
+          String shk, TaskContext ctx) throws Exception {
     // добавление данных о товаре (партия - без ведущих нулей)
     if (qty.signum() == 0) {
       return;
@@ -3172,6 +3207,7 @@ class ComplData extends ProcData {
     dr.setS(FieldType.CHARG, charg);
     dr.setI(FieldType.SGM, sgm);
     dr.setN(FieldType.QTY, qty);
+    dr.setS(FieldType.SHK, shk);
     dr.setI(FieldType.LOG, LogType.ADD_TOV.ordinal());
     Track.saveProcessChange(dr, ctx.task, ctx);
   }
@@ -3374,7 +3410,8 @@ class ComplData extends ProcData {
   private void hdAddTov(DataRecord dr) {
     ComplScanData sd = new ComplScanData(lenum, toPal, dr.getValStr(FieldType.MATNR),
             dr.getValStr(FieldType.CHARG), (Integer) dr.getVal(FieldType.SGM),
-            (BigDecimal) dr.getVal(FieldType.QTY));
+            (BigDecimal) dr.getVal(FieldType.QTY),
+             dr.getValStr(FieldType.SHK));
     if (vedVC != null) {
       String key = lenum + "_" + sd.matnr + "_" + sd.charg;
       ComplVedVCpos vedPos = vedVC.ved.get(key);
@@ -3570,6 +3607,10 @@ class ComplData extends ProcData {
           lastCharg = dr.getValStr(FieldType.LAST_CHARG);
         }
 
+        if (dr.haveVal(FieldType.LAST_SCAN)) {
+          lastScan = dr.getValStr(FieldType.LAST_SCAN);
+        }
+
         if (dr.haveVal(FieldType.LAST_QTY)) {
           lastQty = (BigDecimal) dr.getVal(FieldType.LAST_QTY);
         }
@@ -3591,7 +3632,9 @@ class ComplData extends ProcData {
           hdAddFP1(dr); // логика перенесена в процедуру
         }
 
-        if (dr.haveVal(FieldType.MATNR) && dr.haveVal(FieldType.CHARG) && dr.haveVal(FieldType.QTY) && dr.haveVal(FieldType.SGM)) {
+        if (dr.haveVal(FieldType.MATNR) && dr.haveVal(FieldType.CHARG) && 
+            dr.haveVal(FieldType.QTY) && dr.haveVal(FieldType.SGM) &&
+            dr.haveVal(FieldType.SHK)) {
           hdAddTov(dr); // логика перенесена в процедуру
         }
 

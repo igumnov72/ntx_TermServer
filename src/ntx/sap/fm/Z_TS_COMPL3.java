@@ -170,6 +170,7 @@ public class Z_TS_COMPL3 {
         IT_DONE1_t.setValue("MATNR", params.IT_DONE1[i].MATNR);
         IT_DONE1_t.setValue("CHARG", params.IT_DONE1[i].CHARG);
         IT_DONE1_t.setValue("QTY", params.IT_DONE1[i].QTY);
+        IT_DONE1_t.setValue("SHK", params.IT_DONE1[i].SHK);
       }
 
       IT_PAL_ZONE_t.appendRows(params.IT_PAL_ZONE.length);
@@ -219,6 +220,7 @@ public class Z_TS_COMPL3 {
           IT_DONE1_r.MATNR = IT_DONE1_t.getString("MATNR");
           IT_DONE1_r.CHARG = IT_DONE1_t.getString("CHARG");
           IT_DONE1_r.QTY = IT_DONE1_t.getBigDecimal("QTY");
+          IT_DONE1_r.SHK = IT_DONE1_t.getString("SHK");
           params.IT_DONE1[i] = IT_DONE1_r;
         }
 

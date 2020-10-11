@@ -5,6 +5,7 @@ import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
+import ntx.sap.fm.ZSHK_INFO;
 import ntx.sap.refs.RefMat;
 import ntx.sap.refs.RefMatStruct;
 import ntx.ts.html.HtmlPage;
@@ -16,6 +17,7 @@ import ntx.ts.srv.TaskState;
 import ntx.ts.srv.ProcType;
 import ntx.ts.srv.TSparams;
 import ntx.ts.srv.Track;
+import ntx.ts.srv.ScanChargQty;
 
 /**
  * предок для процессов, содержащий полезные утилиты
@@ -411,6 +413,37 @@ public abstract class ProcessUtil extends Process {
     }
   }
 
+  public static ScanChargQty getScanChargQty(String scan) {
+    ScanChargQty ret = new ScanChargQty();
+    if (!isScanTovMk(scan)) {
+      ret.err = "Нетоварный ШК";
+      return ret;
+    }
+
+    if (isScanTov(scan)) {
+      ret.charg = getScanCharg(scan);
+      ret.qty = getScanQty(scan);
+    } else if (isScanMkSn(scan)) {
+      ret.charg = delZeros(scan.substring(1, 9));
+      ret.qty = new BigDecimal(1);
+    } else if (isScanMkPb(scan)) {
+        ZSHK_INFO f = new ZSHK_INFO();
+        f.SHK = scan;
+        f.execute();
+        if (f.isErr) {
+          ret.err = f.err;
+          return ret;
+        }
+        ret.charg = f.CHARG;
+        ret.qty = f.QTY;
+    } else {
+      ret.err = "Нетоварный ШК";
+      return ret;
+    }
+
+    return ret;
+  }
+  
   public static String getScanVbeln(String scan) {
     if (scan.length() == 11) {
       return delZeros(scan.substring(1));
@@ -462,7 +495,7 @@ public abstract class ProcessUtil extends Process {
   public static int getScanWPsovm(String scan) {
     return Integer.parseInt(scan.substring(2));
   }
-
+  
   public void callSetErr(String err, ProcessContext ctx) throws Exception {
     DataRecord dr = new DataRecord();
     dr.procId = getProcId();

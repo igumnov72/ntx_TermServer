@@ -10,4 +10,5 @@ public class ZTS_COMPL_DONE_TO_PAL_S {
   public String MATNR = ""; // Номер материала
   public String CHARG = ""; // Номер партии
   public BigDecimal QTY = new BigDecimal(0); // Количество
+  public String SHK = ""; // Штрих-код
 }
