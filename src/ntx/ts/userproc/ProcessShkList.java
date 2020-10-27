@@ -55,12 +55,17 @@ public class ProcessShkList extends ProcessTask {
       return htmlMenu();
     }
     
+    if (d.scanIsDouble(scan)) {
+      callSetErr("ШК дублирован (сканирование " + scan + " не принято)", ctx);
+      return htmlWork("Список ШК", true, ctx);
+    }
+    
     if (isScanMkSn(scan) || isScanMkPb(scan) || isScanSsccBox(scan) || 
-            isScanSsccPal(scan) ) {
+            isScanSsccPal(scan) || isScanTov(scan) ) {
       callAddHist(scan, ctx);
-      callSetMsg(scan, ctx);
       //d.callAddNScan(this, ctx);
       d.callAddScan(scan, this, ctx);
+      callSetMsg("В последнем коробе " + Integer.toString(d.lastBoxScanCount()) + " СН", ctx);
       callTaskNameChange(ctx);
       return htmlWork("Список ШК", true, ctx);
     } else {
@@ -181,6 +186,24 @@ class ShkListData extends ProcData {
     dr.setV(FieldType.CLEAR_TOV_DATA);
     Track.saveProcessChange(dr, p, ctx);
   }
+
+  public boolean scanIsDouble(String scan) {
+    int n = scanData.size();
+    for (int i = 0; i < n; i++) 
+        if (scanData.get(i).equals(scan)) return true;
+    return false;
+  }
+
+  public int lastBoxScanCount() {
+    int ret = 0;
+    int n = scanData.size() - 1;
+    String scan;
+    for (int i = n; i >= 0; i--) {
+        scan = scanData.get(i);
+        if (scan.startsWith("S")) ret++; else return ret;
+    }
+    return ret;
+  }
   
 /*  
   public void callAddNScan(ProcessTask p, UserContext ctx) throws Exception {
@@ -190,6 +213,7 @@ class ShkListData extends ProcData {
     Track.saveProcessChange(dr, p, ctx);
   }
 */
+  
   public void callAddScan(String scan, ProcessTask p, UserContext ctx) throws Exception {
     DataRecord dr = new DataRecord();
     dr.procId = p.getProcId();

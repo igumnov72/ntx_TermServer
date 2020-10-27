@@ -3154,7 +3154,7 @@ class ComplData extends ProcData {
       dr.setS(FieldType.LAST_CHARG, charg);
     }
     if (!strEq(this.lastScan, scan)) {
-      dr.setS(FieldType.LAST_SCAN, charg);
+      dr.setS(FieldType.LAST_SCAN, scan);
     }
     if (this.lastQty.compareTo(qty) != 0) {
       dr.setN(FieldType.LAST_QTY, qty);

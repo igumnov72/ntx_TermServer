@@ -434,7 +434,7 @@ public abstract class ProcessUtil extends Process {
           ret.err = f.err;
           return ret;
         }
-        ret.charg = f.CHARG;
+        ret.charg = delZeros(f.CHARG);
         ret.qty = f.QTY;
     } else {
       ret.err = "Нетоварный ШК";

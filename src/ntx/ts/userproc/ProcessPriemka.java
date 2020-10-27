@@ -15,12 +15,14 @@ import ntx.ts.srv.FieldType;
 import ntx.ts.srv.LogType;
 import ntx.ts.srv.TaskState;
 import ntx.ts.srv.ProcType;
+import ntx.ts.srv.ScanChargQty;
 import ntx.ts.srv.TSparams;
 import ntx.ts.srv.TermQuery;
 import ntx.ts.srv.Track;
 import ntx.ts.sysproc.ProcData;
 import ntx.ts.sysproc.ProcessContext;
 import ntx.ts.sysproc.ProcessTask;
+import static ntx.ts.sysproc.ProcessUtil.getScanChargQty;
 import ntx.ts.sysproc.TaskContext;
 import ntx.ts.sysproc.UserContext;
 
@@ -546,7 +548,7 @@ public class ProcessPriemka extends ProcessTask {
   private FileData handleScanVbelnTov(String scan, TaskContext ctx) throws Exception {
     if (isScanVbeln(scan)) {
       return handleScanVbeln(scan, ctx);
-    } else if (isScanTov(scan)) {
+    } else if (isScanTovMk(scan)) {
       d.callClearTov(ctx);
       return handleScanTov(scan, ctx);
     } else {
@@ -558,7 +560,7 @@ public class ProcessPriemka extends ProcessTask {
   private FileData handleScanTovPal(String scan, TaskContext ctx) throws Exception {
     if (isScanPal(scan)) {
       return handleScanPal(scan, ctx);
-    } else if (isScanTov(scan)) {
+    } else if (isScanTovMk(scan)) {
       return handleScanTov(scan, ctx);
     } else {
       callSetErr("Требуется отсканировать ШК товара или паллеты (сканирование " + scan + " не принято)", ctx);
@@ -592,7 +594,7 @@ public class ProcessPriemka extends ProcessTask {
       return handleScanPal(scan, ctx);
     } else if (isScanCell(scan)) {
       return handleScanCell(scan, ctx);
-    } else if (isScanTov(scan)) {
+    } else if (isScanTovMk(scan)) {
       return handleScanTov(scan, ctx);
     } else {
       callSetErr("Требуется отсканировать ШК товара, паллеты или ячейки (сканирование " + scan + " не принято)", ctx);
@@ -684,14 +686,21 @@ public class ProcessPriemka extends ProcessTask {
       dp = parseDf2.format(dt);
     }
 
+    ScanChargQty scanInf; 
+    scanInf = getScanChargQty(scanTov);
+    if (!scanInf.err.isEmpty()) {
+      callSetErr(scanInf.err + " (сканирование " + scanTov + " не принято)", ctx);
+      return htmlGet(true, ctx);
+    }
+    
     try {
-      String charg = getScanCharg(scanTov);
+      String charg = scanInf.charg;// getScanCharg(scanTov);
       RefChargStruct c = RefCharg.get(charg, d.getVbeln());
       if (c == null) {
         callSetErr("Нет такой партии (сканирование " + scanTov + " не принято)", ctx);
         return htmlGet(true, ctx);
       }
-      BigDecimal qty = getScanQty(scanTov);
+      BigDecimal qty = scanInf.qty;// getScanQty(scanTov);
       d.callAddTov(c.matnr, charg, dp, qty, ctx);
       String s = delDecZeros(qty.toString()) + " ед: " + c.matnr + "/" + charg + " " + RefMat.getName(c.matnr);
       if (d.getCheckDp() && (dp != null)) {
