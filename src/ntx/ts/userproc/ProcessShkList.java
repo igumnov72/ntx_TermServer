@@ -2,6 +2,7 @@ package ntx.ts.userproc;
 
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashMap;
 import ntx.sap.fm.Z_TS_SHKLIST1;
 import ntx.sap.refs.RefCharg;
 import ntx.sap.refs.RefChargStruct;
@@ -16,6 +17,7 @@ import ntx.ts.srv.Track;
 import ntx.ts.sysproc.ProcData;
 import ntx.ts.sysproc.ProcessContext;
 import ntx.ts.sysproc.ProcessTask;
+import static ntx.ts.sysproc.ProcessUtil.delZeros;
 import static ntx.ts.sysproc.ProcessUtil.getScanCharg;
 import ntx.ts.sysproc.TaskContext;
 import ntx.ts.sysproc.UserContext;
@@ -65,7 +67,8 @@ public class ProcessShkList extends ProcessTask {
       callAddHist(scan, ctx);
       //d.callAddNScan(this, ctx);
       d.callAddScan(scan, this, ctx);
-      callSetMsg("В последнем коробе " + Integer.toString(d.lastBoxScanCount()) + " СН", ctx);
+      callSetMsg("В коробе " + Integer.toString(d.lastBoxScanCount()) + " СН" +
+              " (" + d.lastBoxMatCount() + ")", ctx);
       callTaskNameChange(ctx);
       return htmlWork("Список ШК", true, ctx);
     } else {
@@ -154,6 +157,8 @@ class ShkListData extends ProcData {
   //private int nScan = 0;
   private final ArrayList<String> scanData
           = new ArrayList<String>(); // отсканированные ШК
+  private final HashMap<String, Integer> mapMatCount
+          = new HashMap<String, Integer>(); // кол-во сканов по ОЗМ
 
   public int getNScan() {
     //return nScan;
@@ -201,6 +206,35 @@ class ShkListData extends ProcData {
     for (int i = n; i >= 0; i--) {
         scan = scanData.get(i);
         if (scan.startsWith("S")) ret++; else return ret;
+    }
+    return ret;
+  }
+
+  public String lastBoxMatCount() {
+    String ret = "";
+    int n = scanData.size() - 1;
+    String scan;
+    String charg;
+    mapMatCount.clear();
+    for (int i = n; i >= 0; i--) {
+        scan = scanData.get(i);
+        if (scan.startsWith("S")) {
+            charg = delZeros(scan.substring(1, 9));
+            RefChargStruct c = null;
+            try { c = RefCharg.get(charg, null); } catch (Exception e) {}
+            if (c == null) continue;
+            Integer matCount = mapMatCount.get(c.matnr);
+            Integer matCountNew;
+            if (matCount == null) matCountNew = 1;
+            else matCountNew = matCount + 1;
+            mapMatCount.put(c.matnr, matCountNew);
+        }
+        else 
+            break;
+    }
+    for (String matnr : mapMatCount.keySet()) {
+        if (ret.isEmpty()) ret = mapMatCount.get(matnr).toString(); 
+        else ret = ret + "-" + mapMatCount.get(matnr).toString(); 
     }
     return ret;
   }

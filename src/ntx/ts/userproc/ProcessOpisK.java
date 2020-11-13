@@ -128,17 +128,21 @@ public class ProcessOpisK extends ProcessTask {
       charg = getScanCharg(scan);
       q = getScanQty(scan);
     } else if (isScanMkSn(scan)) {
+        /*
       if (!d.isMarked()) {
         callSetErr("Маркированные ШК не принимаются по немаркированному заказу", ctx);
         return htmlGet(true, ctx);
       }
+        */
       charg = delZeros(scan.substring(1, 9));
       q = new BigDecimal(1);
     } else if (isScanMkPb(scan)) {
+        /*
       if (!d.isMarked()) {
         callSetErr("Маркированные ШК не принимаются по немаркированному заказу", ctx);
         return htmlGet(true, ctx);
       }
+        */
       ZSHK_INFO f = new ZSHK_INFO();
       f.SHK = scan;
       f.execute();

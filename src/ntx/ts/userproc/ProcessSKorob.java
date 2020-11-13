@@ -86,8 +86,8 @@ public class ProcessSKorob extends ProcessTask {
   }
 
   private FileData handleScanVbelnVa(String scan, TaskContext ctx) throws Exception {
-    if (!isScanVbelnVa(scan) && !isScanEbeln(scan)) {
-      callSetErr("Требуется ввести номер заказа (ввод " + scan + " не принят)", ctx);
+    if (!isScanVbelnVa(scan) && !isScanEbeln(scan) && !isScanVbeln(scan)) {
+      callSetErr("Требуется ввести номер заказа или поставки (ввод " + scan + " не принят)", ctx);
       return htmlGet(true, ctx);
     }
 

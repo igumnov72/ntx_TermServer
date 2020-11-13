@@ -16,11 +16,13 @@ import ntx.ts.srv.FieldType;
 import ntx.ts.srv.LogType;
 import ntx.ts.srv.TaskState;
 import ntx.ts.srv.ProcType;
+import ntx.ts.srv.ScanChargQty;
 import ntx.ts.srv.TermQuery;
 import ntx.ts.srv.Track;
 import ntx.ts.sysproc.ProcData;
 import ntx.ts.sysproc.ProcessContext;
 import ntx.ts.sysproc.ProcessTask;
+import static ntx.ts.sysproc.ProcessUtil.getScanChargQty;
 import ntx.ts.sysproc.TaskContext;
 import ntx.ts.sysproc.UserContext;
 
@@ -396,13 +398,20 @@ public class ProcessVozvrat extends ProcessTask {
 
   private FileData handleScanTovDo(String scanTov, TaskContext ctx) throws Exception {
     try {
-      String charg = getScanCharg(scanTov);
+      ScanChargQty scanInf; 
+      scanInf = getScanChargQty(scanTov);
+      if (!scanInf.err.isEmpty()) {
+        callSetErr(scanInf.err + " (сканирование " + scanTov + " не принято)", ctx);
+        return htmlGet(true, ctx);
+      }
+
+      String charg = scanInf.charg;//getScanCharg(scanTov);
       RefChargStruct c = RefCharg.get(charg);
       if (c == null) {
         callSetErr("Нет такой партии (сканирование " + scanTov + " не принято)", ctx);
         return htmlGet(true, ctx);
       }
-      BigDecimal qty = getScanQty(scanTov);
+      BigDecimal qty = scanInf.qty;//getScanQty(scanTov);
       d.callAddTov(c.matnr, charg, qty, 1, ctx);
       String s = delDecZeros(qty.toString()) + " ед: " + c.matnr + "/" + charg + " " + RefMat.getName(c.matnr);
       s = s + " (на паллете: " + d.getTovMcur().size() + " мат; "
