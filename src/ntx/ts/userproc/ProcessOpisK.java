@@ -121,10 +121,12 @@ public class ProcessOpisK extends ProcessTask {
     BigDecimal q;
 
     if (isScanTov(scan)) {
+        /*
       if (d.isMarked()) {
         callSetErr("Корп ШК не принимаются по маркированному заказу", ctx);
         return htmlGet(true, ctx);
       }
+        */
       charg = getScanCharg(scan);
       q = getScanQty(scan);
     } else if (isScanMkSn(scan)) {

@@ -26,12 +26,14 @@ import ntx.ts.srv.LogType;
 import ntx.ts.srv.MapItemArray;
 import ntx.ts.srv.TaskState;
 import ntx.ts.srv.ProcType;
+import ntx.ts.srv.ScanChargQty;
 import ntx.ts.srv.TSparams;
 import ntx.ts.srv.TermQuery;
 import ntx.ts.srv.Track;
 import ntx.ts.sysproc.ProcData;
 import ntx.ts.sysproc.ProcessContext;
 import ntx.ts.sysproc.ProcessTask;
+import static ntx.ts.sysproc.ProcessUtil.getScanChargQty;
 import ntx.ts.sysproc.TaskContext;
 import ntx.ts.sysproc.UserContext;
 
@@ -241,7 +243,7 @@ public class ProcessInvent extends ProcessTask {
   private FileData handleScanTovCell(String scan, TaskContext ctx) throws Exception {
     if (isScanCell(scan)) {
       return handleScanCellFinDo(scan, ctx);
-    } else if (isScanTov(scan)) {
+    } else if (isScanTovMk(scan)) {
       return handleScanTovDo(scan, ctx);
     } else {
       callSetErr("Требуется отсканировать ШК товара или ячейки (сканирование " + scan + " не принято)", ctx);
@@ -254,7 +256,7 @@ public class ProcessInvent extends ProcessTask {
       return handleScanCellFinDo(scan, ctx);
     } else if (isScanPal(scan)) {
       return handleScanPalDo(scan, ctx);
-    } else if (isScanTov(scan)) {
+    } else if (isScanTovMk(scan)) {
       return handleScanTovDo(scan, ctx);
     } else {
       callSetErr("Требуется отсканировать ШК товара или ячейки (сканирование " + scan + " не принято)", ctx);
@@ -269,17 +271,24 @@ public class ProcessInvent extends ProcessTask {
   private FileData handleScanTovDo(String scan, TaskContext ctx) throws Exception {
     // тип ШК уже проверен
     try {
-      String charg = getScanCharg(scan);
+      ScanChargQty scanInf; 
+      scanInf = getScanChargQty(scan);
+      if (!scanInf.err.isEmpty()) {
+        callSetErr(scanInf.err + " (сканирование " + scan + " не принято)", ctx);
+        return htmlGet(true, ctx);
+      }
+        
+      String charg = scanInf.charg;// getScanCharg(scan);
       RefChargStruct c = RefCharg.get(charg, null);
       if (c == null) {
         callSetErr("Нет такой партии (сканирование " + scan + " не принято)", ctx);
         return htmlGet(true, ctx);
       }
       RefMatStruct m = RefMat.getNoNull(c.matnr);
-      BigDecimal qty = getScanQty(scan);
+      BigDecimal qty = scanInf.qty;// getScanQty(scan);
       RefAbcStruct a = RefAbc.get(d.getLgort(), c.matnr);
 
-      if (ctx.user.getAskQty()) {
+      if (ctx.user.getAskQty() && isScanTov(scan)) {
         String s = c.matnr + "/" + charg + " " + m.name;
         s = appendAbc(s, a);
         callSetMsg(s, ctx);

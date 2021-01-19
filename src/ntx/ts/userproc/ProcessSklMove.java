@@ -15,6 +15,7 @@ import ntx.ts.srv.FieldType;
 import ntx.ts.srv.LogType;
 import ntx.ts.srv.TaskState;
 import ntx.ts.srv.ProcType;
+import ntx.ts.srv.ScanChargQty;
 import ntx.ts.srv.TSparams;
 import ntx.ts.srv.TermQuery;
 import ntx.ts.srv.Track;
@@ -24,6 +25,7 @@ import ntx.ts.sysproc.ProcessTask;
 import static ntx.ts.sysproc.ProcessUtil.delDecZeros;
 import static ntx.ts.sysproc.ProcessUtil.delZeros;
 import static ntx.ts.sysproc.ProcessUtil.fillZeros;
+import static ntx.ts.sysproc.ProcessUtil.getScanChargQty;
 import ntx.ts.sysproc.TaskContext;
 import ntx.ts.sysproc.UserContext;
 
@@ -272,7 +274,7 @@ public class ProcessSklMove extends ProcessTask {
   private FileData handleScanTovCell(String scan, TaskContext ctx) throws Exception {
     if (isScanCell(scan)) {
       return handleScanCell2(scan, ctx);
-    } else if (isScanTov(scan)) {
+    } else if (isScanTovMk(scan)) {
       return handleScanTov(scan, ctx);
     } else {
       callSetErr("Требуется отсканировать товар или ячейку (сканирование " + scan + " не принято)", ctx);
@@ -282,7 +284,7 @@ public class ProcessSklMove extends ProcessTask {
 
   private FileData handleScanQty(String scan, TaskContext ctx) throws Exception {
     if (scan.isEmpty() || isScanCell(scan) || isScanPal(scan)
-            || isScanTov(scan) || !isNumber(scan)) {
+            || isScanTovMk(scan) || !isNumber(scan)) {
       callSetErr("Требуется ввести кол-во (сканирование " + scan + " не принято)", ctx);
       return htmlGet(true, ctx);
     }
@@ -296,12 +298,19 @@ public class ProcessSklMove extends ProcessTask {
       return htmlGet(true, ctx);
     }
 
-    return handleScanTovDo(getScanCharg(d.getLastScan()), qty, ctx);
+    return handleScanTovDo(d.getLastScan(), getScanCharg(d.getLastScan()), qty, ctx);
   }
 
   private FileData handleScanTov(String scan, TaskContext ctx) throws Exception {
+    ScanChargQty scanInf; 
+    scanInf = getScanChargQty(scan);
+    if (!scanInf.err.isEmpty()) {
+      callSetErr(scanInf.err + " (сканирование " + scan + " не принято)", ctx);
+      return htmlGet(true, ctx);
+    }
+
     try {
-      String charg = getScanCharg(scan);
+      String charg = scanInf.charg;// getScanCharg(scan);
       RefChargStruct c = RefCharg.get(charg, null);
       if (c == null) {
         callSetErr("Нет такой партии (сканирование " + scan + " не принято)", ctx);
@@ -314,7 +323,8 @@ public class ProcessSklMove extends ProcessTask {
         d.callSetLastScan(scan, ctx);
         return htmlGet(true, ctx);
       } else {
-        return handleScanTovDo(charg, getScanQty(scan), ctx);
+        return handleScanTovDo(scan, charg, scanInf.qty// getScanQty(scan)
+                , ctx);
       }
     } catch (Exception e) {
       String s = e.getMessage();
@@ -326,7 +336,8 @@ public class ProcessSklMove extends ProcessTask {
     }
   }
 
-  private FileData handleScanTovDo(String charg, BigDecimal qty, TaskContext ctx) throws Exception {
+  private FileData handleScanTovDo(String scan, String charg, 
+          BigDecimal qty, TaskContext ctx) throws Exception {
     Z_TS_SKL_MOVE3 f = new Z_TS_SKL_MOVE3();
     f.LGNUM = d.getLgnum();
     f.LGORT = d.getLgort();
@@ -335,6 +346,7 @@ public class ProcessSklMove extends ProcessTask {
     f.PAL = d.getPal1();
     f.A_CHARG = fillZeros(charg, 10);
     f.A_QTY = qty;
+    f.SHK = scan;
 
     if (!d.getTovDataM().isEmpty()) {
       int n = d.getTovDataM().size();

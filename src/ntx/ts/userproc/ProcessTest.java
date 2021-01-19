@@ -10,12 +10,14 @@ import ntx.ts.http.FileData;
 import ntx.ts.srv.DataRecord;
 import ntx.ts.srv.FieldType;
 import ntx.ts.srv.ProcType;
+import ntx.ts.srv.ScanChargQty;
 import ntx.ts.srv.TermQuery;
 import ntx.ts.srv.Track;
 import ntx.ts.sysproc.ProcData;
 import ntx.ts.sysproc.ProcessContext;
 import ntx.ts.sysproc.ProcessTask;
 import static ntx.ts.sysproc.ProcessUtil.getScanCharg;
+import static ntx.ts.sysproc.ProcessUtil.getScanChargQty;
 import ntx.ts.sysproc.TaskContext;
 import ntx.ts.sysproc.UserContext;
 
@@ -65,8 +67,16 @@ public class ProcessTest extends ProcessTask {
       callAddHist(f.DESCR, ctx);
       callSetMsg(f.DESCR, ctx);
       d.callAddNScan(this, ctx);
-      if (isScanTov(scan)) {
-        String charg = getScanCharg(scan);
+      if (isScanTovMk(scan)) {
+
+        ScanChargQty scanInf; 
+        scanInf = getScanChargQty(scan);
+        if (!scanInf.err.isEmpty()) {
+          callSetErr(scanInf.err + " (сканирование " + scan + " не принято)", ctx);
+          return htmlWork("Тестовая задача", true, ctx);
+        }
+
+        String charg = scanInf.charg;// getScanCharg(scan);
         RefChargStruct c = RefCharg.get(charg, null);
         d.callSetMatnr(c.matnr, this, ctx);
       }

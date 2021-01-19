@@ -349,7 +349,7 @@ public class ProcessVozvrat extends ProcessTask {
   private FileData handleScanTovJvoz(String scan, TaskContext ctx) throws Exception {
     if (isScanJvoz(scan)) {
       return handleScanJvoz(scan, ctx);
-    } else if (isScanTov(scan)) {
+    } else if (isScanTovMk(scan)) {
       return handleScanTovDo(scan, ctx);
     } else {
       callSetErr("Требуется отсканировать ШК товара или паллеты (сканирование " + scan + " не принято)", ctx);
@@ -358,7 +358,7 @@ public class ProcessVozvrat extends ProcessTask {
   }
 
   private FileData handleScanTov(String scan, TaskContext ctx) throws Exception {
-    if (isScanTov(scan)) {
+    if (isScanTovMk(scan)) {
       d.callClearTov(ctx);
       return handleScanTovDo(scan, ctx);
     } else {
@@ -370,7 +370,7 @@ public class ProcessVozvrat extends ProcessTask {
   private FileData handleScanTovPal(String scan, TaskContext ctx) throws Exception {
     if (isScanPal(scan)) {
       return handleScanPal(scan, ctx);
-    } else if (isScanTov(scan)) {
+    } else if (isScanTovMk(scan)) {
       return handleScanTovDo(scan, ctx);
     } else {
       callSetErr("Требуется отсканировать ШК товара или паллеты (сканирование " + scan + " не принято)", ctx);

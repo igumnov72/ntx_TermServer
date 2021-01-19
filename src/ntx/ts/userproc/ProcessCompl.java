@@ -863,7 +863,7 @@ public class ProcessCompl extends ProcessTask {
       ComplRetQty tq = d.getTovQty(c.matnr, charg);
       if (tq.isEzap) {
         String s = c.matnr + "/" + charg + " " + RefMat.getFullName(c.matnr);
-        callSetErr("Эта партия относится к особому запасу, её брать нельзя: " + s, ctx);
+        callSetErr("Эту партию брать нельзя: " + s, ctx);
         return htmlGet(true, ctx);
       } else if (tq.qty == null) {
         String s = c.matnr + "/" + charg + " " + RefMat.getFullName(c.matnr);
