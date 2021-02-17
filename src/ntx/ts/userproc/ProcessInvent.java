@@ -34,6 +34,8 @@ import ntx.ts.sysproc.ProcData;
 import ntx.ts.sysproc.ProcessContext;
 import ntx.ts.sysproc.ProcessTask;
 import static ntx.ts.sysproc.ProcessUtil.getScanChargQty;
+import static ntx.ts.sysproc.ProcessUtil.isScanTovMk;
+import static ntx.ts.sysproc.ProcessUtil.isScanMk;
 import ntx.ts.sysproc.TaskContext;
 import ntx.ts.sysproc.UserContext;
 
@@ -270,7 +272,13 @@ public class ProcessInvent extends ProcessTask {
 
   private FileData handleScanTovDo(String scan, TaskContext ctx) throws Exception {
     // тип ШК уже проверен
-    try {
+    try 
+    {
+      if (d.scanIsMkAndDouble(scan)) {
+        callSetErr("ШК " + scan + " уже сканировался", ctx);
+        return htmlGet(true, ctx);
+      }
+        
       ScanChargQty scanInf; 
       scanInf = getScanChargQty(scan);
       if (!scanInf.err.isEmpty()) {
@@ -295,7 +303,7 @@ public class ProcessInvent extends ProcessTask {
         callSetTaskState(TaskState.QTY, ctx);
         d.callSetLastScan(scan, ctx);
       } else {
-        d.callAddTov(c.matnr, charg, qty, ctx);
+        d.callAddTov(c.matnr, charg, qty, scan, ctx);
         String s = delDecZeros(qty.toString()) + " ед: "
                 + c.matnr + "/" + charg + " " + m.name
                 + " (всего " + d.getDifStr(false) + ")";
@@ -325,7 +333,7 @@ public class ProcessInvent extends ProcessTask {
         return htmlGet(true, ctx);
       }
       RefAbcStruct a = RefAbc.get(d.getLgort(), c.matnr);
-      d.callAddTov(c.matnr, charg, qty, ctx);
+      d.callAddTov(c.matnr, charg, qty, "", ctx);
       String s = delDecZeros(qty.toString()) + " ед: "
               + c.matnr + "/" + charg + " " + RefMat.getName(c.matnr)
               + " (всего " + d.getDifStr(false) + ")";
@@ -831,12 +839,15 @@ class InventTovData {
   public String matnr;
   public String charg;
   public BigDecimal qty;
+  public String shk;
 
-  public InventTovData(String pal, String matnr, String charg, BigDecimal qty) {
+  public InventTovData(String pal, String matnr, String charg, BigDecimal qty,
+          String shk) {
     this.pal = pal;
     this.matnr = matnr;
     this.charg = charg;
     this.qty = qty;
+    this.shk = shk;
   }
 }
 
@@ -886,6 +897,14 @@ class InventData extends ProcData {
     return tov;
   }
 
+  public boolean scanIsMkAndDouble(String scan) {
+    int n = tov.size();
+    for (int i = 0; i < n; i++) {
+        String shk = tov.get(i).shk;
+        if (isScanMk(scan) && shk.equals(scan)) return true;
+    }
+    return false;
+  }  
   public HashMap<String, InventTovDataM> getTovM() {
     return tovM;
   }
@@ -1130,13 +1149,15 @@ class InventData extends ProcData {
     Track.saveProcessChange(dr, ctx.task, ctx);
   }
 
-  public void callAddTov(String matnr, String charg, BigDecimal qty, TaskContext ctx) throws Exception {
+  public void callAddTov(String matnr, String charg, BigDecimal qty, 
+          String shk, TaskContext ctx) throws Exception {
     DataRecord dr = new DataRecord();
     dr.procId = ctx.task.getProcId();
     dr.setS(FieldType.PAL, pal);
     dr.setS(FieldType.MATNR, matnr);
     dr.setS(FieldType.CHARG, charg);
     dr.setN(FieldType.QTY, qty);
+    dr.setS(FieldType.SHK, shk);
     dr.setI(FieldType.LOG, LogType.ADD_TOV.ordinal());
     Track.saveProcessChange(dr, ctx.task, ctx);
   }
@@ -1243,12 +1264,15 @@ class InventData extends ProcData {
           nScan = 0;
         }
         if (dr.haveVal(FieldType.PAL) && dr.haveVal(FieldType.MATNR)
-                && dr.haveVal(FieldType.CHARG) && dr.haveVal(FieldType.QTY)) {
+                && dr.haveVal(FieldType.CHARG) && dr.haveVal(FieldType.QTY)
+                && dr.haveVal(FieldType.SHK)) {
           // добавление в tov
           InventTovData td = new InventTovData(dr.getValStr(FieldType.PAL),
                   dr.getValStr(FieldType.MATNR),
                   dr.getValStr(FieldType.CHARG),
-                  (BigDecimal) dr.getVal(FieldType.QTY));
+                  (BigDecimal) dr.getVal(FieldType.QTY),
+                  dr.getValStr(FieldType.SHK)
+          );
           tov.add(td);
           // добавление в tovM
           addTovM(td);

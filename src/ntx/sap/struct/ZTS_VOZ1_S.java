@@ -9,4 +9,5 @@ public class ZTS_VOZ1_S {
   public String CHARG = ""; // Номер партии
   public BigDecimal QTY = new BigDecimal(0); // Количество
   public int N_POS = 0; // Число позиций в раскладке
+  public String SHK = ""; // Штрих-код
 }

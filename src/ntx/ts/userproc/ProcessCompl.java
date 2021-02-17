@@ -1086,7 +1086,8 @@ public class ProcessCompl extends ProcessTask {
 
     if (!f.isErr) {
       if (n_save > 0) {
-        String s = "Данные комплектации по поставке " + d.getVbeln() + " ячейке " + d.getCell() + " сохранены";
+        String s = "Данные комплектации по поставке " + d.getVbeln() + 
+                " ячейке " + d.getCell() + " сохранены. " + f.INF;
         callSetMsg(s, ctx);
         callAddHist(s, ctx);
       }

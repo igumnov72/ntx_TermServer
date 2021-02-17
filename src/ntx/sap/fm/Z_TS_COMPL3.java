@@ -20,6 +20,9 @@ public class Z_TS_COMPL3 {
   public String TANUM1 = "0"; // MIN Номер  транспортного заказа
   public String TANUM2 = "0"; // MAX Номер транспортного заказа
   //
+  // exporting params
+  public String INF = "";
+  //
   // table params
   public ZTS_COMPL_S[] IT1 = new ZTS_COMPL_S[0]; // Исходные данные ведомости на комплектацию
   public ZTS_COMPL_DONE_TO_PAL_S[] IT_DONE1 = new ZTS_COMPL_DONE_TO_PAL_S[0]; // Скомплектованный товар (с указанием паллеты)
@@ -88,6 +91,7 @@ public class Z_TS_COMPL3 {
     if (e == null) {
       if (TSparams.logDocLevel >= 2) {
         System.out.println("Возврат из ФМ Z_TS_COMPL3:");
+        System.out.println("  INF=" + INF);
         System.out.println("  err=" + err);
         System.out.println("  IT1.length=" + IT1.length);
         System.out.println("  IT_DONE1.length=" + IT_DONE1.length);
@@ -183,6 +187,7 @@ public class Z_TS_COMPL3 {
       ret = SAPconn.executeFunction(function);
 
       if (ret == null) {
+        params.INF = expParams.getString("INF");
         params.err = expParams.getString("ERR");
         if (!params.err.isEmpty()) {
           params.isErr = true;

@@ -717,7 +717,7 @@ public class Track {
       return 0;
     }
     long dt1 = TSparams.comprDate1.getTime();
-    long dtDif = 604800000L * TSparams.comprWeeks;
+    long dtDif = 86400000L * TSparams.comprWeeks;
     long dt2 = (new Date()).getTime();
     while (dt1 < dt2) {
       dt1 += dtDif;

@@ -315,6 +315,7 @@ public class ProcessVozvrat extends ProcessTask {
         f.IT_TOV[counter].CHARG = fillZeros(j.charg, 10);
         f.IT_TOV[counter].QTY = j.qty;
         f.IT_TOV[counter].N_POS = j.nScan;
+        f.IT_TOV[counter].SHK = j.shk;
         counter++;
       }
     }
@@ -412,7 +413,7 @@ public class ProcessVozvrat extends ProcessTask {
         return htmlGet(true, ctx);
       }
       BigDecimal qty = scanInf.qty;//getScanQty(scanTov);
-      d.callAddTov(c.matnr, charg, qty, 1, ctx);
+      d.callAddTov(c.matnr, charg, qty, 1, scanTov, ctx);
       String s = delDecZeros(qty.toString()) + " ед: " + c.matnr + "/" + charg + " " + RefMat.getName(c.matnr);
       s = s + " (на паллете: " + d.getTovMcur().size() + " мат; "
               + delDecZeros(d.getQtyPalCur().toString()) + " ед; "
@@ -544,12 +545,14 @@ class VozvratTovData {
   public String charg;
   public BigDecimal qty;
   public int nScan;
+  public String shk;
 
-  public VozvratTovData(String matnr, String charg, BigDecimal qty, int nScan) {
+  public VozvratTovData(String matnr, String charg, BigDecimal qty, int nScan, String shk) {
     this.matnr = matnr;
     this.charg = charg;
     this.qty = qty;
     this.nScan = nScan;
+    this.shk = shk;
   }
 }
 
@@ -657,13 +660,15 @@ class VozvratData extends ProcData {
     Track.saveProcessChange(dr, ctx.task, ctx);
   }
 
-  public void callAddTov(String matnr, String charg, BigDecimal qty, int nScan, TaskContext ctx) throws Exception {
+  public void callAddTov(String matnr, String charg, BigDecimal qty, int nScan, 
+          String shk, TaskContext ctx) throws Exception {
     DataRecord dr = new DataRecord();
     dr.procId = ctx.task.getProcId();
     dr.setS(FieldType.MATNR, matnr);
     dr.setS(FieldType.CHARG, charg);
     dr.setN(FieldType.QTY, qty);
     dr.setI(FieldType.N_SCAN, nScan);
+    dr.setS(FieldType.SHK, shk);
     dr.setI(FieldType.LOG, LogType.ADD_TOV.ordinal());
     Track.saveProcessChange(dr, ctx.task, ctx);
   }
@@ -732,13 +737,13 @@ class VozvratData extends ProcData {
         lastPal = ll[i];
       }
 
-      hdTov(mm[i], cc[i], qq[i], pp[i]);
+      hdTov(mm[i], cc[i], qq[i], pp[i],  "");
     }
     hdPal(lastPal);
   }
 
-  private void hdTov(String matnr, String charg, BigDecimal nn, int nScan) {
-    VozvratTovData td = new VozvratTovData(matnr, charg, nn, nScan);
+  private void hdTov(String matnr, String charg, BigDecimal nn, int nScan, String shk) {
+    VozvratTovData td = new VozvratTovData(matnr, charg, nn, nScan, shk);
     tovCur.add(td);
     qtyPalCur = qtyPalCur.add(nn);
     qtyTot = qtyTot.add(nn);
@@ -775,9 +780,11 @@ class VozvratData extends ProcData {
           qtyTot = qtyTot.subtract(qtyPalCur);
           qtyPalCur = BigDecimal.ZERO;
         }
-        if (dr.haveVal(FieldType.MATNR) && dr.haveVal(FieldType.CHARG) && dr.haveVal(FieldType.QTY)) {
+        if (dr.haveVal(FieldType.MATNR) && dr.haveVal(FieldType.CHARG) 
+                && dr.haveVal(FieldType.QTY)&& dr.haveVal(FieldType.SHK)) {
           String matnr = dr.getValStr(FieldType.MATNR);
           String charg = dr.getValStr(FieldType.CHARG);
+          String shk = dr.getValStr(FieldType.SHK);
           BigDecimal nn = (BigDecimal) dr.getVal(FieldType.QTY);
           int nScan;
           if (dr.haveVal(FieldType.N_SCAN)) {
@@ -785,7 +792,7 @@ class VozvratData extends ProcData {
           } else {
             nScan = 1;
           }
-          hdTov(matnr, charg, nn, nScan);
+          hdTov(matnr, charg, nn, nScan, shk);
         }
         if (dr.haveVal(FieldType.DEL_LAST)) {
           if (tovCur.isEmpty()) {
