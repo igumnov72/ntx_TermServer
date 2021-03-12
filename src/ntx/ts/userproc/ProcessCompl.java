@@ -23,6 +23,7 @@ import ntx.ts.srv.Track;
 import ntx.ts.sysproc.ProcData;
 import ntx.ts.sysproc.ProcessContext;
 import ntx.ts.sysproc.ProcessTask;
+import static ntx.ts.sysproc.ProcessUtil.isScanMk;
 import ntx.ts.sysproc.TaskContext;
 import ntx.ts.sysproc.UserContext;
 
@@ -847,6 +848,11 @@ public class ProcessCompl extends ProcessTask {
         return htmlGet(true, ctx);
       }
 
+      if (d.scanIsMkAndDouble(scan)) {
+        callSetErr("ШК " + scan + " уже сканировался", ctx);
+        return htmlGet(true, ctx);
+      }
+      
       ScanChargQty scanInf; 
       scanInf = getScanChargQty(scan);
       if (!scanInf.err.isEmpty()) {
@@ -2739,6 +2745,15 @@ class ComplData extends ProcData {
   public int getScanDataSize() {
     return scanData.size();
   }
+
+  public boolean scanIsMkAndDouble(String scan) {
+    int n = scanData.size();
+    for (int i = 0; i < n; i++) {
+        String shk = scanData.get(i).shk;
+        if (isScanMk(scan) && shk.equals(scan)) return true;
+    }
+    return false;
+  }  
 
   public boolean haveVbeln(String vbeln) {
     return vcq.get(vbeln) != null;

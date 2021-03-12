@@ -905,6 +905,7 @@ class InventData extends ProcData {
     }
     return false;
   }  
+  
   public HashMap<String, InventTovDataM> getTovM() {
     return tovM;
   }
