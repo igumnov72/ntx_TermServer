@@ -19,6 +19,9 @@ import ntx.ts.sysproc.ProcessContext;
 import ntx.ts.sysproc.ProcessTask;
 import static ntx.ts.sysproc.ProcessUtil.delZeros;
 import static ntx.ts.sysproc.ProcessUtil.getScanCharg;
+import static ntx.ts.sysproc.ProcessUtil.isScanTov;
+import static ntx.ts.sysproc.ProcessUtil.isScanTov;
+import static ntx.ts.sysproc.ProcessUtil.getScanQty;
 import ntx.ts.sysproc.TaskContext;
 import ntx.ts.sysproc.UserContext;
 
@@ -68,7 +71,10 @@ public class ProcessShkList extends ProcessTask {
       //d.callAddNScan(this, ctx);
       d.callAddScan(scan, this, ctx);
       callSetMsg("В коробе " + Integer.toString(d.lastBoxScanCount()) + " СН" +
-              " (" + d.lastBoxMatCount() + ")", ctx);
+              " (" + d.lastBoxMatCount() + ") " + 
+              Integer.toString(d.getBoxCount()) + "-" +
+              Integer.toString(d.getGoodCount()), 
+              ctx);
       callTaskNameChange(ctx);
       return htmlWork("Список ШК", true, ctx);
     } else {
@@ -195,8 +201,38 @@ class ShkListData extends ProcData {
   public boolean scanIsDouble(String scan) {
     int n = scanData.size();
     for (int i = 0; i < n; i++) 
-        if (scanData.get(i).equals(scan)) return true;
+        if (scanData.get(i).equals(scan) && !isScanTov(scan)) return true;
     return false;
+  }
+
+  public int getGoodCount() {
+    int ret = 0;
+    int n = scanData.size() - 1;
+    String scan;
+    for (int i = n; i >= 0; i--) {
+        scan = scanData.get(i);
+        if (scan.startsWith("S")) 
+            ret++; 
+        else if (isScanTov(scan)) 
+            ret = ret + getScanQty(scan).intValue();
+    }
+    return ret;
+  }
+
+  public int getBoxCount() {
+    int ret = 0;
+    int n = scanData.size() - 1;
+    String scan;
+    for (int i = n; i >= 0; i--) {
+        scan = scanData.get(i);
+        if (scan.startsWith("YN") || scan.startsWith("046")) 
+            ret++; 
+        else if (isScanTov(scan)) {
+            if (getScanQty(scan).intValue() > 1) 
+                ret++;
+        }
+    }
+    return ret;
   }
 
   public int lastBoxScanCount() {
