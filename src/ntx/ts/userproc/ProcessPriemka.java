@@ -23,6 +23,7 @@ import ntx.ts.sysproc.ProcData;
 import ntx.ts.sysproc.ProcessContext;
 import ntx.ts.sysproc.ProcessTask;
 import static ntx.ts.sysproc.ProcessUtil.getScanChargQty;
+import static ntx.ts.sysproc.ProcessUtil.isScanTov;
 import ntx.ts.sysproc.TaskContext;
 import ntx.ts.sysproc.UserContext;
 
@@ -686,6 +687,11 @@ public class ProcessPriemka extends ProcessTask {
       dp = parseDf2.format(dt);
     }
 
+    if (d.scanIsDouble(scanTov)) {
+      callSetErr("ШК дублирован (сканирование " + scanTov + " не принято)", ctx);
+      return htmlGet(true, ctx);
+    }
+
     ScanChargQty scanInf; 
     scanInf = getScanChargQty(scanTov);
     if (!scanInf.err.isEmpty()) {
@@ -701,7 +707,7 @@ public class ProcessPriemka extends ProcessTask {
         return htmlGet(true, ctx);
       }
       BigDecimal qty = scanInf.qty;// getScanQty(scanTov);
-      d.callAddTov(c.matnr, charg, dp, qty, ctx);
+      d.callAddTov(c.matnr, charg, dp, qty, scanTov, ctx);
       String s = delDecZeros(qty.toString()) + " ед: " + c.matnr + "/" + charg + " " + RefMat.getName(c.matnr);
       if (d.getCheckDp() && (dp != null)) {
         s = s + "; выпуск: " + dp.substring(6, 8) + "."
@@ -898,19 +904,24 @@ class PriemkaTovData {
   public String charg;
   public String prDat;
   public BigDecimal qty;
+  public String scan;
 
-  public PriemkaTovData(String matnr, String charg, String prDat, BigDecimal qty) {
+  public PriemkaTovData(String matnr, String charg, String prDat, 
+          BigDecimal qty, String scan) {
     this.matnr = matnr;
     this.charg = charg;
     this.prDat = prDat;
     this.qty = qty;
+    this.scan = scan;
   }
 
-  public PriemkaTovData(String matnr, String charg, BigDecimal qty) {
+  public PriemkaTovData(String matnr, String charg, BigDecimal qty, 
+          String scan) {
     this.matnr = matnr;
     this.charg = charg;
     this.prDat = null;
     this.qty = qty;
+    this.scan = scan;
   }
 }
 
@@ -971,6 +982,13 @@ class PriemkaData extends ProcData {
     return tovM;
   }
 
+  public boolean scanIsDouble(String scan) {
+    int n = tov.size();
+    for (int i = 0; i < n; i++) 
+        if (tov.get(i).scan.equals(scan) && !isScanTov(scan)) return true;
+    return false;
+  }
+  
   public void callClearTov(TaskContext ctx) throws Exception {
     // удаление данных о товаре
     DataRecord dr = new DataRecord();
@@ -1030,7 +1048,8 @@ class PriemkaData extends ProcData {
     Track.saveProcessChange(dr, ctx.task, ctx);
   }
 
-  public void callAddTov(String matnr, String charg, String dp, BigDecimal qty, TaskContext ctx) throws Exception {
+  public void callAddTov(String matnr, String charg, String dp, BigDecimal qty, 
+          String scan, TaskContext ctx) throws Exception {
     DataRecord dr = new DataRecord();
     dr.procId = ctx.task.getProcId();
     dr.setS(FieldType.MATNR, matnr);
@@ -1039,6 +1058,7 @@ class PriemkaData extends ProcData {
       dr.setS(FieldType.DAT_PR, dp);
     }
     dr.setN(FieldType.QTY, qty);
+    dr.setS(FieldType.SHK, scan);
     dr.setI(FieldType.LOG, LogType.ADD_TOV.ordinal());
     Track.saveProcessChange(dr, ctx.task, ctx);
   }
@@ -1081,15 +1101,17 @@ class PriemkaData extends ProcData {
           tovM.clear();
           qtyPal = BigDecimal.ZERO;
         }
-        if (dr.haveVal(FieldType.MATNR) && dr.haveVal(FieldType.CHARG) && dr.haveVal(FieldType.QTY)) {
+        if (dr.haveVal(FieldType.MATNR) && dr.haveVal(FieldType.CHARG) && 
+                dr.haveVal(FieldType.QTY) && dr.haveVal(FieldType.SHK)) {
           String matnr = dr.getValStr(FieldType.MATNR);
           String charg = dr.getValStr(FieldType.CHARG);
+          String scan = dr.getValStr(FieldType.SHK);
           BigDecimal nn = (BigDecimal) dr.getVal(FieldType.QTY);
           String dp = null;
           if (dr.haveVal(FieldType.DAT_PR)) {
             dp = dr.getValStr(FieldType.DAT_PR);
           }
-          PriemkaTovData td = new PriemkaTovData(matnr, charg, dp, nn);
+          PriemkaTovData td = new PriemkaTovData(matnr, charg, dp, nn, scan);
           tov.add(td);
           qtyPal = qtyPal.add(nn);
 
