@@ -1,11 +1,14 @@
 package ntx.ts.userproc;
 
 import java.math.BigDecimal;
+import java.text.DecimalFormat;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map.Entry;
 import ntx.sap.fm.*;
 import ntx.sap.refs.*;
+import ntx.sap.struct.ZTS_LG_STOCK_S;
 import ntx.sap.struct.ZTS_MAT_ABC_S;
 import ntx.sap.struct.ZTS_VED_S;
 import ntx.ts.html.*;
@@ -223,6 +226,7 @@ public class ProcessSklMove extends ProcessTask {
         if (f.NOT_WHOLE.equals("X")) {
           s = s + " <br>!!! ОТКРЫТЫЕ ТРАНСП. ЗАКАЗЫ, ВЕСЬ ТОВАР С ПАЛЛЕТЫ ПЕРЕМЕСТИТЬ НЕЛЬЗЯ";
         }
+        s = s + " " + d.getStockStr();
         callSetMsg(s, ctx);
         callAddHist("Источник: " + d.getCell1() + " " + d.getPal1(), ctx);
         d.callClearTovData(ctx);
@@ -259,6 +263,7 @@ public class ProcessSklMove extends ProcessTask {
       if (f.NOT_WHOLE.equals("X")) {
         s = s + " <br>!!! ОТКРЫТЫЕ ТРАНСП. ЗАКАЗЫ, ВЕСЬ ТОВАР С ПАЛЛЕТЫ ПЕРЕМЕСТИТЬ НЕЛЬЗЯ";
       }
+      s = s + " " + d.getStockStr();
       callSetMsg(s, ctx);
       callAddHist("Источник: " + d.getCell1() + " " + d.getPal1(), ctx);
       d.callClearTovData(ctx);
@@ -372,6 +377,7 @@ public class ProcessSklMove extends ProcessTask {
       if (!f.MAT_CELL.isEmpty()) {
         s = s + " (" + f.MAT_CELL + ")";
       }
+      s = s + " " + d.getStockChargStr(f.CHARG);
       callAddHist(s, ctx);
       callSetMsg(s, ctx);
 
@@ -655,7 +661,48 @@ class SklMoveData extends ProcData {
   private String lastScan = null; // предыдущее сканирование
   private HashMap<String, BigDecimal> tovData = new HashMap<String, BigDecimal>(); // товар по партиям
   private HashMap<String, BigDecimal> tovDataM = new HashMap<String, BigDecimal>(); // товар по материалам
+  private final ArrayList<ZTS_LG_STOCK_S> stock = new ArrayList<ZTS_LG_STOCK_S>();
 
+  public String getStockStr() {
+    String stock_str = "";
+    if (!lgnum.equals("333") && !lgnum.equals("223")) return stock_str;
+    DecimalFormat df = new DecimalFormat();
+    df.setMaximumFractionDigits(1);
+    df.setMinimumFractionDigits(0);
+    df.setGroupingUsed(false);
+    for (ZTS_LG_STOCK_S stock_item : stock) {
+      if (!stock_str.isEmpty()) stock_str = stock_str + "; ";
+      stock_str = stock_str + delZeros(stock_item.MATNR) + " (" + 
+        stock_item.CHARG + ", З " + df.format(stock_item.GESME) +
+        ", ДЗ " + df.format(stock_item.VERME) + ")";
+    }
+    return stock_str;
+  }
+
+  public String getStockChargStr(String charg) {
+    String stock_str = "";
+    if (!lgnum.equals("333") && !lgnum.equals("223")) return stock_str;
+    DecimalFormat df = new DecimalFormat();
+    df.setMaximumFractionDigits(1);
+    df.setMinimumFractionDigits(0);
+    df.setGroupingUsed(false);
+    for (ZTS_LG_STOCK_S stock_item : stock) {
+      if (delZeros(stock_item.CHARG).equalsIgnoreCase(charg)) {
+          BigDecimal qty = tovData.get(charg);
+          BigDecimal qty_z = new BigDecimal(0);
+          BigDecimal qty_dz = new BigDecimal(0);
+          if (qty != null) {
+            qty_z = stock_item.GESME.subtract(qty);
+            qty_dz = stock_item.GESME.subtract(qty);
+          } 
+          stock_str = "(З " + df.format(qty_z) +
+            ", ДЗ " + df.format(qty_dz) + ")";
+          return stock_str;
+      }
+    }
+    return stock_str;
+  }
+  
   public String getLastScan() {
     return lastScan;
   }
@@ -832,6 +879,25 @@ class SklMoveData extends ProcData {
         }
         if (dr.haveVal(FieldType.PAL)) {
           pal1 = dr.getValStr(FieldType.PAL);
+          
+          stock.clear();
+          Z_TS_LG_STOCK f = new Z_TS_LG_STOCK();
+          f.LGNUM = lgnum;
+          f.LGTYP = lgtyp1;
+          f.LGPLA = cell1;
+          f.LENUM = pal1;
+          f.execute();
+          if (!f.isErr) {
+            for (int i = 0; i < f.IT.length; i++) {
+              ZTS_LG_STOCK_S stock_item = new ZTS_LG_STOCK_S();
+              stock_item.MATNR = f.IT[i].MATNR;
+              stock_item.CHARG = f.IT[i].CHARG;
+              stock_item.GESME = f.IT[i].GESME;
+              stock_item.VERME = f.IT[i].VERME;
+              stock.add(stock_item);
+            }
+          }
+          
         }
         if (dr.haveVal(FieldType.CLEAR_TOV_DATA)) {
           tovData.clear();
