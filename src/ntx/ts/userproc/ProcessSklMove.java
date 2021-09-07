@@ -29,6 +29,7 @@ import static ntx.ts.sysproc.ProcessUtil.delDecZeros;
 import static ntx.ts.sysproc.ProcessUtil.delZeros;
 import static ntx.ts.sysproc.ProcessUtil.fillZeros;
 import static ntx.ts.sysproc.ProcessUtil.getScanChargQty;
+import static ntx.ts.sysproc.ProcessUtil.isScanTov;
 import ntx.ts.sysproc.TaskContext;
 import ntx.ts.sysproc.UserContext;
 
@@ -321,7 +322,7 @@ public class ProcessSklMove extends ProcessTask {
         callSetErr("Нет такой партии (сканирование " + scan + " не принято)", ctx);
         return htmlGet(true, ctx);
       }
-      if (ctx.user.getAskQty()) {
+      if (ctx.user.getAskQty() && !isScanMk(scan)) {
         String s = c.matnr + "/" + charg + " " + RefMat.getName(c.matnr);
         callSetMsg(s, ctx);
         callSetTaskState(TaskState.QTY, ctx);
@@ -343,6 +344,12 @@ public class ProcessSklMove extends ProcessTask {
 
   private FileData handleScanTovDo(String scan, String charg, 
           BigDecimal qty, TaskContext ctx) throws Exception {
+
+    if (d.scanIsDouble(scan)) {
+      callSetErr("ШК дублирован (сканирование " + scan + " не принято)", ctx);
+      return htmlGet(true, ctx);
+    }
+      
     Z_TS_SKL_MOVE3 f = new Z_TS_SKL_MOVE3();
     f.LGNUM = d.getLgnum();
     f.LGORT = d.getLgort();
@@ -369,7 +376,7 @@ public class ProcessSklMove extends ProcessTask {
     if (!f.isErr) {
       f.MATNR = delZeros(f.MATNR);
       f.CHARG = delZeros(f.CHARG);
-      d.callAddTov(f.MATNR, f.CHARG, f.QTY, ctx);
+      d.callAddTov(f.MATNR, f.CHARG, f.QTY, scan, ctx);
 
       String s = delDecZeros(f.QTY.toString()) + "ед " + f.MATNR + " (" + f.CHARG + ") " + f.MAKTX;
       s = appendAbc(s, f.ABC);
@@ -662,7 +669,15 @@ class SklMoveData extends ProcData {
   private HashMap<String, BigDecimal> tovData = new HashMap<String, BigDecimal>(); // товар по партиям
   private HashMap<String, BigDecimal> tovDataM = new HashMap<String, BigDecimal>(); // товар по материалам
   private final ArrayList<ZTS_LG_STOCK_S> stock = new ArrayList<ZTS_LG_STOCK_S>();
+  private final ArrayList<String> tovScans = new ArrayList<String>();
 
+  public boolean scanIsDouble(String scan) {
+    int n = tovScans.size();
+    for (int i = 0; i < n; i++) 
+        if (tovScans.get(i).equals(scan) && !isScanTov(scan)) return true;
+    return false;
+  }
+  
   public String getStockStr() {
     String stock_str = "";
     if (!lgnum.equals("333") && !lgnum.equals("223")) return stock_str;
@@ -838,7 +853,8 @@ class SklMoveData extends ProcData {
     Track.saveProcessChange(dr, ctx.task, ctx);
   }
 
-  public void callAddTov(String matnr, String charg, BigDecimal qty, TaskContext ctx) throws Exception {
+  public void callAddTov(String matnr, String charg, BigDecimal qty, 
+          String scan, TaskContext ctx) throws Exception {
     // добавление данных о товаре (партия - без ведущих нулей)
     if (qty.signum() == 0) {
       return;
@@ -848,6 +864,7 @@ class SklMoveData extends ProcData {
     dr.setS(FieldType.MATNR, matnr);
     dr.setS(FieldType.CHARG, charg);
     dr.setN(FieldType.QTY, qty);
+    dr.setS(FieldType.SHK, scan);
     Track.saveProcessChange(dr, ctx.task, ctx);
   }
 
@@ -902,9 +919,12 @@ class SklMoveData extends ProcData {
         if (dr.haveVal(FieldType.CLEAR_TOV_DATA)) {
           tovData.clear();
           tovDataM.clear();
+          tovScans.clear();
         }
-        if (dr.haveVal(FieldType.MATNR) && dr.haveVal(FieldType.CHARG) && dr.haveVal(FieldType.QTY)) {
+        if (dr.haveVal(FieldType.MATNR) && dr.haveVal(FieldType.CHARG) && 
+                dr.haveVal(FieldType.QTY) && dr.haveVal(FieldType.SHK)) {
           String charg = dr.getValStr(FieldType.CHARG);
+          String scan = dr.getValStr(FieldType.SHK);
           BigDecimal nn = (BigDecimal) dr.getVal(FieldType.QTY);
           BigDecimal nn0 = tovData.get(charg);
           if (nn0 != null) {
@@ -918,6 +938,7 @@ class SklMoveData extends ProcData {
             nn = nn.add(nn0);
           }
           tovDataM.put(matnr, nn);
+          tovScans.add(scan);
         }
         if (dr.haveVal(FieldType.CELL2)) {
           cell2 = dr.getValStr(FieldType.CELL2);

@@ -23,6 +23,7 @@ import ntx.ts.sysproc.ProcData;
 import ntx.ts.sysproc.ProcessContext;
 import ntx.ts.sysproc.ProcessTask;
 import static ntx.ts.sysproc.ProcessUtil.getScanChargQty;
+import static ntx.ts.sysproc.ProcessUtil.isScanTov;
 import ntx.ts.sysproc.TaskContext;
 import ntx.ts.sysproc.UserContext;
 
@@ -398,6 +399,12 @@ public class ProcessVozvrat extends ProcessTask {
   }
 
   private FileData handleScanTovDo(String scanTov, TaskContext ctx) throws Exception {
+
+    if (d.scanIsDouble(scanTov)) {
+      callSetErr("ШК дублирован (сканирование " + scanTov + " не принято)", ctx);
+      return htmlGet(true, ctx);
+    }
+
     try {
       ScanChargQty scanInf; 
       scanInf = getScanChargQty(scanTov);
@@ -578,6 +585,13 @@ class VozvratData extends ProcData {
   private BigDecimal qtyTot = BigDecimal.ZERO; // общее кол-во
   private HashMap<String, BigDecimal> tovMcur = new HashMap<String, BigDecimal>(); // товар на текущей паллете по материалам
   private HashMap<String, VozvratPalData> pals = new HashMap<String, VozvratPalData>(); // отсканированные паллеты
+
+  public boolean scanIsDouble(String scan) {
+    int n = tovCur.size();
+    for (int i = 0; i < n; i++) 
+        if (tovCur.get(i).shk.equals(scan) && !isScanTov(scan)) return true;
+    return false;
+  }
 
   public int getNScan() {
     int ret = 0;

@@ -34,7 +34,7 @@ import ntx.ts.sysproc.TaskContext;
 import ntx.ts.sysproc.UserContext;
 
 /**
- * Отгрузка ДПДТ Состояния: START SEL_SKL TOV
+ * Отгрузка ДПДТ Состояния: START SEL_SKL TOV TOV_PAL
  */
 public class ProcessDpdt extends ProcessTask {
 
@@ -108,6 +108,9 @@ public class ProcessDpdt extends ProcessTask {
       case TOV:
         return handleScanTov(scan, ctx);
 
+      case TOV_PAL:
+        return handleScanTovPal(scan, ctx);
+
       default:
         callSetErr("Ошибка программы: недопустимое состояние "
                 + getTaskState().name() + " (сканирование не принято)", ctx);
@@ -120,6 +123,17 @@ public class ProcessDpdt extends ProcessTask {
       return handleScanTovDo(scan, ctx);
     } else {
       callSetErr("Требуется отсканировать ШК товара (сканирование " + scan + " не принято)", ctx);
+      return htmlGet(true, ctx);
+    }
+  }
+  
+  private FileData handleScanTovPal(String scan, TaskContext ctx) throws Exception {
+    if (isScanTovMk(scan)) {
+      return handleScanTovDo(scan, ctx);
+    } else if (isScanPal(scan)) {
+      return handleScanPalDo(scan, ctx);
+    } else {
+      callSetErr("Требуется отсканировать ШК товара или паллеты (сканирование " + scan + " не принято)", ctx);
       return htmlGet(true, ctx);
     }
   }
@@ -162,7 +176,7 @@ public class ProcessDpdt extends ProcessTask {
       }
     }
 
-    d.callAddTov(charg, q, ctx);
+    d.callAddTov(charg, q, TaskState.TOV_PAL, ctx);
     r = d.getPrtQtyNull(charg);
     String s = c.matnr + "/" + charg + " " + RefMat.getFullName(c.matnr)
             + ": " + delDecZeros(q.toString()) + " ед";
@@ -175,13 +189,49 @@ public class ProcessDpdt extends ProcessTask {
     return htmlGet(true, ctx);
   }
 
+  private FileData handleScanPalDo(String scan, TaskContext ctx) throws Exception {
+    // тип ШК уже проверен
+    String pal = getScanPal(scan);
+    
+    callClearErrMsg(ctx);
+
+    if (d.getNScan() > 0) {
+      Z_TS_DPDT2 f = new Z_TS_DPDT2();
+      f.LGORT = d.getLgort();
+      f.USER_SHK = ctx.user.getUserSHK();
+      f.IT_DONE = d.getScanData();
+      f.LENUM = pal;
+
+      f.execute();
+
+      if (f.isErr) {
+        callSetErr(f.err, ctx);
+      }
+    }
+
+    if (getLastErr() == null) {
+      callTaskFinish(ctx);
+      return null;
+    } else {
+      return htmlGet(true, ctx);
+    }
+
+//    d.callSetPal(pal, TaskState.SEL_CELL, ctx);
+//    callSetMsg("Просканирована паллета " + pal, ctx);
+  }
+  
   private FileData htmlMenu(TaskContext ctx) throws Exception {
     String definition;
 
     switch (getTaskState()) {
       case TOV:
         definition = "cont:Продолжить;later:Отложить;dellast:Отменить последнее сканирование;"
-                + "delall:Отменить всё;showtov:Показать общее кол-во;fin:Завершить";
+                + "delall:Отменить всё;showtov:Показать общее кол-во;fin:Завершить без сохранения";
+        break;
+
+      case TOV_PAL:
+        definition = "cont:Продолжить;later:Отложить;dellast:Отменить последнее сканирование;"
+                + "delall:Отменить всё;showtov:Показать общее кол-во;fin:Завершить без сохранения";
         break;
 
       default:
@@ -246,6 +296,7 @@ public class ProcessDpdt extends ProcessTask {
   }
 
   private FileData handleMenuFin(TaskContext ctx) throws Exception {
+      /*
     if (d.getNScan() > 0) {
       Z_TS_DPDT2 f = new Z_TS_DPDT2();
       f.LGORT = d.getLgort();
@@ -258,6 +309,7 @@ public class ProcessDpdt extends ProcessTask {
         callSetErr(f.err, ctx);
       }
     }
+*/
 
     if (getLastErr() == null) {
       callTaskFinish(ctx);
@@ -450,12 +502,16 @@ class DpdtData extends ProcData {
     Track.saveProcessChange(dr, ctx.task, ctx);
   }
 
-  public void callAddTov(String charg, BigDecimal qty, TaskContext ctx) throws Exception {
+  public void callAddTov(String charg, BigDecimal qty, 
+          TaskState state, TaskContext ctx) throws Exception {
     DataRecord dr = new DataRecord();
     dr.procId = ctx.task.getProcId();
     dr.setS(FieldType.CHARG, charg);
     dr.setN(FieldType.QTY, qty);
     dr.setI(FieldType.LOG, LogType.ADD_TOV.ordinal());
+    if ((state != null) && (state != ctx.task.getTaskState())) {
+      dr.setI(FieldType.TASK_STATE, state.ordinal());
+    }
     Track.saveProcessChange(dr, ctx.task, ctx);
   }
 

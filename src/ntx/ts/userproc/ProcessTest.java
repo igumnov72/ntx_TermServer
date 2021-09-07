@@ -78,7 +78,7 @@ public class ProcessTest extends ProcessTask {
 
         String charg = scanInf.charg;// getScanCharg(scan);
         RefChargStruct c = RefCharg.get(charg, null);
-        d.callSetMatnr(c.matnr, this, ctx);
+        if (c != null) d.callSetMatnr(c.matnr, this, ctx);
       }
       callTaskNameChange(ctx);
     } else {

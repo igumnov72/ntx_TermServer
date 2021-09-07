@@ -420,6 +420,7 @@ public class ProcessProgres extends ProcessTask {
   }
 
   private FileData handleMenuFin(TaskContext ctx) throws Exception {
+      /*
     if (d.getNScan() > 0) {
       Z_TS_DPDT2 f = new Z_TS_DPDT2();
       f.LGORT = d.getLgort();
@@ -432,6 +433,7 @@ public class ProcessProgres extends ProcessTask {
         callSetErr(f.err, ctx);
       }
     }
+*/
 
     if (getLastErr() == null) {
       callTaskFinish(ctx);

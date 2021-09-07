@@ -13,6 +13,7 @@ public class Z_TS_DPDT2 {
   // importing params
   public String LGORT = ""; // Склад
   public String USER_SHK = ""; // Штрих-код пользователя
+  public String LENUM = ""; // № единицы складирования
   //
   // table params
   public ZTS_PRT_QTY_S[] IT_DONE = new ZTS_PRT_QTY_S[0]; // Кол-во по партии
@@ -49,6 +50,7 @@ public class Z_TS_DPDT2 {
       System.out.println("Вызов ФМ Z_TS_DPDT2:");
       System.out.println("  LGORT=" + LGORT);
       System.out.println("  USER_SHK=" + USER_SHK);
+      System.out.println("  LENUM=" + LENUM);
       System.out.println("  IT_DONE.length=" + IT_DONE.length);
     }
 
@@ -103,6 +105,7 @@ public class Z_TS_DPDT2 {
 
       impParams.setValue("LGORT", params.LGORT);
       impParams.setValue("USER_SHK", params.USER_SHK);
+      impParams.setValue("LENUM", params.LENUM);
 
       IT_DONE_t.appendRows(params.IT_DONE.length);
       for (int i = 0; i < params.IT_DONE.length; i++) {
