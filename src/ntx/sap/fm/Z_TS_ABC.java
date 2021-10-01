@@ -15,6 +15,7 @@ public class Z_TS_ABC {
   //
   // exporting params
   public String ABC = ""; // Признак материала на складе ABC
+  public String XYZ = ""; // XYZ
   //
   // переменные для работы с ошибками
   public boolean isErr;
@@ -47,6 +48,7 @@ public class Z_TS_ABC {
       if (TSparams.logDocLevel >= 2) {
         System.out.println("Возврат из ФМ Z_TS_ABC:");
         System.out.println("  ABC=" + ABC);
+        System.out.println("  XYZ=" + XYZ);
       }
     } else {
       // обработка ошибки
@@ -91,6 +93,7 @@ public class Z_TS_ABC {
 
       if (ret == null) {
         params.ABC = expParams.getString("ABC");
+        params.XYZ = expParams.getString("XYZ");
       }
     } catch (Exception e) {
       return e;

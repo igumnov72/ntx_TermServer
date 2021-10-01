@@ -709,6 +709,7 @@ public class ProcessPriemka extends ProcessTask {
       BigDecimal qty = scanInf.qty;// getScanQty(scanTov);
       d.callAddTov(c.matnr, charg, dp, qty, scanTov, ctx);
       String s = delDecZeros(qty.toString()) + " ед: " + c.matnr + "/" + charg + " " + RefMat.getName(c.matnr);
+      s = RefAbc.appendAbcXyz(s, d.getLgort(), c.matnr);
       if (d.getCheckDp() && (dp != null)) {
         s = s + "; выпуск: " + dp.substring(6, 8) + "."
                 + dp.substring(4, 6) + "." + dp.substring(0, 4);

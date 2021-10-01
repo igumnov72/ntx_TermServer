@@ -11,7 +11,8 @@ import ntx.sap.sys.SAPconn;
  */
 public class RefAbc {
 
-  private static final Map<String, RefAbcStruct> ref = Collections.synchronizedMap(new HashMap<String, RefAbcStruct>(3000));
+  private static final Map<String, RefAbcStruct> 
+          ref = Collections.synchronizedMap(new HashMap<String, RefAbcStruct>(3000));
 
   public static RefAbcStruct get(String lgort, String matnr) throws Exception {
     RefAbcStruct ret = ref.get(lgort + "-" + matnr);
@@ -29,7 +30,7 @@ public class RefAbc {
     } catch (Exception e) {
     }
     if (ret == null) {
-      ret = new RefAbcStruct("???");
+      ret = new RefAbcStruct("???", "???");
     }
     return ret;
   }
@@ -46,6 +47,15 @@ public class RefAbc {
       }
     }
   }
+  
+  public static String appendAbcXyz(String s, String lgort, String matnr) throws Exception {
+      String ret = s;
+      RefAbcStruct a = get(lgort, matnr);
+      if (a == null) return ret;
+      if (!a.abc.isEmpty()) ret = ret + " (ABC: " + a.abc + ")";
+      if (!a.xyz.isEmpty()) ret = ret + " (XYZ: " + a.xyz + ")";
+      return ret;
+  }
 
   private static RefAbcStruct getFromSAP(String lgort, String matnr) throws Exception {
     // получение данных о материале из САП (с помещением в справочник)
@@ -58,11 +68,11 @@ public class RefAbc {
     if (f.isErr) {
       throw new Exception(f.err);
     }
-    if ((f.ABC == null) || f.ABC.isEmpty()) {
-      return null;
-    }
+    //if ((f.ABC == null) || f.ABC.isEmpty()) {
+    //  return null;
+    //}
 
-    RefAbcStruct s = new RefAbcStruct(f.ABC);
+    RefAbcStruct s = new RefAbcStruct(f.ABC, f.XYZ);
     return set(lgort, matnr, s);
   }
 }

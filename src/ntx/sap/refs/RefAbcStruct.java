@@ -8,10 +8,12 @@ import ntx.ts.sysproc.ProcessTask;
 public class RefAbcStruct {
 
   public String abc;
+  public String xyz;
   private long tim;
 
-  public RefAbcStruct(String abc) {
+  public RefAbcStruct(String abc, String xyz) {
     this.abc = abc;
+    this.xyz = xyz;
     this.tim = System.currentTimeMillis();
   }
   
@@ -20,6 +22,6 @@ public class RefAbcStruct {
   }
 
   public boolean equals(RefAbcStruct m) throws Exception {
-    return ProcessTask.strEq(abc, m.abc);
+    return ( ProcessTask.strEq(abc, m.abc) && ProcessTask.strEq(xyz, m.xyz) );
   }
 }

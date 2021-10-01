@@ -11,6 +11,7 @@ import ntx.sap.fm.Z_TS_DPDT3;
 import ntx.sap.fm.Z_TS_DPDT4;
 import ntx.sap.fm.Z_TS_DPDT5;
 import ntx.sap.fm.ZSHK_INFO;
+import ntx.sap.refs.RefAbc;
 import ntx.sap.refs.RefCharg;
 import ntx.sap.refs.RefChargStruct;
 import ntx.sap.refs.RefInfo;
@@ -263,6 +264,7 @@ public class ProcessProgres extends ProcessTask {
     r = d.getPrtQtyNull(charg);
     String s = c.matnr + "/" + charg + " " + RefMat.getFullName(c.matnr)
             + ": " + delDecZeros(q.toString()) + " ед";
+    s = RefAbc.appendAbcXyz(s, d.getLgort(), c.matnr);
     callAddHist(s, ctx);
     s = s + " (по партии: " + delDecZeros(r.qty.toString()) + " ед, "
             + r.n + " скан; всего: " + delDecZeros(d.getQtyTot().toString()) + " ед, "
@@ -321,6 +323,7 @@ public class ProcessProgres extends ProcessTask {
     f.LGORT1 = d.getLgort1();
     f.LGORT2 = d.getLgort();
     f.LENUM = fillZeros(pal, 20);
+    f.USER_SHK = ctx.user.getUserSHK();
     f.IT_DONE = d.getScanData();
 
     f.execute();
@@ -332,6 +335,8 @@ public class ProcessProgres extends ProcessTask {
 
     d.callSetPal(pal, TaskState.SEL_CELL, ctx);
     callSetMsg("Просканирована паллета " + pal, ctx);
+    if (!f.INF.isEmpty())
+        callAddHist(f.INF, ctx);
 
     return htmlGet(true, ctx);
   }

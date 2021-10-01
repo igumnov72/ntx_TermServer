@@ -379,7 +379,8 @@ public class ProcessSklMove extends ProcessTask {
       d.callAddTov(f.MATNR, f.CHARG, f.QTY, scan, ctx);
 
       String s = delDecZeros(f.QTY.toString()) + "ед " + f.MATNR + " (" + f.CHARG + ") " + f.MAKTX;
-      s = appendAbc(s, f.ABC);
+      //s = appendAbc(s, f.ABC);
+      s = RefAbc.appendAbcXyz(s, d.getLgort(), f.MATNR);
 
       if (!f.MAT_CELL.isEmpty()) {
         s = s + " (" + f.MAT_CELL + ")";

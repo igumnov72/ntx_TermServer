@@ -14,10 +14,12 @@ public class Z_TS_DPDT4 {
   public String LGORT1 = ""; // Склад отпускающий
   public String LGORT2 = ""; // Склад принимающий
   public String LENUM = ""; // № единицы складирования
+  public String USER_SHK = ""; // Штрих-код
   //
   // exporting params
   public String WERKS1 = ""; // Завод отпускающий
   public String WERKS2 = ""; // Завод принимающий
+  public String INF = "";
   //
   // table params
   public ZTS_PRT_QTY_S[] IT_DONE = new ZTS_PRT_QTY_S[0]; // Кол-во по партии
@@ -55,6 +57,7 @@ public class Z_TS_DPDT4 {
       System.out.println("  LGORT1=" + LGORT1);
       System.out.println("  LGORT2=" + LGORT2);
       System.out.println("  LENUM=" + LENUM);
+      System.out.println("  USER_SHK=" + USER_SHK);
       System.out.println("  IT_DONE.length=" + IT_DONE.length);
     }
 
@@ -66,6 +69,7 @@ public class Z_TS_DPDT4 {
         System.out.println("Возврат из ФМ Z_TS_DPDT4:");
         System.out.println("  WERKS1=" + WERKS1);
         System.out.println("  WERKS2=" + WERKS2);
+        System.out.println("  INF=" + INF);
         System.out.println("  err=" + err);
         System.out.println("  IT_DONE.length=" + IT_DONE.length);
       }
@@ -112,6 +116,7 @@ public class Z_TS_DPDT4 {
       impParams.setValue("LGORT1", params.LGORT1);
       impParams.setValue("LGORT2", params.LGORT2);
       impParams.setValue("LENUM", params.LENUM);
+      impParams.setValue("USER_SHK", params.USER_SHK);
 
       IT_DONE_t.appendRows(params.IT_DONE.length);
       for (int i = 0; i < params.IT_DONE.length; i++) {
@@ -126,6 +131,7 @@ public class Z_TS_DPDT4 {
       if (ret == null) {
         params.WERKS1 = expParams.getString("WERKS1");
         params.WERKS2 = expParams.getString("WERKS2");
+        params.INF = expParams.getString("INF");
         params.err = expParams.getString("ERR");
         if (!params.err.isEmpty()) {
           params.isErr = true;
