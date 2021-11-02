@@ -424,7 +424,7 @@ public abstract class ProcessUtil extends Process {
       ret.charg = getScanCharg(scan);
       ret.qty = getScanQty(scan);
     } else if (isScanMkSn(scan)) {
-      ret.charg = delZeros(scan.substring(1, 9));
+      ret.charg = delZeros(scan.substring(2, 9));
       ret.qty = new BigDecimal(1);
     } else if (isScanMkPb(scan)) {
         ZSHK_INFO f = new ZSHK_INFO();
