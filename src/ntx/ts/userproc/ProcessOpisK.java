@@ -136,7 +136,7 @@ public class ProcessOpisK extends ProcessTask {
         return htmlGet(true, ctx);
       }
         */
-      charg = delZeros(scan.substring(1, 9));
+      charg = delZeros(scan.substring(2, 9));
       q = new BigDecimal(1);
     } else if (isScanMkPb(scan)) {
         /*

@@ -255,7 +255,7 @@ class ShkListData extends ProcData {
     for (int i = n; i >= 0; i--) {
         scan = scanData.get(i);
         if (scan.startsWith("S")) {
-            charg = delZeros(scan.substring(1, 9));
+            charg = delZeros(scan.substring(2, 9));
             RefChargStruct c = null;
             try { c = RefCharg.get(charg, null); } catch (Exception e) {}
             if (c == null) continue;

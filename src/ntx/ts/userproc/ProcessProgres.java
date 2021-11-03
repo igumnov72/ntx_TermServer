@@ -214,7 +214,7 @@ public class ProcessProgres extends ProcessTask {
       charg = getScanCharg(scan);
       q = getScanQty(scan);
     } else if (isScanMkSn(scan)) {
-      charg = delZeros(scan.substring(1, 9));
+      charg = delZeros(scan.substring(2, 9));
       q = new BigDecimal(1);
     } else if (isScanMkPb(scan)) {
         ZSHK_INFO f = new ZSHK_INFO();
