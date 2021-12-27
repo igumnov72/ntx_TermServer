@@ -53,7 +53,10 @@ public enum TaskState {
   SEL_ZONE("Зона склада:"),
   SEL_SKL1("Выберите отпускающий склад:"),
   KOROB("Короб:"),
-  KOROB_PAL("Короб или паллета:");
+  KOROB_PAL("Короб или паллета:"),
+  SEL_OP("Выберите операцию:"),
+  SEL_SHK("ШК:")
+  ;
   //
   public final String actionText;
 

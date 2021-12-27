@@ -142,7 +142,8 @@ public enum FieldType {
   LGORT1_LIST(ValType.STRING), // список складов
   KOR_SHK_S(ValType.STRING_AR), // массив штрихкодов коробов
   KOR_N_S(ValType.INT_AR), // массив числа коробов
-  MARKED(ValType.STRING) // признак маркировки
+  MARKED(ValType.STRING), // признак маркировки
+  OP(ValType.STRING) // операция
   ; 
   //
   public final ValType valType;

@@ -196,7 +196,8 @@ public class ProcessProdPriemka extends ProcessTask {
               + delDecZeros(d.getQtyPal().toString()) + " ед; "
               + d.getNScan() + " скан)";
       if (!abc.isEmpty()) {
-        s += " (ABC: " + abc + ")";
+        //s += " (ABC: " + abc + ")";
+        s = RefAbc.appendAbcXyz(s, d.getLgort(), c.matnr);
       }
       callSetMsg(s, ctx);
       callAddHist(s, ctx);

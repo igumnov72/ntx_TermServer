@@ -27,7 +27,8 @@ public enum ProcType {
   COMPL_MOVE("Перемещение скомпл. товара", 15), // перемещение скомплектованного товара
   PROGRES("Перемещение с Прогресса", 16), // перемещение товара с Прогресса
   SKOROB("Сборный короб", 14), // сборный короб
-  SHK_LIST("Список ШК",17);
+  SHK_LIST("Список ШК",17),
+  PROGOPIS("Прогресс опись",18);
   //
   public final String text;
   public final boolean isUserProc;
