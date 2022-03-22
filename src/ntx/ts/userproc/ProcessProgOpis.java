@@ -55,7 +55,7 @@ public class ProcessProgOpis extends ProcessTask {
       if (!scan.equals("00")) {
         callClearErrMsg(ctx);
       }
-      return handleScan(scan, false, ctx);
+      return handleScan(scan.toUpperCase(), false, ctx);
     } else if (menu != null) {
       return handleMenu(menu, ctx);
     }
@@ -98,7 +98,7 @@ public class ProcessProgOpis extends ProcessTask {
     } else
     if (getTaskState() == TaskState.SEL_CELL) {
         if (isScanCell(scan)) {
-          d.callAddScanData(scan, TaskState.SEL_SHK, this, ctx);
+          d.callAddScanData(scan.substring(1), TaskState.SEL_SHK, this, ctx);
           s = "Добавлена запись по ячейке " + scan.substring(1) + ". Всего записей: " + 
                   Integer.toString(d.getScanDataCount());
           callSetMsg(s , ctx);

@@ -11,6 +11,7 @@ import ntx.ts.html.*;
 import ntx.ts.http.FileData;
 import ntx.ts.srv.DataRecord;
 import ntx.ts.srv.FieldType;
+import ntx.ts.srv.LogType;
 import ntx.ts.srv.ProcType;
 import ntx.ts.srv.TermQuery;
 import ntx.ts.srv.Track;
@@ -288,6 +289,7 @@ class ShkListData extends ProcData {
     DataRecord dr = new DataRecord();
     dr.procId = p.getProcId();
     dr.setS(FieldType.SHK, scan);
+    dr.setI(FieldType.LOG, LogType.ADD_TOV.ordinal());
     Track.saveProcessChange(dr, p, ctx);
   }
   

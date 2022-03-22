@@ -714,10 +714,10 @@ public class ProcessPriemka extends ProcessTask {
         s = s + "; выпуск: " + dp.substring(6, 8) + "."
                 + dp.substring(4, 6) + "." + dp.substring(0, 4);
       }
+      callAddHist(s, ctx);
       s = s + " (на паллете: " + d.getTovM().size() + " мат; "
               + delDecZeros(d.getQtyPal().toString()) + " ед; "
               + d.getNScan() + " скан)";
-      callAddHist(s, ctx);
       if (d.getIsRet()) {
         String s2 = getTovCells(c.matnr);
         if (s2 != null) {

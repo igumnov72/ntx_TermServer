@@ -33,6 +33,7 @@ import ntx.ts.srv.Track;
 import ntx.ts.sysproc.ProcData;
 import ntx.ts.sysproc.ProcessContext;
 import ntx.ts.sysproc.ProcessTask;
+import static ntx.ts.sysproc.ProcessUtil.isScanTov;
 import ntx.ts.sysproc.TaskContext;
 import ntx.ts.sysproc.UserContext;
 
@@ -210,6 +211,11 @@ public class ProcessProgres extends ProcessTask {
     String charg;
     BigDecimal q;
 
+    if (d.scanIsDouble(scan)) {
+      callSetErr("ШК дублирован (сканирование " + scan + " не принято)", ctx);
+      return htmlGet(true, ctx);
+    }
+    
     if (isScanTov(scan)) {
       charg = getScanCharg(scan);
       q = getScanQty(scan);
@@ -334,9 +340,10 @@ public class ProcessProgres extends ProcessTask {
     }
 
     d.callSetPal(pal, TaskState.SEL_CELL, ctx);
-    callSetMsg("Просканирована паллета " + pal, ctx);
-    if (!f.INF.isEmpty())
-        callAddHist(f.INF, ctx);
+    String s = "Просканирована паллета " + pal + ".";
+    if (!f.INF.isEmpty()) s = s + " " + f.INF;
+    callSetMsg(s, ctx);
+    callAddHist(s, ctx);
 
     return htmlGet(true, ctx);
   }
@@ -661,6 +668,13 @@ class ProgresData extends ProcData {
     return pq.get(charg);
   }
 
+  public boolean scanIsDouble(String scan) {
+    int n = scanData.size();
+    for (int i = 0; i < n; i++) 
+        if (scanData.get(i).shk.equals(scan) && !isScanTov(scan)) return true;
+    return false;
+  }
+  
   public void callSetLgort(String lgort, TaskState state, TaskContext ctx) throws Exception {
     DataRecord dr = new DataRecord();
     dr.procId = ctx.task.getProcId();
