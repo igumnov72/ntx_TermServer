@@ -144,7 +144,7 @@ public class ProcessProgOpis extends ProcessTask {
     } else if (menu.equals("save")) {
 
         Z_TS_PROGOPIS1 f = new Z_TS_PROGOPIS1();
-        //f.USER_SHK = ctx.user.getUserSHK();
+        f.USER_SHK = ctx.user.getUserSHK();
 
         int nn = d.getScanDataCount();
         ProgOpisScanData sd;

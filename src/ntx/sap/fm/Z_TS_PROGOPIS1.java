@@ -10,6 +10,9 @@ import ntx.sap.struct.*;
  */
 public class Z_TS_PROGOPIS1 {
 
+  // importing params
+  public String USER_SHK = ""; // Штрих-код
+  //
   // table params
   public ZTS_IO_SHK_CELL_S[] IT = new ZTS_IO_SHK_CELL_S[0]; // ZTS_IO_SHK_CELL_T
   //
@@ -21,6 +24,7 @@ public class Z_TS_PROGOPIS1 {
   //
   // вспомогательные переменные
   private static volatile JCoFunction function;
+  private static volatile JCoParameterList impParams;
   private static volatile JCoParameterList expParams;
   private static volatile JCoParameterList tabParams;
   private static volatile boolean isInit = false;
@@ -40,6 +44,10 @@ public class Z_TS_PROGOPIS1 {
 
     if (TSparams.logDocLevel == 1) {
       System.out.println("Вызов ФМ Z_TS_PROGOPIS1");
+    } else if (TSparams.logDocLevel >= 2) {
+      System.out.println("Вызов ФМ Z_TS_PROGOPIS1:");
+      System.out.println("  USER_SHK=" + USER_SHK);
+      System.out.println("  IT.length=" + IT.length);
     }
 
     // вызов САПовской процедуры
@@ -85,10 +93,13 @@ public class Z_TS_PROGOPIS1 {
         }
       }
 
+      impParams.clear();
       expParams.clear();
       tabParams.clear();
 
       JCoTable IT_t = tabParams.getTable("IT");
+
+      impParams.setValue("USER_SHK", params.USER_SHK);
 
       IT_t.appendRows(params.IT.length);
       for (int i = 0; i < params.IT.length; i++) {
@@ -136,6 +147,7 @@ public class Z_TS_PROGOPIS1 {
       return new JCoException(0, "Z_TS_PROGOPIS1 not found in SAP.");
     }
 
+    impParams = function.getImportParameterList();
     expParams = function.getExportParameterList();
     tabParams = function.getTableParameterList();
 

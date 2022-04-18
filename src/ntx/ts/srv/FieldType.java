@@ -143,7 +143,8 @@ public enum FieldType {
   KOR_SHK_S(ValType.STRING_AR), // массив штрихкодов коробов
   KOR_N_S(ValType.INT_AR), // массив числа коробов
   MARKED(ValType.STRING), // признак маркировки
-  OP(ValType.STRING) // операция
+  OP(ValType.STRING), // операция
+  CLEAR_PAL_DATA(ValType.VOID) // удаление данных по паллете
   ; 
   //
   public final ValType valType;

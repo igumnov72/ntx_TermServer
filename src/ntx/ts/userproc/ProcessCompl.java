@@ -1168,7 +1168,9 @@ public class ProcessCompl extends ProcessTask {
                   + "show:Показать ведомость на комплектацию;"
                   + "showcell:Ведомость по ячейке;showdone:Выполненная компл по ячейке;"
                   + "dellast:Отменить последнее сканирование товара;"
-                  + "delall:Отменить всё несохраненное (по ячейке и поставке);" + askQtyMenu;
+                  + "delall:Отменить всё несохраненное (по ячейке и поставке);" 
+                  + "delpal:Отменить по паллете;" 
+                  + askQtyMenu;
         }
         break;
 
@@ -1325,9 +1327,15 @@ public class ProcessCompl extends ProcessTask {
     } else if (menu.equals("delall")) {
       callClearErrMsg(ctx);
       return htmlCnfDelAll(); // удалить всё несохраненное (по ячейке/поставке)
+    } else if (menu.equals("delpal")) {
+      callClearErrMsg(ctx);
+      return htmlCnfDelPal(); 
     } else if (menu.equals("do_cnf_delall")) {
       callClearErrMsg(ctx);
       return handleMenuDelAll(ctx);
+    } else if (menu.equals("do_cnf_delpal")) {
+      callClearErrMsg(ctx);
+      return handleMenuDelPal(ctx);
     } else if (menu.equals("show_sk_cells")) {
       callClearErrMsg(ctx);
       return htmlShowSKcells(ctx);
@@ -1682,11 +1690,29 @@ public class ProcessCompl extends ProcessTask {
     return p.getPage();
   }
 
+  private FileData htmlCnfDelPal() throws Exception {
+    HtmlPageMenu p = new HtmlPageMenu("Комплектация",
+            "Удалить все полученные данные по последней паллете по ячейке " 
+            + d.getCell() + ", поставке " + d.getVbeln() + "?",
+            "no:Нет;do_cnf_delpal:Да", "no", null, null, false);
+    return p.getPage();
+  }
+
   private FileData handleMenuDelAll(TaskContext ctx) throws Exception {
     d.callClearTovData(ctx);
     callSetMsg("Все данные сканирования по ячейке " + d.getCell()
             + ", поставке " + d.getVbeln() + " удалены", ctx);
     callAddHist("Удалено всё по ячейке " + d.getCell()
+            + ", поставке " + d.getVbeln(), ctx);
+    return htmlGet(true, ctx);
+  }
+
+  private FileData handleMenuDelPal(TaskContext ctx) throws Exception {
+    d.callClearPalData(ctx);
+    callSetMsg("Все данные сканирования по ячейке " + d.getCell()
+            + ", поставке " + d.getVbeln() + ", по последней паллете" 
+            + " удалены", ctx);
+    callAddHist("Удалено всё по последней паллете по ячейке " + d.getCell()
             + ", поставке " + d.getVbeln(), ctx);
     return htmlGet(true, ctx);
   }
@@ -3260,7 +3286,17 @@ class ComplData extends ProcData {
     Track.saveProcessChange(dr, ctx.task, ctx);
   }
 
-  public void callDelLast(TaskContext ctx) throws Exception {
+  public void callClearPalData(TaskContext ctx) throws Exception {
+    // удаление данных о товаре
+    DataRecord dr = new DataRecord();
+    dr.procId = ctx.task.getProcId();
+    if (!scanData.isEmpty()) {
+      dr.setV(FieldType.CLEAR_PAL_DATA);
+    }
+    Track.saveProcessChange(dr, ctx.task, ctx);
+  }
+
+    public void callDelLast(TaskContext ctx) throws Exception {
     DataRecord dr = new DataRecord();
     dr.procId = ctx.task.getProcId();
     dr.setV(FieldType.DEL_LAST);
@@ -3665,6 +3701,19 @@ class ComplData extends ProcData {
         if (dr.haveVal(FieldType.CLEAR_TOV_DATA)) {
           while (scanData.size() > 0) {
             hdDelLast();
+          }
+        }
+
+        if (dr.haveVal(FieldType.CLEAR_PAL_DATA)) {
+          if (scanData.size() > 0) {
+            String cpd_last_pal = scanData.get(scanData.size() - 1).pal;
+            String cpd_pal = cpd_last_pal;
+            if (!cpd_pal.isEmpty()) {
+              while (scanData.size() > 0 && cpd_pal.equals(cpd_last_pal)) {
+                hdDelLast();
+                cpd_pal = scanData.get(scanData.size() - 1).pal;
+              }
+            }
           }
         }
 

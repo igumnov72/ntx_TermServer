@@ -265,6 +265,11 @@ public class ProcessSklMove extends ProcessTask {
         s = s + " <br>!!! ОТКРЫТЫЕ ТРАНСП. ЗАКАЗЫ, ВЕСЬ ТОВАР С ПАЛЛЕТЫ ПЕРЕМЕСТИТЬ НЕЛЬЗЯ";
       }
       s = s + " " + d.getStockStr();
+
+      if (!f.MAT_CELL.isEmpty()) {
+        s = s + " " + f.MAT_CELL;
+      }
+
       callSetMsg(s, ctx);
       callAddHist("Источник: " + d.getCell1() + " " + d.getPal1(), ctx);
       d.callClearTovData(ctx);
@@ -382,10 +387,12 @@ public class ProcessSklMove extends ProcessTask {
       //s = appendAbc(s, f.ABC);
       s = RefAbc.appendAbcXyz(s, d.getLgort(), f.MATNR);
 
-      if (!f.MAT_CELL.isEmpty()) {
-        s = s + " (" + f.MAT_CELL + ")";
-      }
       s = s + " " + d.getStockChargStr(f.CHARG);
+
+      if (!f.MAT_CELL.isEmpty()) {
+        s = s + " " + f.MAT_CELL;
+      }
+
       callAddHist(s, ctx);
       callSetMsg(s, ctx);
 
