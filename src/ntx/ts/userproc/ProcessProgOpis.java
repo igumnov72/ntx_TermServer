@@ -94,6 +94,36 @@ public class ProcessProgOpis extends ProcessTask {
           } else
           callSetErr("Просканирован не ШК остатка (сканирование " + scan + " не принято)", ctx);
         } else
+        if ((n == 15) && isAllDigits(scan.substring(0, 7)) && isAllDigits(scan.substring(8)) && 
+                ((scan.charAt(7) == 'D') || (scan.charAt(7) == 'C'))) {
+          String tov_charg = delZeros(scan.substring(0, 7));
+          String tov_qty = scan.substring(8);
+          RefChargStruct c = RefCharg.get(tov_charg, null);
+          if (c == null) {
+            callSetErr("Просканирован не ШК остатка (сканирование " + scan + " не принято)", ctx);
+          } else {
+            String prog_scan = delZeros(c.matnr);
+            RefMatStruct prog_ref_mat = RefMat.get(prog_scan);
+            String prog_mat_name = "";
+            if (prog_ref_mat != null) prog_mat_name = prog_ref_mat.name;
+            if (prog_scan.length() == 6) prog_scan = "00" + prog_scan;
+            if (prog_scan.length() == 7) prog_scan = "0" + prog_scan;
+            String prog_qty = "";
+            if (scan.charAt(7) == 'D') {
+              prog_scan = prog_scan + tov_qty.substring(3) + "0";
+              prog_qty = delZeros(tov_qty.substring(3)) + ".0";
+            }
+            if (scan.charAt(7) == 'C') {
+              prog_scan = prog_scan + tov_qty.substring(2);
+              prog_qty = delZeros(tov_qty.substring(2,6)) + "." + tov_qty.substring(6);
+            }
+            d.callSetShk(prog_scan, TaskState.SEL_CELL, this, ctx);
+            s = "Просканирован ШК остатка " + delZeros(c.matnr) + " " +
+              prog_mat_name + " метраж " + prog_qty;
+            callSetMsg(s, ctx);
+            callAddHist(s, ctx);
+          }
+        } else
           callSetErr("Просканирован не ШК остатка (сканирование " + scan + " не принято)", ctx);
     } else
     if (getTaskState() == TaskState.SEL_CELL) {

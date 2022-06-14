@@ -180,7 +180,9 @@ public class Logger {
         f.IT[i].SOTR = r.sotr;
         f.IT[i].MATNR = SAPconn.fillZeros(r.matnr, 18);
         f.IT[i].CHARG = SAPconn.fillZeros(r.charg, 10);
-        f.IT[i].QTY = r.qty;
+        if (r.qty.compareTo(BigDecimal.valueOf(1000000000)) > 0) 
+          f.IT[i].QTY = BigDecimal.valueOf(1000000000); else
+          f.IT[i].QTY = r.qty;
         f.IT[i].LENUM = SAPconn.fillZeros(r.pal, 20);
         f.IT[i].VBELN = SAPconn.fillZeros(r.vbeln, 10);
         f.IT[i].LGPLA = r.cell;

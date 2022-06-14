@@ -259,6 +259,17 @@ public abstract class ProcessUtil extends Process {
     return false;
   }
 
+  public static boolean isScanSur(String scan) {
+    int n = scan.length();
+    if ((n == 15) && isAllDigits(scan.substring(0, 4)) && isAllDigits(scan.substring(5))) {
+      char c = scan.charAt(4);
+      if (c == 'Z') {
+        return true;
+      }
+    }
+    return false;
+  }
+
   public static boolean isScanMkSn(String scan) {
     int n = scan.length();
     char c = scan.charAt(0);

@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 import ntx.sap.fm.Z_TS_SHKLIST1;
+import ntx.sap.fm.Z_TS_SHKLIST2;
 import ntx.sap.refs.RefCharg;
 import ntx.sap.refs.RefChargStruct;
 import ntx.sap.refs.RefInfo;
@@ -67,11 +68,21 @@ public class ProcessShkList extends ProcessTask {
     }
     
     if (isScanMkSn(scan) || isScanMkPb(scan) || isScanSsccBox(scan) || 
-            isScanSsccPal(scan) || isScanTov(scan) ) {
+            isScanSsccPal(scan) || isScanTov(scan) || isScanSur(scan)) {
       callAddHist(scan, ctx);
       //d.callAddNScan(this, ctx);
       d.callAddScan(scan, this, ctx);
-      callSetMsg("В коробе " + Integer.toString(d.lastBoxScanCount()) + " СН" +
+      if (isScanSur(scan)) {
+        Z_TS_SHKLIST2 f = new Z_TS_SHKLIST2();
+        f.SHK = scan;
+        f.execute();
+        if (f.isErr) {
+          callSetErr(f.err, ctx);
+          return htmlWork("Список ШК", true, ctx);
+        }
+        callSetMsg(f.INF, ctx);
+      } else
+        callSetMsg("В коробе " + Integer.toString(d.lastBoxScanCount()) + " СН" +
               " (" + d.lastBoxMatCount() + ") " + 
               Integer.toString(d.getBoxCount()) + "-" +
               Integer.toString(d.getGoodCount()), 
