@@ -136,6 +136,15 @@ public class ProcessOpisK extends ProcessTask {
         return htmlGet(true, ctx);
       }
         */
+
+      Z_TS_OPISK4 f = new Z_TS_OPISK4();
+      f.SHK = scan;
+      f.VBELN = d.getVbelnVa();
+      f.execute();
+      if (f.isErr) {
+        callAddHist(f.err, ctx);
+      }
+        
       charg = delZeros(scan.substring(2, 9));
       q = new BigDecimal(1);
     } else if (isScanMkPb(scan)) {

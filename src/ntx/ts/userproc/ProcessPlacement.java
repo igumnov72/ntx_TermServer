@@ -114,7 +114,8 @@ public class ProcessPlacement extends ProcessTask {
         if (!f.ABC.isEmpty()) {
           s += " (ABC: " + f.ABC + ")";
         }
-        callSetMsg(s + s1 + "<br>\r\nВсего паллет к размещению по " + d.getVbeln() + ": " + f.NERAZM, ctx);
+        callSetMsg(s + s1 + "<br>\r\nВсего паллет к размещению по " + 
+                d.getVbeln() + ": " + f.NERAZM + " " + f.INF, ctx);
         d.callSetDoPM(false, false, ctx);
         if (f.ASK_CNF_PM.equals("X")) {
           callSetTaskState(TaskState.CNF_PM, ctx);

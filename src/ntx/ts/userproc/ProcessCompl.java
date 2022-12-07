@@ -1994,7 +1994,8 @@ public class ProcessCompl extends ProcessTask {
           s = s + " / " + r.CHARG;
         }
         s = s + "</b> " + RefMat.getFullName(r.MATNR) + " <b>"
-                + delDecZeros(r.QTY.toString()) + " ед</b>";
+                + delDecZeros(r.QTY.toString()) + " ед</b>" +
+                " (запас " + delDecZeros(r.STOCK.toString()) + " ед)";
         p.addLine(s);
       }
     }
@@ -3711,7 +3712,8 @@ class ComplData extends ProcData {
             if (!cpd_pal.isEmpty()) {
               while (scanData.size() > 0 && cpd_pal.equals(cpd_last_pal)) {
                 hdDelLast();
-                cpd_pal = scanData.get(scanData.size() - 1).pal;
+                if (scanData.size() > 0)
+                  cpd_pal = scanData.get(scanData.size() - 1).pal;
               }
             }
           }

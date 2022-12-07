@@ -135,6 +135,7 @@ public class Z_TS_COMPL6 {
         IT_t.setValue("MATNR", params.IT[i].MATNR);
         IT_t.setValue("CHARG", params.IT[i].CHARG);
         IT_t.setValue("QTY", params.IT[i].QTY);
+        IT_t.setValue("STOCK", params.IT[i].STOCK);
       }
 
       ret = SAPconn.executeFunction(function);
@@ -168,6 +169,7 @@ public class Z_TS_COMPL6 {
           IT_r.MATNR = IT_t.getString("MATNR");
           IT_r.CHARG = IT_t.getString("CHARG");
           IT_r.QTY = IT_t.getBigDecimal("QTY");
+          IT_r.STOCK = IT_t.getBigDecimal("STOCK");
           params.IT[i] = IT_r;
         }
       }

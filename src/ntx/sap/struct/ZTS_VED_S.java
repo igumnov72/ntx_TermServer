@@ -12,4 +12,5 @@ public class ZTS_VED_S {
   public String MATNR = ""; // Номер материала
   public String CHARG = ""; // Номер партии
   public BigDecimal QTY = new BigDecimal(0); // Количество
+  public BigDecimal STOCK = new BigDecimal(0); // Количество
 }
