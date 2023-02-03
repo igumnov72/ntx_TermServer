@@ -79,14 +79,19 @@ public class ProcessProgOpis extends ProcessTask {
     
     int n = scan.length();
     String s;
+    String tov_qty;
+    RefMatStruct prog_ref_mat;
+    String prog_scan;
+    String prog_mat_name;
 
-    if (getTaskState() == TaskState.SEL_SHK) {
+    if ((getTaskState() == TaskState.TOV || getTaskState() == TaskState.TOV_CELL) 
+            && isScanProgopis(scan)) {
         if (n == 13) {
           String mat = delZeros(scan.substring(0,8));
           String qty = scan.substring(8);
           RefMatStruct ref_mat = RefMat.get(mat);
           if (ref_mat != null && isAllDigits(qty)) {
-            d.callSetShk(scan, TaskState.SEL_CELL, this, ctx);
+            d.callAddShk(scan, TaskState.TOV_CELL, this, ctx);
             s = "Просканирован ШК остатка " + mat + " " + ref_mat.name + 
               " метраж " + qty.substring(0,4) + "." + qty.substring(4);
             callSetMsg(s, ctx);
@@ -97,14 +102,14 @@ public class ProcessProgOpis extends ProcessTask {
         if ((n == 15) && isAllDigits(scan.substring(0, 7)) && isAllDigits(scan.substring(8)) && 
                 ((scan.charAt(7) == 'D') || (scan.charAt(7) == 'C'))) {
           String tov_charg = delZeros(scan.substring(0, 7));
-          String tov_qty = scan.substring(8);
+          tov_qty = scan.substring(8);
           RefChargStruct c = RefCharg.get(tov_charg, null);
           if (c == null) {
             callSetErr("Просканирован не ШК остатка (сканирование " + scan + " не принято)", ctx);
           } else {
-            String prog_scan = delZeros(c.matnr);
-            RefMatStruct prog_ref_mat = RefMat.get(prog_scan);
-            String prog_mat_name = "";
+            prog_scan = delZeros(c.matnr);
+            prog_ref_mat = RefMat.get(prog_scan);
+            prog_mat_name = "";
             if (prog_ref_mat != null) prog_mat_name = prog_ref_mat.name;
             if (prog_scan.length() == 6) prog_scan = "00" + prog_scan;
             if (prog_scan.length() == 7) prog_scan = "0" + prog_scan;
@@ -117,25 +122,37 @@ public class ProcessProgOpis extends ProcessTask {
               prog_scan = prog_scan + tov_qty.substring(2);
               prog_qty = delZeros(tov_qty.substring(2,6)) + "." + tov_qty.substring(6);
             }
-            d.callSetShk(prog_scan, TaskState.SEL_CELL, this, ctx);
+            d.callAddShk(prog_scan, TaskState.TOV_CELL, this, ctx);
             s = "Просканирован ШК остатка " + delZeros(c.matnr) + " " +
               prog_mat_name + " метраж " + prog_qty;
             callSetMsg(s, ctx);
             callAddHist(s, ctx);
           }
         } else
+        if ((n == 15) && isAllDigits(scan.substring(1)) && 
+                (scan.charAt(0) == 'R')) {
+            d.callAddShk(scan, TaskState.TOV_CELL, this, ctx);
+            prog_scan = delZeros(scan.substring(1,8));
+            prog_ref_mat = RefMat.get(prog_scan);
+            prog_mat_name = "";
+            if (prog_ref_mat != null) prog_mat_name = prog_ref_mat.name;
+            s = "Просканирован ШК остатка " + delZeros(scan.substring(1,8)) + 
+                prog_mat_name + 
+                " метраж " + scan.substring(8,12) + "." + scan.substring(12);
+            callSetMsg(s, ctx);
+            callAddHist(s, ctx);
+        }
+        else
           callSetErr("Просканирован не ШК остатка (сканирование " + scan + " не принято)", ctx);
     } else
-    if (getTaskState() == TaskState.SEL_CELL) {
-        if (isScanCell(scan)) {
-          d.callAddScanData(scan.substring(1), TaskState.SEL_SHK, this, ctx);
-          s = "Добавлена запись по ячейке " + scan.substring(1) + ". Всего записей: " + 
+    if ((getTaskState() == TaskState.TOV_CELL) && isScanCell(scan)) {
+          d.callAddScanData(scan.substring(1), TaskState.TOV, this, ctx);
+          s = "Добавлены записи по ячейке " + scan.substring(1) + ". Всего записей: " + 
                   Integer.toString(d.getScanDataCount());
           callSetMsg(s , ctx);
           callAddHist(s, ctx);
-        } else {
-          callSetErr("Просканирован не ШК ячейки (сканирование " + scan + " не принято)", ctx);
-        }
+    } else {
+        callSetErr("Просканирован неизвестный ШК (сканирование " + scan + " не принято)", ctx);
     }
     
     return htmlWork("Прогресс опись", true, ctx);
@@ -166,10 +183,10 @@ public class ProcessProgOpis extends ProcessTask {
       d.callClearScanData(this, ctx);
       return htmlWork("Прогресс опись", true, ctx);
     } else if (menu.equals("op_i")) {
-        d.callSetOp("I", TaskState.SEL_SHK, this, ctx);
+        d.callSetOp("I", TaskState.TOV, this, ctx);
         return htmlWork("Прогресс опись", false, ctx);
     } else if (menu.equals("op_o")) {
-        d.callSetOp("O", TaskState.SEL_SHK, this, ctx);
+        d.callSetOp("O", TaskState.TOV, this, ctx);
         return htmlWork("Прогресс опись", false, ctx);
     } else if (menu.equals("save")) {
 
@@ -236,7 +253,9 @@ class ProgOpisScanData {  // отсканированные позиции
 class ProgOpisData extends ProcData {
 
   private String op = "";
-  private String shk = "";
+  //private String shk = "";
+  private final ArrayList<String> shkList
+          = new ArrayList<String>();
   private final ArrayList<ProgOpisScanData> scanData
           = new ArrayList<ProgOpisScanData>(); // отсканированные ШК
 
@@ -265,7 +284,8 @@ class ProgOpisData extends ProcData {
   
   public void clearScanData() {
   //  op = "";
-    shk = "";
+  //  shk = "";
+    shkList.clear();
     scanData.clear();
   }
   
@@ -273,8 +293,8 @@ class ProgOpisData extends ProcData {
     DataRecord dr = new DataRecord();
     dr.procId = p.getProcId();
     dr.setV(FieldType.CLEAR_TOV_DATA);
-    if (TaskState.SEL_SHK != p.getTaskState()) {
-      dr.setI(FieldType.TASK_STATE, TaskState.SEL_SHK.ordinal());
+    if (TaskState.TOV != p.getTaskState()) {
+      dr.setI(FieldType.TASK_STATE, TaskState.TOV.ordinal());
     }
     Track.saveProcessChange(dr, p, ctx);
   }
@@ -303,13 +323,13 @@ class ProgOpisData extends ProcData {
     Track.saveProcessChange(dr, p, ctx);
   }
 
-  public void callSetShk(String shk, TaskState state, ProcessTask p, UserContext ctx) throws Exception {
+  public void callAddShk(String shk, TaskState state, ProcessTask p, UserContext ctx) throws Exception {
     DataRecord dr = new DataRecord();
     dr.procId = p.getProcId();
-    if (!strEq(shk, this.shk)) {
+//    if (!strEq(shk, this.shk)) {
       dr.setS(FieldType.SHK, shk);
 //      dr.setI(FieldType.LOG, LogType.OP.ordinal());
-    }
+//    }
     if ((state != null) && (state != p.getTaskState())) {
       dr.setI(FieldType.TASK_STATE, state.ordinal());
     }
@@ -328,15 +348,19 @@ class ProgOpisData extends ProcData {
           */
 
         if (dr.haveVal(FieldType.SHK)) {
-          shk = (String) dr.getVal(FieldType.SHK);
+          String shk = (String) dr.getVal(FieldType.SHK);
+          shkList.add(shk);
         }
 
         if (dr.haveVal(FieldType.CELL)) {
           String cell;
           cell = (String) dr.getVal(FieldType.CELL);
-          ProgOpisScanData sd = new ProgOpisScanData(op, shk, cell);
-          scanData.add(sd);
-          shk = "";
+          int n = shkList.size();
+          for (int i = 0; i < n; i++) {
+            ProgOpisScanData sd = new ProgOpisScanData(op, shkList.get(i), cell);
+            scanData.add(sd);
+          }
+          shkList.clear();
         }
 
         if (dr.haveVal(FieldType.OP)) {

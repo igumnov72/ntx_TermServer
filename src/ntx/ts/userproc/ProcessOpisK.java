@@ -48,7 +48,7 @@ public class ProcessOpisK extends ProcessTask {
       callSetTaskState(TaskState.VBELN_VA, ctx);
       return htmlGet(false, ctx);
     } else if (scan != null) {
-      if (!scan.equals("00")) {
+      if (!scan.equals("00") && !scan.equals("01")) {
         callClearErrMsg(ctx);
       }
       return handleScan(scan.toUpperCase(), ctx);
@@ -73,6 +73,10 @@ public class ProcessOpisK extends ProcessTask {
   private FileData handleScan(String scan, TaskContext ctx) throws Exception {
     if (scan.equals("00")) {
       return htmlMenu(ctx);
+    }
+    
+    if (scan.equals("01")) {
+      return handleMenu("save", ctx);
     }
 
     switch (getTaskState()) {

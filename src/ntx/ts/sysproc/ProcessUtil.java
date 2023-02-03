@@ -226,6 +226,19 @@ public abstract class ProcessUtil extends Process {
     }
   }
 
+  public static boolean isScanProgopis(String scan) {
+    int n = scan.length();
+    if ((n == 13 && isAllDigits(scan)) || 
+        ((n == 15) && isAllDigits(scan.substring(0, 7)) && isAllDigits(scan.substring(8)) && 
+                ((scan.charAt(7) == 'D') || (scan.charAt(7) == 'C'))) ||
+        ((n == 15) && isAllDigits(scan.substring(1)) && 
+                (scan.charAt(0) == 'R'))) {
+      return true;
+    } else {
+      return false;
+    }
+  }
+
   public static boolean isScanSgm(String scan) {
     if (scan.equals("0")) {
       return true;
