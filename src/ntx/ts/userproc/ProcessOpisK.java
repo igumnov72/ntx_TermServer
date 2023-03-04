@@ -123,23 +123,48 @@ public class ProcessOpisK extends ProcessTask {
   private FileData handleScanTov(String scan, TaskContext ctx) throws Exception {
     String charg;
     BigDecimal q;
+    BigDecimal q2 = BigDecimal.ZERO;
 
+    Z_TS_OPISK4 f = new Z_TS_OPISK4();
+    f.SHK = scan;
+    f.VBELN = fillZeros(d.getVbelnVa(), 10);
+    f.execute();
+
+    if (f.isErr) {
+      callSetErr(f.err, ctx);
+      return htmlGet(true, ctx);
+    }    
+    
+    if (f.QTY.signum() <= 0) {
+      callSetErr("ШК неизвестного типа (сканирование " + scan + " не принято)", ctx);
+      return htmlGet(true, ctx);
+    }
+
+    if (f.QTY2.signum() <= 0) {
+      callSetErr("Этого материала нет в заказе (сканирование " + scan + " не принято)", ctx);
+      return htmlGet(true, ctx);
+    }
+
+    charg = delZeros(f.CHARG);
+    q = f.QTY;
+
+    RefChargStruct c = RefCharg.get(charg, null);
+    if (c == null) {
+      callSetErr("Нет такой партии (сканирование " + scan + " не принято)", ctx);
+      return htmlGet(true, ctx);
+    }
+    
+    if (!f.INF.isEmpty()) callAddHist(f.INF, ctx);
+    if (!f.INF2.isEmpty()) callAddHist(f.INF2, ctx);
+    q2 = f.QTY2.subtract(f.QTY3).subtract(d.getMatQty(c.matnr)).subtract(q);
+    
+    return handleScanTovDo(c.matnr, q, q2, scan, ctx);    
+
+/*
     if (isScanTov(scan)) {
-        /*
-      if (d.isMarked()) {
-        callSetErr("Корп ШК не принимаются по маркированному заказу", ctx);
-        return htmlGet(true, ctx);
-      }
-        */
       charg = getScanCharg(scan);
       q = getScanQty(scan);
     } else if (isScanMkSn(scan)) {
-        /*
-      if (!d.isMarked()) {
-        callSetErr("Маркированные ШК не принимаются по немаркированному заказу", ctx);
-        return htmlGet(true, ctx);
-      }
-        */
 
       Z_TS_OPISK4 f = new Z_TS_OPISK4();
       f.SHK = scan;
@@ -152,12 +177,6 @@ public class ProcessOpisK extends ProcessTask {
       charg = delZeros(scan.substring(2, 9));
       q = new BigDecimal(1);
     } else if (isScanMkPb(scan)) {
-        /*
-      if (!d.isMarked()) {
-        callSetErr("Маркированные ШК не принимаются по немаркированному заказу", ctx);
-        return htmlGet(true, ctx);
-      }
-        */
       ZSHK_INFO f = new ZSHK_INFO();
       f.SHK = scan;
       f.execute();
@@ -171,6 +190,7 @@ public class ProcessOpisK extends ProcessTask {
         callSetErr("ШК неизвестного типа (сканирование " + scan + " не принято)", ctx);
         return htmlGet(true, ctx);
     }
+
     
     try {
       RefChargStruct c = RefCharg.get(charg, null);
@@ -179,6 +199,7 @@ public class ProcessOpisK extends ProcessTask {
         return htmlGet(true, ctx);
       }
 
+//--------------      
       boolean haveMat = getHaveMat(c.matnr, ctx);
       if ((getLastErr() != null) && !getLastErr().isEmpty()) {
         return htmlGet(true, ctx);
@@ -186,17 +207,9 @@ public class ProcessOpisK extends ProcessTask {
         callSetErr("Этого материала нет в заказе (сканирование " + scan + " не принято)", ctx);
         return htmlGet(true, ctx);
       }
+//------------      
 
-/*
-    if (ctx.user.getAskQtyCompl(d.getLgort())) {
-        String s = c.matnr + " " + RefMat.getFullName(c.matnr);
-        callSetMsg(s, ctx);
-        d.callSetLastMatnr(c.matnr, getScanQty(scan), TaskState.QTY, ctx);
-        return htmlGet(true, ctx);
-      }
-*/
-
-      return handleScanTovDo(c.matnr, q, scan, ctx);
+      return handleScanTovDo(c.matnr, q, q2, scan, ctx);
     } catch (Exception e) {
       String s = e.getMessage();
       if (s == null) {
@@ -205,14 +218,17 @@ public class ProcessOpisK extends ProcessTask {
       callSetErr(s, ctx);
       return htmlGet(true, ctx);
     }
+*/
   }
 
   private FileData handleScanTovDo(String matnr, BigDecimal qty, 
+          BigDecimal qty_rest, 
           String shk, TaskContext ctx) throws Exception {
     d.callAddTov(matnr, qty, shk, TaskState.TOV, ctx);
     String s = delDecZeros(qty.toString()) + "ед " + matnr + " " + RefMat.getName(matnr);
     callAddHist(s, ctx);
-    s += " (всего " + d.getQtyTotStr() + " ед)";
+    s += " (в коробе " + d.getQtyTotStr() + " ед, по ОЗМ ост. " + 
+            delDecZeros(qty_rest.toString()) + " ед)";
     callSetMsg(s, ctx);
     return htmlGet(true, ctx);
   }
@@ -497,6 +513,15 @@ class OpisKData extends ProcData {
     return delDecZeros(ret.toString());
   }
 
+  public BigDecimal getMatQty(String matnr) {
+    BigDecimal ret = BigDecimal.ZERO;
+    for (OpisKScanData n : scanData) {
+      if (strEq(n.matnr, matnr))
+        ret = ret.add(n.qty);
+    }
+    return ret;
+  }
+  
   public int getScanCount() {
     return scanData.size();
   }

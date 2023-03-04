@@ -16,6 +16,7 @@ public class Z_TS_OPISK2 {
   //
   // exporting params
   public BigDecimal QTY = new BigDecimal(0); // Количество
+  public BigDecimal QTY2 = new BigDecimal(0); // Отсканированное количество
   //
   // переменные для работы с ошибками
   public boolean isErr;
@@ -50,6 +51,7 @@ public class Z_TS_OPISK2 {
       if (TSparams.logDocLevel >= 2) {
         System.out.println("Возврат из ФМ Z_TS_OPISK2:");
         System.out.println("  QTY=" + QTY);
+        System.out.println("  QTY2=" + QTY2);
         System.out.println("  err=" + err);
       }
     } else {
@@ -96,6 +98,7 @@ public class Z_TS_OPISK2 {
 
       if (ret == null) {
         params.QTY = expParams.getBigDecimal("QTY");
+        params.QTY2 = expParams.getBigDecimal("QTY2");
         params.err = expParams.getString("ERR");
         if (!params.err.isEmpty()) {
           params.isErr = true;

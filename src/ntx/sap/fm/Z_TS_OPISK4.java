@@ -3,6 +3,7 @@ package ntx.sap.fm;
 import ntx.ts.srv.TSparams;
 import ntx.sap.sys.*;
 import com.sap.conn.jco.*;
+import java.math.BigDecimal;
 
 /**
  * Проверка скана
@@ -12,6 +13,15 @@ public class Z_TS_OPISK4 {
   // importing params
   public String SHK = ""; // Штрих-код
   public String VBELN = ""; // Номер документа сбыта
+  //
+  // exporting params
+  public String INF = "";
+  public String MATNR = "";
+  public String CHARG = "";
+  public BigDecimal QTY = new BigDecimal(0);
+  public BigDecimal QTY2 = new BigDecimal(0);
+  public String INF2 = "";
+  public BigDecimal QTY3 = new BigDecimal(0);
   //
   // переменные для работы с ошибками
   public boolean isErr;
@@ -45,6 +55,13 @@ public class Z_TS_OPISK4 {
     if (e == null) {
       if (TSparams.logDocLevel >= 2) {
         System.out.println("Возврат из ФМ Z_TS_OPISK4:");
+        System.out.println("  INF=" + INF);
+        System.out.println("  MATNR=" + MATNR);
+        System.out.println("  CHARG=" + CHARG);
+        System.out.println("  QTY=" + QTY);
+        System.out.println("  QTY2=" + QTY2);
+        System.out.println("  INF2=" + INF2);
+        System.out.println("  QTY3=" + QTY3);
         System.out.println("  err=" + err);
       }
     } else {
@@ -90,6 +107,13 @@ public class Z_TS_OPISK4 {
       ret = SAPconn.executeFunction(function);
 
       if (ret == null) {
+        params.INF = expParams.getString("INF");
+        params.MATNR = expParams.getString("MATNR");
+        params.CHARG = expParams.getString("CHARG");
+        params.QTY = expParams.getBigDecimal("QTY");
+        params.QTY2 = expParams.getBigDecimal("QTY2");
+        params.INF2 = expParams.getString("INF2");
+        params.QTY3 = expParams.getBigDecimal("QTY3");
         params.err = expParams.getString("ERR");
         if (!params.err.isEmpty()) {
           params.isErr = true;
