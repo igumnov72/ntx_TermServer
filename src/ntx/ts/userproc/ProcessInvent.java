@@ -901,7 +901,7 @@ class InventData extends ProcData {
     int n = tov.size();
     for (int i = 0; i < n; i++) {
         String shk = tov.get(i).shk;
-        if (isScanMk(scan) && shk.equals(scan)) return true;
+        if (shk != null && isScanMk(scan) && shk.equals(scan)) return true;
     }
     return false;
   }  

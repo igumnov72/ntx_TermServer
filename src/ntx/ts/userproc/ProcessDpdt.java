@@ -30,6 +30,8 @@ import ntx.ts.sysproc.ProcData;
 import ntx.ts.sysproc.ProcessContext;
 import ntx.ts.sysproc.ProcessTask;
 import static ntx.ts.sysproc.ProcessUtil.getScanChargQty;
+import static ntx.ts.sysproc.ProcessUtil.isScanMkPb;
+import static ntx.ts.sysproc.ProcessUtil.isScanTov;
 import ntx.ts.sysproc.TaskContext;
 import ntx.ts.sysproc.UserContext;
 
@@ -142,6 +144,11 @@ public class ProcessDpdt extends ProcessTask {
     // тип ШК уже проверен
     //String charg = getScanCharg(scan);
     
+    if (d.scanIsDouble(scan)) {
+      callSetErr("ШК дублирован (сканирование " + scan + " не принято)", ctx);
+      return htmlGet(true, ctx);
+    }
+
     ScanChargQty scanInf; 
     scanInf = getScanChargQty(scan);
     if (!scanInf.err.isEmpty()) {
@@ -176,7 +183,7 @@ public class ProcessDpdt extends ProcessTask {
       }
     }
 
-    d.callAddTov(charg, q, TaskState.TOV_PAL, ctx);
+    d.callAddTov(charg, q, scan, TaskState.TOV_PAL, ctx);
     r = d.getPrtQtyNull(charg);
     String s = c.matnr + "/" + charg + " " + RefMat.getFullName(c.matnr)
             + ": " + delDecZeros(q.toString()) + " ед";
@@ -410,10 +417,12 @@ class DpdtScanData {  // отсканированные позиции
 
   public String charg;
   public BigDecimal qty;
+  public String scan;
 
-  public DpdtScanData(String charg, BigDecimal qty) {
+  public DpdtScanData(String charg, BigDecimal qty, String scan) {
     this.charg = charg;
     this.qty = qty;
+    this.scan = scan;
   }
 }
 
@@ -489,6 +498,14 @@ class DpdtData extends ProcData {
     return pq.get(charg);
   }
 
+  public boolean scanIsDouble(String scan) {
+    int n = scanData.size();
+    for (int i = 0; i < n; i++) 
+        if ((scanData.get(i).scan != null) && isScanMkPb(scan) && scanData.get(i).scan.equals(scan)) 
+            return true;
+    return false;
+  }
+
   public void callSetLgort(String lgort, TaskState state, TaskContext ctx) throws Exception {
     DataRecord dr = new DataRecord();
     dr.procId = ctx.task.getProcId();
@@ -502,12 +519,13 @@ class DpdtData extends ProcData {
     Track.saveProcessChange(dr, ctx.task, ctx);
   }
 
-  public void callAddTov(String charg, BigDecimal qty, 
+  public void callAddTov(String charg, BigDecimal qty, String scan, 
           TaskState state, TaskContext ctx) throws Exception {
     DataRecord dr = new DataRecord();
     dr.procId = ctx.task.getProcId();
     dr.setS(FieldType.CHARG, charg);
     dr.setN(FieldType.QTY, qty);
+    dr.setS(FieldType.SHK, scan);
     dr.setI(FieldType.LOG, LogType.ADD_TOV.ordinal());
     if ((state != null) && (state != ctx.task.getTaskState())) {
       dr.setI(FieldType.TASK_STATE, state.ordinal());
@@ -534,7 +552,8 @@ class DpdtData extends ProcData {
 
   private void hdAddTov(DataRecord dr) {
     DpdtScanData sd = new DpdtScanData(dr.getValStr(FieldType.CHARG),
-            (BigDecimal) dr.getVal(FieldType.QTY));
+            (BigDecimal) dr.getVal(FieldType.QTY),
+            dr.getValStr(FieldType.SHK));
 
     if (sd.qty.signum() > 0) {
       scanData.add(sd);
