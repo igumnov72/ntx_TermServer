@@ -68,7 +68,8 @@ public class ProcessShkList extends ProcessTask {
     }
     
     if (isScanMkSn(scan) || isScanMkPb(scan) || isScanSsccBox(scan) || 
-            isScanSsccPal(scan) || isScanTov(scan) || isScanSur(scan)) {
+        isScanSsccPal(scan) || isScanTov(scan) || isScanSur(scan) ||
+        isScanPal(scan) ) {
       callAddHist(scan, ctx);
       //d.callAddNScan(this, ctx);
       d.callAddScan(scan, this, ctx);
