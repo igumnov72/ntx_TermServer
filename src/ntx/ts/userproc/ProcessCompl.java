@@ -299,6 +299,7 @@ public class ProcessCompl extends ProcessTask {
     f.VBELN = fillZeros(vbeln, 10);
     f.INF_COMPL1 = d.getInfCompl();
     f.CHECK_COMPL1 = d.getCheckCompl();
+    f.USER_SHK = ctx.user.getUserSHK();
 
     f.execute();
 

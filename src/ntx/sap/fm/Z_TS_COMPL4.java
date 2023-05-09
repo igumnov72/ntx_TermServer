@@ -15,6 +15,7 @@ public class Z_TS_COMPL4 {
   public String VBELN = ""; // Номер документа сбыта
   public String INF_COMPL1 = ""; // Признак информационной комплектации
   public String CHECK_COMPL1 = ""; // Контроль возможности комплектации
+  public String USER_SHK = ""; // Штрих-код
   //
   // exporting params
   public String INF_COMPL = ""; // Признак информационной комплектации
@@ -67,6 +68,7 @@ public class Z_TS_COMPL4 {
       System.out.println("  VBELN=" + VBELN);
       System.out.println("  INF_COMPL1=" + INF_COMPL1);
       System.out.println("  CHECK_COMPL1=" + CHECK_COMPL1);
+      System.out.println("  USER_SHK=" + USER_SHK);
       System.out.println("  IT.length=" + IT.length);
       System.out.println("  IT_FP.length=" + IT_FP.length);
     }
@@ -130,6 +132,7 @@ public class Z_TS_COMPL4 {
       impParams.setValue("VBELN", params.VBELN);
       impParams.setValue("INF_COMPL1", params.INF_COMPL1);
       impParams.setValue("CHECK_COMPL1", params.CHECK_COMPL1);
+      impParams.setValue("USER_SHK", params.USER_SHK);
 
       IT_t.appendRows(params.IT.length);
       for (int i = 0; i < params.IT.length; i++) {

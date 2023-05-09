@@ -111,9 +111,8 @@ public class ProcessPlacement extends ProcessTask {
           s1 = "<br>\r\n(только в " + f.LGPLA + ")";
         }
         String s = "Размещение паллеты " + d.getPal() + " на складе " + f.LGORT;
-        if (!f.ABC.isEmpty()) {
-          s += " (ABC: " + f.ABC + ")";
-        }
+        if (!f.ABC.isEmpty()) s += " (ABC: " + f.ABC + ")";
+        if (!f.XYZ.isEmpty()) s += " (XYZ: " + f.XYZ + ")";
         callSetMsg(s + s1 + "<br>\r\nВсего паллет к размещению по " + 
                 d.getVbeln() + ": " + f.NERAZM + " " + f.INF, ctx);
         d.callSetDoPM(false, false, ctx);

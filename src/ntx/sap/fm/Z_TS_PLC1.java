@@ -26,6 +26,7 @@ public class Z_TS_PLC1 {
   public String ASK_CNF_PM = ""; // требуется запрос создания ПМ (есть вход пост)
   public String ABC = ""; // Признак материала на складе ABC
   public String INF = "";
+  public String XYZ = ""; // Признак материала на складе XYZ
   //
   // переменные для работы с ошибками
   public boolean isErr;
@@ -71,6 +72,7 @@ public class Z_TS_PLC1 {
         System.out.println("  ASK_CNF_PM=" + ASK_CNF_PM);
         System.out.println("  ABC=" + ABC);
         System.out.println("  INF=" + INF);
+        System.out.println("  XYZ=" + XYZ);
         System.out.println("  err=" + err);
       }
     } else {
@@ -128,6 +130,7 @@ public class Z_TS_PLC1 {
         params.ASK_CNF_PM = expParams.getString("ASK_CNF_PM");
         params.ABC = expParams.getString("ABC");
         params.INF = expParams.getString("INF");
+        params.XYZ = expParams.getString("XYZ");
         params.err = expParams.getString("ERR");
         if (!params.err.isEmpty()) {
           params.isErr = true;
