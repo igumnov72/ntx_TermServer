@@ -22,6 +22,7 @@ public class ZSHK_INFO {
   public boolean isErr;
   public String err;
   public String errFull;
+  public boolean isSapErr;
   //
   // вспомогательные переменные
   private static volatile JCoFunction function;
@@ -31,6 +32,7 @@ public class ZSHK_INFO {
 
   public void execute() {
     isErr = false;
+    isSapErr = false;
     err = "";
     errFull = "";
 
@@ -50,10 +52,12 @@ public class ZSHK_INFO {
         System.out.println("  MATNR=" + MATNR);
         System.out.println("  CHARG=" + CHARG);
         System.out.println("  QTY=" + QTY);
+        System.out.println("  err=" + err);
       }
     } else {
       // обработка ошибки
       isErr = true;
+      isSapErr = true;
       errFull = e.toString();
       ErrDescr ed = SAPconn.describeErr(errFull);
       err = ed.err;
@@ -95,6 +99,11 @@ public class ZSHK_INFO {
         params.MATNR = expParams.getString("MATNR");
         params.CHARG = expParams.getString("CHARG");
         params.QTY = expParams.getBigDecimal("QTY");
+        params.err = expParams.getString("ERR");
+        if (!params.err.isEmpty()) {
+          params.isErr = true;
+          params.errFull = params.err;
+        }
       }
     } catch (Exception e) {
       return e;

@@ -170,7 +170,9 @@ public class ProcessSKorob extends ProcessTask {
     if (!f.isErr) {
       int nn = d.getNKorob();
       String s = "паллета " + pal + " (" + nn + " коробов)";
-      callSetMsg("Сохранена " + s, ctx);
+      String s2 = s;
+      if (!f.INF.isEmpty()) s2 = s2 + ". " + f.INF;
+      callSetMsg("Сохранена " + s2, ctx);
       callAddHist(s, ctx);
       d.callClearTov(ctx);
 

@@ -14,6 +14,9 @@ public class Z_TS_SKOROB2 {
   public String ZV = ""; // Номер заказа или поставки
   public String LENUM = ""; // № единицы складирования
   //
+  // exporting params
+  public String INF = "";
+  //
   // table params
   public ZTS_SKOROB_SHK_S[] IT = new ZTS_SKOROB_SHK_S[0]; // Число коробов по ШК короба
   //
@@ -58,6 +61,7 @@ public class Z_TS_SKOROB2 {
     if (e == null) {
       if (TSparams.logDocLevel >= 2) {
         System.out.println("Возврат из ФМ Z_TS_SKOROB2:");
+        System.out.println("  INF=" + INF);
         System.out.println("  err=" + err);
         System.out.println("  IT.length=" + IT.length);
       }
@@ -114,6 +118,7 @@ public class Z_TS_SKOROB2 {
       ret = SAPconn.executeFunction(function);
 
       if (ret == null) {
+        params.INF = expParams.getString("INF");
         params.err = expParams.getString("ERR");
         if (!params.err.isEmpty()) {
           params.isErr = true;
