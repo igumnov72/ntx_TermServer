@@ -448,6 +448,7 @@ public class ProcessCompl extends ProcessTask {
       callAddHist("Выбрана " + cell + " " + vs + addMsg2, ctx);
       d.callSetCell(cell, d.getFP(cell) ? TaskState.FROM_PAL_CELL : TaskState.TOV_CELL, ctx);
     }
+    sendCurCellInf(cell, ctx);
     return htmlGet(true, ctx);
   }
 
@@ -1055,6 +1056,15 @@ public class ProcessCompl extends ProcessTask {
     }
 
     return htmlGet(true, ctx);
+  }
+  
+  private void sendCurCellInf(String cell, TaskContext ctx) throws Exception {
+    Z_TS_COMPL22 f = new Z_TS_COMPL22();
+    f.LGORT = d.getLgort();
+    f.VBELN = fillZeros(d.getVbeln(), 10);
+    f.LGPLA = cell;
+    f.USER_SHK = ctx.user.getUserSHK();
+    f.execute();
   }
 
   private ComplRetSave saveComplData(String nextCell, String nextVbeln, TaskContext ctx, boolean restQtyCnf) throws Exception {

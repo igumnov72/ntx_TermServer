@@ -34,3 +34,4 @@ build/*
 /ts_rod.ini
 /ts_test.ini
 dist/*
+*.dat
