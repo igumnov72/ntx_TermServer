@@ -391,6 +391,20 @@ public abstract class ProcessUtil extends Process {
     return true;
   }
 
+  public static boolean isAllDigitsComma(String str) {
+    int n = str.length();
+    char c;
+    for (int i = 0; i < n; i++) {
+      c = str.charAt(i);
+      if ((c < '0') || (c > '9')) {
+        if (c != ',') { 
+          return false;
+        }  
+      }
+    }
+    return true;
+  }  
+  
   public static boolean isNumber(String str) {
     int n = str.length();
     char c;

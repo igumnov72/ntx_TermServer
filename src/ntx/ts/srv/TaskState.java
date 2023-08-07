@@ -55,7 +55,8 @@ public enum TaskState {
   KOROB("Короб:"),
   KOROB_PAL("Короб или паллета:"),
   SEL_OP("Выберите операцию:"),
-  SEL_SHK("ШК:")
+  SEL_SHK("ШК:"),
+  SEL_OPIS("Опись:"),
   ;
   //
   public final String actionText;

@@ -28,7 +28,8 @@ public enum ProcType {
   PROGRES("Перемещение с Прогресса", 16), // перемещение товара с Прогресса
   SKOROB("Сборный короб", 14), // сборный короб
   SHK_LIST("Список ШК",17),
-  PROGOPIS("Прогресс опись",18);
+  PROGOPIS("Прогресс опись",18),
+  OPIS_SAMTEKS("Опись Самтекс",19);
   //
   public final String text;
   public final boolean isUserProc;

@@ -144,8 +144,8 @@ public enum FieldType {
   KOR_N_S(ValType.INT_AR), // массив числа коробов
   MARKED(ValType.STRING), // признак маркировки
   OP(ValType.STRING), // операция
-  CLEAR_PAL_DATA(ValType.VOID) // удаление данных по паллете
-  ; 
+  CLEAR_PAL_DATA(ValType.VOID), // удаление данных по паллете
+  OPIS(ValType.STRING); 
   //
   public final ValType valType;
 
