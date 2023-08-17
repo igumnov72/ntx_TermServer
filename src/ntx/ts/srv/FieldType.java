@@ -145,7 +145,9 @@ public enum FieldType {
   MARKED(ValType.STRING), // признак маркировки
   OP(ValType.STRING), // операция
   CLEAR_PAL_DATA(ValType.VOID), // удаление данных по паллете
-  OPIS(ValType.STRING); 
+  OPIS(ValType.STRING),         // Номер описи
+  ZAVOZ(ValType.STRING),        // номер завоза
+  CHARG_PU(ValType.STRING);     // номер партии ПУ 
   //
   public final ValType valType;
 

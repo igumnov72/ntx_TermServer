@@ -57,6 +57,8 @@ public enum TaskState {
   SEL_OP("Выберите операцию:"),
   SEL_SHK("ШК:"),
   SEL_OPIS("Опись:"),
+  SEL_ZAVOZ("Завоз:"),
+  SEL_CHARG("Номер партии ПУ:")
   ;
   //
   public final String actionText;

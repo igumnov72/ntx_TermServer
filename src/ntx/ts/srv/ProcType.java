@@ -29,7 +29,8 @@ public enum ProcType {
   SKOROB("Сборный короб", 14), // сборный короб
   SHK_LIST("Список ШК",17),
   PROGOPIS("Прогресс опись",18),
-  OPIS_SAMTEKS("Опись Самтекс",19);
+  OPIS_SAMTEKS("Опись Самтекс",19),    // Опись Самтекс
+  NABOR_SAMTEKS("Набор Самтекс",20);   // Набор Самтекс
   //
   public final String text;
   public final boolean isUserProc;

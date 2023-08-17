@@ -112,6 +112,9 @@ public class Track {
       case OPIS_SAMTEKS:
         ret = new ProcessOpisSamteks(procId);
         break;            
+      case NABOR_SAMTEKS:
+        ret = new ProcessNaborSamteks(procId);
+        break;            
     }
     if (ret == null) {
       throw new Exception("Ошибка программы: не создан процесс типа " + pType.text);
