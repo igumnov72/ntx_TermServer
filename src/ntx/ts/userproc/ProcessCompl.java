@@ -1154,7 +1154,7 @@ public class ProcessCompl extends ProcessTask {
         definition = "cont:Продолжить;later:Отложить;" + freeCompl
                 + "foto:Фото материалов в ячейке;" + toPalMenu
                 + "show:Показать ведомость на комплектацию;"
-                + "showcell:Ведомость по ячейке;" + freeComplEnter
+                + "showcell:Ведомость по ячейке;showcell2:Запас по ячейке;" + freeComplEnter
                 + toModSGM + "fin1:Завершить;" + askQtyMenu;
         break;
 
@@ -1170,14 +1170,15 @@ public class ProcessCompl extends ProcessTask {
           definition = "cont:Продолжить;later:Отложить;"
                   + "foto:Фото материалов в ячейке;" + toPalMenu
                   + "show:Показать ведомость на комплектацию;"
-                  + "showcell:Ведомость по ячейке;" + delVed
+                  + "showcell:Ведомость по ячейке;showcell2:Запас по ячейке;" + delVed
                   + "showdone:Выполненная компл по ячейке;" + freeComplEnter
                   + toModSGM + "fin1:Завершить;" + askQtyMenu;
         } else {
           definition = "cont:Продолжить;later:Отложить;"
                   + "foto:Фото материалов в ячейке;" + toPalMenu
                   + "show:Показать ведомость на комплектацию;"
-                  + "showcell:Ведомость по ячейке;showdone:Выполненная компл по ячейке;"
+                  + "showcell:Ведомость по ячейке;showcell2:Запас по ячейке;"  
+                  + "showdone:Выполненная компл по ячейке;"
                   + "dellast:Отменить последнее сканирование товара;"
                   + "delall:Отменить всё несохраненное (по ячейке и поставке);" 
                   + "delpal:Отменить по паллете;" 
@@ -1307,7 +1308,10 @@ public class ProcessCompl extends ProcessTask {
       return htmlShowCompl(ctx);
     } else if (menu.equals("showcell")) {
       callClearErrMsg(ctx);
-      return htmlShowComplCell(ctx);
+      return htmlShowComplCell(ctx, "");
+    } else if (menu.equals("showcell2")) {
+      callClearErrMsg(ctx);
+      return htmlShowComplCell(ctx, "X");
     } else if (menu.equals("restqty_cnf")) {
       callClearErrMsg(ctx);
       return handleRestQtyCnf(ctx);
@@ -1917,15 +1921,15 @@ public class ProcessCompl extends ProcessTask {
     return p.getPage();
   }
 
-  private FileData htmlShowComplCell(TaskContext ctx) throws Exception {
+  private FileData htmlShowComplCell(TaskContext ctx, String add_charg_stocks) throws Exception {
 //    if (d.isFreeCompl()) {
 //      return htmlShowComplCell2(ctx);
 //    } else {
-    return htmlShowComplCell1(ctx);
+    return htmlShowComplCell1(ctx, add_charg_stocks);
 //    }
   }
 
-  private FileData htmlShowComplCell1(TaskContext ctx) throws Exception {
+  private FileData htmlShowComplCell1(TaskContext ctx, String add_charg_stocks) throws Exception {
     // отображение нескомплектованных позиций (по текущей ячейке)
 
     String cell = d.getCell();
@@ -1936,6 +1940,7 @@ public class ProcessCompl extends ProcessTask {
     f.LGORT = d.getLgort();
     f.LGPLA = cell;
     f.INF_COMPL = d.getInfCompl();
+    f.ADD_CHARG_STOCKS = add_charg_stocks;
 
     String[] vv = d.getVbelnList();
     int n = vv.length;
@@ -1992,7 +1997,7 @@ public class ProcessCompl extends ProcessTask {
         }
       }
 
-      if (r.QTY.signum() != 0) {
+      if (r.QTY.signum() != 0 || add_charg_stocks.equals("X") ) {
         s = "<b>";
         if (canScanVbeln()) {
           s = s + " <font color=blue>" + r.VBELN + "</font>";

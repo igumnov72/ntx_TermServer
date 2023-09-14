@@ -14,6 +14,7 @@ public class Z_TS_COMPL6 {
   public String LGORT = ""; // Склад
   public String LGPLA = ""; // Складское место
   public String INF_COMPL = ""; // Признак информационной комплектации
+  public String ADD_CHARG_STOCKS = ""; // Общий флаг
   //
   // table params
   public ZTS_VBELN_S[] IT_V = new ZTS_VBELN_S[0]; // Номера поставок
@@ -59,6 +60,7 @@ public class Z_TS_COMPL6 {
       System.out.println("  LGORT=" + LGORT);
       System.out.println("  LGPLA=" + LGPLA);
       System.out.println("  INF_COMPL=" + INF_COMPL);
+      System.out.println("  ADD_CHARG_STOCKS=" + ADD_CHARG_STOCKS);
       System.out.println("  IT_V.length=" + IT_V.length);
       System.out.println("  IT.length=" + IT.length);
     }
@@ -117,6 +119,7 @@ public class Z_TS_COMPL6 {
       impParams.setValue("LGORT", params.LGORT);
       impParams.setValue("LGPLA", params.LGPLA);
       impParams.setValue("INF_COMPL", params.INF_COMPL);
+      impParams.setValue("ADD_CHARG_STOCKS", params.ADD_CHARG_STOCKS);
 
       IT_V_t.appendRows(params.IT_V.length);
       for (int i = 0; i < params.IT_V.length; i++) {
