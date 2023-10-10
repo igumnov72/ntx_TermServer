@@ -206,7 +206,7 @@ public class ProcessNaborSamteks extends ProcessTask {
               Integer.toString(d.getGoodCount()), 
               ctx);
       callTaskNameChange(ctx);
-      return htmlWork("Опись Самтекс", true, ctx);
+      return htmlWork("Набор Самтекс", true, ctx);
     } else {
       callSetErr("Неизвестный тип ШК (сканирование " + scan + " не принято)", ctx);
       return htmlWork("Набор Самтекс", true, ctx);
@@ -271,7 +271,11 @@ public class ProcessNaborSamteks extends ProcessTask {
         }
         else {
 //        String s = "Сохранен список " + delZeros(f.SHKLIST);
-          String s = "Для Завоза №" + f.W_SUPPLY + " создана партия: " + f.W_CHARG_PU; //d.zvv_opis + // + delZeros(f.SHKLIST);
+
+          BigDecimal d_qty = d.getSummaQty();       
+//          callSetMsg(f.INF + " " + "[" + d_qty.toString() + "/" + Integer.toString(d.getNScan()) + "]", ctx);
+
+          String s = "Для Завоза №" + f.W_SUPPLY + " создана партия: " + f.W_CHARG_PU + "[" + d_qty.toString() + "/" + Integer.toString(d.getNScan()) + "]";
           callAddHist(s, ctx);
           callSetMsg(s, ctx);
         }

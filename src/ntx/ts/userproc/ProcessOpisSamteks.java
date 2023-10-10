@@ -5,6 +5,7 @@
  */
 package ntx.ts.userproc;
 
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
@@ -139,7 +140,11 @@ public class ProcessOpisSamteks extends ProcessTask {
           //d.callAddNScan(this, ctx);
           d.callAddScan(scan, this, ctx);            
         }        
-        callSetMsg(f.INF, ctx);
+
+        BigDecimal d_qty = d.getSummaQty();       
+        callSetMsg(f.INF + " " + "[" + d_qty.toString() + "/" + Integer.toString(d.getNScan()) + "]", ctx);
+        
+//        callSetMsg(f.INF, ctx);
       } else
         callSetMsg("В коробе " + Integer.toString(d.lastBoxScanCount()) + " СН" +
               " (" + d.lastBoxMatCount() + ") " + 
@@ -258,6 +263,43 @@ class OpisSamteksData extends ProcData {
 //    String zvv_opis;
     private String opis;
 
+  public BigDecimal getSummaQty() {
+    BigDecimal qty = new BigDecimal(0);
+    BigDecimal s_qty = new BigDecimal(0);
+    int n = scanData.size() - 1;
+    String scan;
+    for (int i = n; i >= 0; i--) {
+        scan = scanData.get(i);
+        if (scan.length() == 15) {
+
+          switch (scan.charAt(4)) {
+          case 'Z':
+            BigDecimal ret = new BigDecimal(Long.parseLong(scan.substring(0,4)));
+            ret = ret.setScale(3);
+            ret = ret.divide(new BigDecimal(10));
+
+//            ret = ret.divide(new BigDecimal(1000));
+//            qty = expParams.getBigDecimal("ret"); 
+            s_qty = s_qty.add(ret);
+//            s_qty = s_qty + ret;
+            break;
+          }
+
+//        if (scan.startsWith("Z")) 
+        
+        }
+    }
+/*          switch (scan.charAt(5)) {
+          case 'Z':
+//            ret = ret.divide(new BigDecimal(1000));
+            qty = 0.1; 
+            s_qty = s_qty + qty;
+            break;
+          }    
+  */  
+    return s_qty;
+  }    
+    
   public String getOpis() {
 //    if (opis.startsWith("I")) return "Приход";
 //    else if (opis.startsWith("O")) return "Расход";
