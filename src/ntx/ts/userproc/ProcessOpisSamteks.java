@@ -218,6 +218,16 @@ public class ProcessOpisSamteks extends ProcessTask {
 //        String s = "Сохранен список " + delZeros(f.SHKLIST);
           String s = "Опись " + f.W_OPIS + " проверена."; //d.zvv_opis + // + delZeros(f.SHKLIST);
           callAddHist(s, ctx);
+          
+          callAddHist("----------", ctx);
+
+          String zinfo = "";
+          for (int i = 0; i < f.IT_INFO.length; i++) {
+             zinfo = f.IT_INFO[i].ZINFO;
+             callAddHist(zinfo, ctx);
+          }          
+          callAddHist("----------", ctx);
+          
           callSetMsg(s, ctx);
         }
         d.callClearScanData(this, ctx);

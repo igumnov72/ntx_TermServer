@@ -30,7 +30,8 @@ public enum ProcType {
   SHK_LIST("Список ШК",17),
   PROGOPIS("Прогресс опись",18),
   OPIS_SAMTEKS("Опись Самтекс",19),    // Опись Самтекс
-  NABOR_SAMTEKS("Набор Самтекс",20);   // Набор Самтекс
+  NABOR_SAMTEKS("Набор Самтекс",20),   // Набор Самтекс
+  NEW_ZTPRJ("Создать Наряд",21);       // Создать Наряд
   //
   public final String text;
   public final boolean isUserProc;

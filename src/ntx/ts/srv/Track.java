@@ -115,6 +115,9 @@ public class Track {
       case NABOR_SAMTEKS:
         ret = new ProcessNaborSamteks(procId);
         break;            
+      case NEW_ZTPRJ:
+        ret = new ProcessNewZTPRJ(procId);
+        break;            
     }
     if (ret == null) {
       throw new Exception("Ошибка программы: не создан процесс типа " + pType.text);

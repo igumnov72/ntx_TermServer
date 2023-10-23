@@ -147,7 +147,9 @@ public enum FieldType {
   CLEAR_PAL_DATA(ValType.VOID), // удаление данных по паллете
   OPIS(ValType.STRING),         // Номер описи
   ZAVOZ(ValType.STRING),        // номер завоза
-  CHARG_PU(ValType.STRING);     // номер партии ПУ 
+  CHARG_PU(ValType.STRING),     // номер партии ПУ 
+  SHK_ZEQ(ValType.STRING),      // ШК станка 
+  SHK_CHARG(ValType.STRING);    // ШК партии 
   //
   public final ValType valType;
 
