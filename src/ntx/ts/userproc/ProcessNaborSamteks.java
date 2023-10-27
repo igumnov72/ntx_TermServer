@@ -278,9 +278,13 @@ public class ProcessNaborSamteks extends ProcessTask {
           String s = "Для Завоза №" + f.W_SUPPLY + " создана партия: " + f.W_CHARG_PU + "[" + d_qty.toString() + "/" + Integer.toString(d.getNScan()) + "]";
           callAddHist(s, ctx);
           callSetMsg(s, ctx);
+          d.callClearScanData(this, ctx);
+          callSetTaskState(TaskState.SEL_ZAVOZ, ctx); 
+//          scan = null;
+          menu = null;
+          
+          return htmlWork("Набор Самтекс", true, ctx);
         }
-        d.callClearScanData(this, ctx);
-//        return htmlWork("Набор Самтекс", true, ctx);
     } else if (menu.equals("del_last")) {
 
         int nn = d.getScanDataCount();
