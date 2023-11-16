@@ -69,6 +69,7 @@ import static ntx.ts.sysproc.ProcessUtil.isScanVbeln;
 import ntx.ts.sysproc.TaskContext;
 import ntx.ts.sysproc.UserContext;
 import java.math.BigDecimal;
+import ntx.sap.fm.Z_TS_SHKLIST_GET_SUPPLY;
 
 /**
  *
@@ -122,6 +123,19 @@ public class ProcessNaborSamteks extends ProcessTask {
     if (getTaskState() == TaskState.SEL_ZAVOZ) {
     
 //        if (isAllDigits(scan)) {
+        if (scan.charAt(4) == 'Z') {  
+//          callSetMsg("Есть 'Z' " + scan, ctx); 
+
+          Z_TS_SHKLIST_GET_SUPPLY ff2 = new Z_TS_SHKLIST_GET_SUPPLY();
+          ff2.SHK = scan;
+          ff2.execute();
+
+          callSetMsg(ff2.INF, ctx);   
+
+          return htmlWork("Набор Самтекс", true, ctx);
+
+        }
+
         if (isAllDigits(scan)) {
             
           Z_TS_IS_SUPPLY ff = new Z_TS_IS_SUPPLY();
