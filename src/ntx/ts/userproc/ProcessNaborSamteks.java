@@ -130,7 +130,15 @@ public class ProcessNaborSamteks extends ProcessTask {
           ff2.SHK = scan;
           ff2.execute();
 
-          callSetMsg(ff2.INF, ctx);   
+//          callSetMsg(ff2.INF, ctx);   
+
+          if (ff2.isErr) { 
+            callSetErr(ff2.err, ctx);
+          }
+          else {    
+              callSetMsg("Завоз № " + ff2.W_SUPPLY, ctx); 
+              d.callSetZavoz(ff2.W_SUPPLY, TaskState.SEL_CHARG, this, ctx);   // SEL_SHK
+          }
 
           return htmlWork("Набор Самтекс", true, ctx);
 
@@ -146,7 +154,8 @@ public class ProcessNaborSamteks extends ProcessTask {
 //            callSetErr("Опись " + scan + " не найдена", ctx);
           }
           else {  
-          callSetMsg("Завоз № " + scan, ctx); 
+              callDelHist(ctx); 
+              callSetMsg("Завоз № " + scan, ctx); 
 //          d.zvv_opis = scan;
           d.callSetZavoz(scan, TaskState.SEL_CHARG, this, ctx);   // SEL_SHK
 //          callSetTaskState(TaskState.SEL_SHK, ctx);

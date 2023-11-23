@@ -60,7 +60,8 @@ public enum TaskState {
   SEL_ZAVOZ("Завоз:"),
   SEL_CHARG("Номер партии ПУ:"),
   SEL_ZEQ("ШК станка:"),
-  SEL_NAVOI("ШК Навоя:")
+  SEL_NAVOI("ШК Навоя:"),
+  K_VBELN("Комплексная поставка:")
   ;
   //
   public final String actionText;

@@ -72,6 +72,13 @@ public abstract class ProcessUtil extends Process {
     Track.saveProcessChange(dr, this, ctx);
   }
 
+  public void callDelHist(ProcessContext ctx) throws Exception {
+    DataRecord dr = new DataRecord();
+    dr.procId = getProcId();
+    dr.setV(FieldType.DEL_HIST);
+    Track.saveProcessChange(dr, this, ctx);
+  }
+
   public TaskState getTaskState() {
     return taskState;
   }
@@ -651,6 +658,9 @@ public abstract class ProcessUtil extends Process {
         }
         if (dr.haveVal(FieldType.ADD_HIST)) {
           hist.add(dr.getValStr(FieldType.ADD_HIST));
+        }
+        if (dr.haveVal(FieldType.DEL_HIST)) {
+          hist.clear();
         }
         break;
     }

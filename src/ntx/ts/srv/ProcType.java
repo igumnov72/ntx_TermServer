@@ -31,7 +31,9 @@ public enum ProcType {
   PROGOPIS("Прогресс опись",18),
   OPIS_SAMTEKS("Опись Самтекс",19),    // Опись Самтекс
   NABOR_SAMTEKS("Набор Самтекс",20),   // Набор Самтекс
-  NEW_ZTPRJ("Создать Наряд",21);       // Создать Наряд
+  NEW_ZTPRJ("Создать Наряд",21),       // Создать Наряд
+  CDLVMOVE("Перемещ по комплексной поставке",22)
+  ;
   //
   public final String text;
   public final boolean isUserProc;

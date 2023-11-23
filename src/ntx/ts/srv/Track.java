@@ -118,6 +118,9 @@ public class Track {
       case NEW_ZTPRJ:
         ret = new ProcessNewZTPRJ(procId);
         break;            
+      case CDLVMOVE:
+        ret = new ProcessCDlvMove(procId);
+        break;
     }
     if (ret == null) {
       throw new Exception("Ошибка программы: не создан процесс типа " + pType.text);

@@ -100,12 +100,13 @@ public class ProcessNewZTPRJ extends ProcessTask {
             if (ff2.isErr) { callSetErr(ff2.err, ctx); }
             else { 
                 callSetMsg("Создан(ы) Наряд(ы):" + ff2.ZTPRJ, ctx);  
+                d.callSetStart(TaskState.SEL_ZEQ, this, ctx);
             }
           }
           return htmlWork("Создать Наряд", false, ctx);    
     }
     else {
-      return htmlWork("Создать Наряд", false, ctx);    
+      return htmlWork("Создать Наряд", true, ctx);    
     }
     }
     
@@ -179,7 +180,22 @@ public class ProcessNewZTPRJ extends ProcessTask {
     private String SHK_EQ;
     private String SHK_CHARG;
     
-  public void callSetSHK_ZEQ(String SHK_EQ, TaskState state, ProcessTask p, UserContext ctx) throws Exception {
+  public void callSetStart(TaskState state, ProcessTask p, UserContext ctx) throws Exception {
+    DataRecord dr = new DataRecord();
+    dr.procId = p.getProcId();
+//    if (!strEq(SHK_EQ, this.SHK_EQ)) {
+//      dr.setS(FieldType.SHK_ZEQ, SHK_EQ);
+////      dr.setI(FieldType.LOG, LogType.OP.ordinal());
+//    }
+    if ((state != null) && (state != p.getTaskState())) {
+
+      dr.setI(FieldType.TASK_STATE, state.ordinal());
+      
+    }
+    Track.saveProcessChange(dr, p, ctx);
+  }    
+
+    public void callSetSHK_ZEQ(String SHK_EQ, TaskState state, ProcessTask p, UserContext ctx) throws Exception {
     DataRecord dr = new DataRecord();
     dr.procId = p.getProcId();
     if (!strEq(SHK_EQ, this.SHK_EQ)) {

@@ -149,7 +149,9 @@ public enum FieldType {
   ZAVOZ(ValType.STRING),        // номер завоза
   CHARG_PU(ValType.STRING),     // номер партии ПУ 
   SHK_ZEQ(ValType.STRING),      // ШК станка 
-  SHK_CHARG(ValType.STRING);    // ШК партии 
+  SHK_CHARG(ValType.STRING),    // ШК партии 
+  DEL_HIST(ValType.VOID) // удаление всех сообщений в истории
+  ;
   //
   public final ValType valType;
 

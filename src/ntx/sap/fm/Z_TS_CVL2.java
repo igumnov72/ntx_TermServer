@@ -3,19 +3,21 @@ package ntx.sap.fm;
 import ntx.ts.srv.TSparams;
 import ntx.sap.sys.*;
 import com.sap.conn.jco.*;
+import ntx.sap.struct.*;
 
 /**
- * По ШК получить завоз
+ * Проверка скана и сохранение сканов по КП
  */
-public class Z_TS_SHKLIST_GET_SUPPLY {
+public class Z_TS_CVL2 {
 
   // importing params
+  public String CVL = ""; // Номер документа сбыта
+  public String LGPLA = ""; // Складское место
   public String SHK = ""; // Штрих-код
+  public String SAVE = ""; // Общий флаг
   //
-  // exporting params
-  public String INF = ""; // Информация по завозу
-  public String W_SUPPLY = ""; // Номер завоза
-  public String ISERR = ""; // Признак ошибки
+  // table params
+  public ZTS_SHK_S[] IT = new ZTS_SHK_S[0]; // ШК и название
   //
   // переменные для работы с ошибками
   public boolean isErr;
@@ -27,7 +29,15 @@ public class Z_TS_SHKLIST_GET_SUPPLY {
   private static volatile JCoFunction function;
   private static volatile JCoParameterList impParams;
   private static volatile JCoParameterList expParams;
+  private static volatile JCoParameterList tabParams;
   private static volatile boolean isInit = false;
+
+  public void IT_create(int n) {
+    IT = new ZTS_SHK_S[n];
+    for (int i = 0; i < n; i++) {
+      IT[i] = new ZTS_SHK_S();
+    }
+  }
 
   public void execute() {
     isErr = false;
@@ -36,10 +46,14 @@ public class Z_TS_SHKLIST_GET_SUPPLY {
     errFull = "";
 
     if (TSparams.logDocLevel == 1) {
-      System.out.println("Вызов ФМ Z_TS_SHKLIST_GET_SUPPLY");
+      System.out.println("Вызов ФМ Z_TS_CVL2");
     } else if (TSparams.logDocLevel >= 2) {
-      System.out.println("Вызов ФМ Z_TS_SHKLIST_GET_SUPPLY:");
+      System.out.println("Вызов ФМ Z_TS_CVL2:");
+      System.out.println("  CVL=" + CVL);
+      System.out.println("  LGPLA=" + LGPLA);
       System.out.println("  SHK=" + SHK);
+      System.out.println("  SAVE=" + SAVE);
+      System.out.println("  IT.length=" + IT.length);
     }
 
     // вызов САПовской процедуры
@@ -47,11 +61,9 @@ public class Z_TS_SHKLIST_GET_SUPPLY {
 
     if (e == null) {
       if (TSparams.logDocLevel >= 2) {
-        System.out.println("Возврат из ФМ Z_TS_SHKLIST_GET_SUPPLY:");
-        System.out.println("  INF=" + INF);
-        System.out.println("  W_SUPPLY=" + W_SUPPLY);
-        System.out.println("  ISERR=" + ISERR);
+        System.out.println("Возврат из ФМ Z_TS_CVL2:");
         System.out.println("  err=" + err);
+        System.out.println("  IT.length=" + IT.length);
       }
     } else {
       // обработка ошибки
@@ -61,7 +73,7 @@ public class Z_TS_SHKLIST_GET_SUPPLY {
       ErrDescr ed = SAPconn.describeErr(errFull);
       err = ed.err;
 
-      System.err.println("Error calling SAP procedure Z_TS_SHKLIST_GET_SUPPLY:");
+      System.err.println("Error calling SAP procedure Z_TS_CVL2:");
       if (ed.isShort || !err.equals(errFull)) {
         System.err.println(err);
       }
@@ -71,12 +83,12 @@ public class Z_TS_SHKLIST_GET_SUPPLY {
       System.err.flush();
 
       if (errFull.startsWith("com.sap.conn.jco.JCoException: (104) JCO_ERROR_SYSTEM_FAILURE:")) {
-        System.out.println("!!! Error in Z_TS_SHKLIST_GET_SUPPLY: " + err);
+        System.out.println("!!! Error in Z_TS_CVL2: " + err);
       }
     }
   }
 
-  private static synchronized Exception execute(Z_TS_SHKLIST_GET_SUPPLY params) {
+  private static synchronized Exception execute(Z_TS_CVL2 params) {
     Exception ret = null;
 
     try {
@@ -89,19 +101,39 @@ public class Z_TS_SHKLIST_GET_SUPPLY {
 
       impParams.clear();
       expParams.clear();
+      tabParams.clear();
 
+      JCoTable IT_t = tabParams.getTable("IT");
+
+      impParams.setValue("CVL", params.CVL);
+      impParams.setValue("LGPLA", params.LGPLA);
       impParams.setValue("SHK", params.SHK);
+      impParams.setValue("SAVE", params.SAVE);
+
+      IT_t.appendRows(params.IT.length);
+      for (int i = 0; i < params.IT.length; i++) {
+        IT_t.setRow(i);
+        IT_t.setValue("SHK", params.IT[i].SHK);
+        IT_t.setValue("SHK_NAME", params.IT[i].SHK_NAME);
+      }
 
       ret = SAPconn.executeFunction(function);
 
       if (ret == null) {
-        params.INF = expParams.getString("INF");
-        params.W_SUPPLY = expParams.getString("W_SUPPLY");
-        params.ISERR = expParams.getString("ISERR");
         params.err = expParams.getString("ERR");
         if (!params.err.isEmpty()) {
           params.isErr = true;
           params.errFull = params.err;
+        }
+
+        params.IT = new ZTS_SHK_S[IT_t.getNumRows()];
+        ZTS_SHK_S IT_r;
+        for (int i = 0; i < params.IT.length; i++) {
+          IT_t.setRow(i);
+          IT_r = new ZTS_SHK_S();
+          IT_r.SHK = IT_t.getString("SHK");
+          IT_r.SHK_NAME = IT_t.getString("SHK_NAME");
+          params.IT[i] = IT_r;
         }
       }
     } catch (Exception e) {
@@ -113,17 +145,18 @@ public class Z_TS_SHKLIST_GET_SUPPLY {
 
   private static JCoException init() {
     try {
-      function = SAPconn.getFunction("Z_TS_SHKLIST_GET_SUPPLY");
+      function = SAPconn.getFunction("Z_TS_CVL2");
     } catch (JCoException e) {
       return e;
     }
 
     if (function == null) {
-      return new JCoException(0, "Z_TS_SHKLIST_GET_SUPPLY not found in SAP.");
+      return new JCoException(0, "Z_TS_CVL2 not found in SAP.");
     }
 
     impParams = function.getImportParameterList();
     expParams = function.getExportParameterList();
+    tabParams = function.getTableParameterList();
 
     isInit = true;
 
