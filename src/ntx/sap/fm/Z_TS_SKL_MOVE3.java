@@ -28,6 +28,7 @@ public class Z_TS_SKL_MOVE3 {
   public String MAKTX = ""; // Краткий текст материала
   public String MAT_CELL = ""; // Ячейки с материалом
   public String ABC = ""; // Признак материала на складе ABC
+  public String EI = ""; // Внешняя ЕИ - техническое представление (6-значная)
   //
   // table params
   public ZTS_MAT_QTY_S[] IT_MQ = new ZTS_MAT_QTY_S[0]; // Кол-во по материалу
@@ -85,6 +86,7 @@ public class Z_TS_SKL_MOVE3 {
         System.out.println("  MAKTX=" + MAKTX);
         System.out.println("  MAT_CELL=" + MAT_CELL);
         System.out.println("  ABC=" + ABC);
+        System.out.println("  EI=" + EI);
         System.out.println("  err=" + err);
         System.out.println("  IT_MQ.length=" + IT_MQ.length);
       }
@@ -142,6 +144,7 @@ public class Z_TS_SKL_MOVE3 {
         IT_MQ_t.setRow(i);
         IT_MQ_t.setValue("MATNR", params.IT_MQ[i].MATNR);
         IT_MQ_t.setValue("QTY", params.IT_MQ[i].QTY);
+        IT_MQ_t.setValue("SHK", params.IT_MQ[i].SHK);
       }
 
       ret = SAPconn.executeFunction(function);
@@ -153,6 +156,7 @@ public class Z_TS_SKL_MOVE3 {
         params.MAKTX = expParams.getString("MAKTX");
         params.MAT_CELL = expParams.getString("MAT_CELL");
         params.ABC = expParams.getString("ABC");
+        params.EI = expParams.getString("EI");
         params.err = expParams.getString("ERR");
         if (!params.err.isEmpty()) {
           params.isErr = true;
@@ -166,6 +170,7 @@ public class Z_TS_SKL_MOVE3 {
           IT_MQ_r = new ZTS_MAT_QTY_S();
           IT_MQ_r.MATNR = IT_MQ_t.getString("MATNR");
           IT_MQ_r.QTY = IT_MQ_t.getBigDecimal("QTY");
+          IT_MQ_r.SHK = IT_MQ_t.getString("SHK");
           params.IT_MQ[i] = IT_MQ_r;
         }
       }

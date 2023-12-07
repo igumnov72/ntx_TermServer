@@ -26,6 +26,7 @@ public class Z_TS_SHKLIST2_IS_CHARG {
 
   // importing params
   public String SHK = ""; // Штрих-код
+  public String SUPPLY = ""; // Номер завоза  
   //
   // exporting params
   public String INF = "";
@@ -51,6 +52,7 @@ public class Z_TS_SHKLIST2_IS_CHARG {
     } else if (TSparams.logDocLevel >= 2) {
       System.out.println("Вызов ФМ Z_TS_SHKLIST2_IS_CHARG:");
       System.out.println("  SHK=" + SHK);
+      System.out.println("  SUPPLY=" + SUPPLY);
     }
 
     // вызов САПовской процедуры
@@ -60,6 +62,7 @@ public class Z_TS_SHKLIST2_IS_CHARG {
       if (TSparams.logDocLevel >= 2) {
         System.out.println("Возврат из ФМ Z_TS_SHKLIST2_IS_CHARG:");
         System.out.println("  INF=" + INF);
+        System.out.println("  err=" + err);
       }
     } else {
       // обработка ошибки
@@ -98,6 +101,7 @@ public class Z_TS_SHKLIST2_IS_CHARG {
       expParams.clear();
 
       impParams.setValue("SHK", params.SHK);
+      impParams.setValue("SUPPLY", params.SUPPLY);
 
       ret = SAPconn.executeFunction(function);
 

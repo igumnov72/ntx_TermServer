@@ -207,6 +207,7 @@ public class ProcessNaborSamteks extends ProcessTask {
 //        Z_TS_SHKLIST2 f = new Z_TS_SHKLIST2();
         Z_TS_SHKLIST2_IS_CHARG f = new Z_TS_SHKLIST2_IS_CHARG();
 
+        f.SUPPLY = d.getZavoz();
         f.SHK = scan;
 //        f.W_OPIS = d.getOpis();
         f.execute();
@@ -298,6 +299,7 @@ public class ProcessNaborSamteks extends ProcessTask {
           BigDecimal d_qty = d.getSummaQty();       
 //          callSetMsg(f.INF + " " + "[" + d_qty.toString() + "/" + Integer.toString(d.getNScan()) + "]", ctx);
 
+          callClearErr(ctx);
           String s = "Для Завоза №" + f.W_SUPPLY + " создана партия: " + f.W_CHARG_PU + "[" + d_qty.toString() + "/" + Integer.toString(d.getNScan()) + "]";
           callAddHist(s, ctx);
           callSetMsg(s, ctx);
@@ -306,7 +308,7 @@ public class ProcessNaborSamteks extends ProcessTask {
 //          scan = null;
           menu = null;
           
-          return htmlWork("Набор Самтекс", true, ctx);
+          return htmlWork("Набор Самтекс", false, ctx);
         }
     } else if (menu.equals("del_last")) {
 

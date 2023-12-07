@@ -383,7 +383,9 @@ public class ProcessSklMove extends ProcessTask {
       f.CHARG = delZeros(f.CHARG);
       d.callAddTov(f.MATNR, f.CHARG, f.QTY, scan, ctx);
 
-      String s = delDecZeros(f.QTY.toString()) + "ед " + f.MATNR + " (" + f.CHARG + ") " + f.MAKTX;
+      //String s = delDecZeros(f.QTY.toString()) + "ед " + f.MATNR + " (" + f.CHARG + ") " + f.MAKTX;
+      String s = d.getScanQtyStr(f.CHARG, f.QTY, f.EI) + " " + 
+              f.MATNR + " (" + f.CHARG + ") " + f.MAKTX;
       //s = appendAbc(s, f.ABC);
       s = RefAbc.appendAbcXyz(s, d.getLgort(), f.MATNR);
 
@@ -678,6 +680,7 @@ class SklMoveData extends ProcData {
   private HashMap<String, BigDecimal> tovDataM = new HashMap<String, BigDecimal>(); // товар по материалам
   private final ArrayList<ZTS_LG_STOCK_S> stock = new ArrayList<ZTS_LG_STOCK_S>();
   private final ArrayList<String> tovScans = new ArrayList<String>();
+  private HashMap<String, BigDecimal> tovDataK = new HashMap<String, BigDecimal>(); // куски по партиям
 
   public boolean scanIsDouble(String scan) {
     int n = tovScans.size();
@@ -726,7 +729,32 @@ class SklMoveData extends ProcData {
     return stock_str;
   }
   
-  public String getLastScan() {
+  public String getScanQtyStr(String charg, BigDecimal Qty, String ei) {
+    String str = delDecZeros(Qty.toString()) + ei;
+    if (!lgnum.equals("334")) return str;
+
+    int n = 0;
+    BigDecimal kk = new BigDecimal(0);
+    for (Entry<String, BigDecimal> tdk : tovDataK.entrySet()) {
+      kk = kk.add(tdk.getValue());
+      n++;
+    }
+    BigDecimal charg_kk = tovDataK.get(charg);
+    if (charg_kk == null) charg_kk = BigDecimal.ZERO;
+    BigDecimal charg_qty = tovData.get(charg);
+    if (charg_qty == null) charg_qty = BigDecimal.ZERO;
+    
+    str = delDecZeros(Qty.toString()) + ei + "(" +
+            delDecZeros(charg_qty.toString()) + ei + ")/" + 
+            delDecZeros(charg_kk.toString()) + "кус(" + 
+            delDecZeros(kk.toString()) + "кус)" 
+            //Integer.toString(n) + "кус)"
+            ;
+            
+    return str;
+  }
+  
+public String getLastScan() {
     return lastScan;
   }
 
@@ -928,17 +956,27 @@ class SklMoveData extends ProcData {
           tovData.clear();
           tovDataM.clear();
           tovScans.clear();
+          tovDataK.clear();
         }
         if (dr.haveVal(FieldType.MATNR) && dr.haveVal(FieldType.CHARG) && 
                 dr.haveVal(FieldType.QTY) && dr.haveVal(FieldType.SHK)) {
           String charg = dr.getValStr(FieldType.CHARG);
           String scan = dr.getValStr(FieldType.SHK);
           BigDecimal nn = (BigDecimal) dr.getVal(FieldType.QTY);
+
           BigDecimal nn0 = tovData.get(charg);
           if (nn0 != null) {
             nn = nn.add(nn0);
           }
           tovData.put(charg, nn);
+
+          BigDecimal nnk = new BigDecimal(1);
+          BigDecimal nnk0 = tovDataK.get(charg);
+          if (nnk0 != null) {
+            nnk = nnk.add(nnk0);
+          }
+          tovDataK.put(charg, nnk);
+
           String matnr = dr.getValStr(FieldType.MATNR);
           nn = (BigDecimal) dr.getVal(FieldType.QTY);
           nn0 = tovDataM.get(matnr);
@@ -946,6 +984,7 @@ class SklMoveData extends ProcData {
             nn = nn.add(nn0);
           }
           tovDataM.put(matnr, nn);
+
           tovScans.add(scan);
         }
         if (dr.haveVal(FieldType.CELL2)) {
