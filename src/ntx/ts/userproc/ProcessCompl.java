@@ -30,11 +30,14 @@ import ntx.ts.sysproc.UserContext;
 /**
  * Комплектация поставки Состояния: START SEL_SKL SEL_SGM VBELN CELL_VBELN
  * CNF_CROSSDOC VBELN_CELL SEL_CELL FROM_PAL_CELL TOV_CELL QTY SGM FIN_MSG
- * COMPL_TO_PAL SEL_ZONE
+ * COMPL_TO_PAL SEL_ZONE SEL_IP
  */
 public class ProcessCompl extends ProcessTask {
 
   private final ComplData d = new ComplData();
+  private String umsg = null;
+  private String uumsg = null;
+  private ZTS_VED_S[] curved;
 
   public ProcessCompl(long procId) throws Exception {
     super(ProcType.COMPL, procId);
@@ -82,6 +85,14 @@ public class ProcessCompl extends ProcessTask {
           return (new HtmlPageMessage(getLastErr(), null, null, null)).getPage();
         }
 
+      case SEL_IP:
+        try {
+          return htmlSelIp(ctx);
+        } catch (Exception e) {
+          callSetErr(e.getMessage(), ctx);
+          return (new HtmlPageMessage(getLastErr(), null, null, null)).getPage();
+        }
+        
       case CNF_CROSSDOC:
         try {
           return htmlCnfCrossDoc(ctx);
@@ -96,11 +107,53 @@ public class ProcessCompl extends ProcessTask {
       case FIN_MSG:
         return (new HtmlPageMessage(getLastErr(), getLastMsg(), "fin_msg", null)).getPage();
 
+      case CELL_VBELN:
+      case VBELN_CELL:
+      case SEL_CELL:
+      case TOV_CELL:
+//        if (getLastMsg() != null && getLastMsg().contains("ыбрана"))
+          return htmlWork("Комплектация", playSound, null, ctx, umsg, uumsg);
+//        else
+//          return htmlWork("Комплектация", playSound, ctx);  
+        
       default:
         return htmlWork("Комплектация", playSound, ctx);
     }
   }
 
+  public FileData htmlSelIp(UserContext ctx) throws Exception {
+    String def = null;
+    String def0 = null;
+    
+    Z_TS_COMPL23 f = new Z_TS_COMPL23();
+    f.LGORT = d.getLgort();
+    f.USER_SHK = ctx.user.getUserSHK();
+    f.execute();
+
+    if (f.isErr) {
+      callSetErr(f.err, ctx);
+      return (new HtmlPageMessage(getLastErr(), null, null, null)).getPage();
+    }
+
+    for (int i = 0; i < f.IT.length; i++) {
+      if (def == null) {
+        def = "selipn" + f.IT[i].VBELN + ":" + f.IT[i].VBELN_DESC;
+        def0 = "selipn" + f.IT[i].VBELN;
+      } else {
+        def = def + ";selipn" + f.IT[i].VBELN + ":" + f.IT[i].VBELN_DESC;
+      }
+    }
+    if (def == null) { 
+        def = "selipm"; def0 = def; 
+    } else 
+        def = def + ";selipm";
+    def = def + ":Указать вручную";
+
+    HtmlPageMenu p = new HtmlPageMenu("Выбор ИП", "Выберите ИП:", def,
+            def0, null, null);
+    return p.getPage();
+  }
+  
   public FileData htmlCnfCrossDoc(UserContext ctx) throws Exception {
     // подтверждение кроссдокинга
     HtmlPageMenu p = new HtmlPageMenu("Подтверждение кроссдокинга", "Эта поставка помечена как кроссдокинговая, подтверждаете?",
@@ -111,12 +164,13 @@ public class ProcessCompl extends ProcessTask {
   private FileData init(TaskContext ctx) throws Exception {
     // запуск задачи
     boolean playSnd = false;
+    /*
     String[] lgorts = getLgorts(ctx);
     if (lgorts.length == 1) {
       // единственные склад
       // сначала проверяем необходимость сканирования СГМ
       Z_TS_COMPL15 f = new Z_TS_COMPL15();
-      f.LGORT = d.getLgort();
+      f.LGORT = lgorts[0]; //d.getLgort();
       f.execute();
 
       if (f.isErr) {
@@ -136,8 +190,9 @@ public class ProcessCompl extends ProcessTask {
         callTaskNameChange(ctx);
       }
     } else {
-      callSetTaskState(TaskState.SEL_SKL, ctx);
-    }
+    */
+    callSetTaskState(TaskState.SEL_SKL, ctx);
+    //}
     return htmlGet(playSnd, ctx);
   }
 
@@ -185,6 +240,12 @@ public class ProcessCompl extends ProcessTask {
 
       case SEL_ZONE:
         return handleScanZone(scan, ctx);
+
+      case QTY_PAL:
+        return handleScanQtyPal(scan, ctx);
+
+      case QTY_BOX:
+        return handleScanQtyBox(scan, ctx);
 
       default:
         callSetErr("Ошибка программы: недопустимое состояние "
@@ -280,7 +341,104 @@ public class ProcessCompl extends ProcessTask {
   private boolean canScanPal() {
     return d.getFP();
   }
+  
+  private void clearUMsg() {
+    umsg = null;
+    uumsg = null;
+  }
+  
+  private void refreshCurVed() {
+    curved = null;
 
+    Z_TS_COMPL6 f = new Z_TS_COMPL6();
+    f.LGORT = d.getLgort();
+    f.VBELN = fillZeros(d.getVbeln(), 10);
+
+    f.execute();
+
+    if (f.isErr) {
+      return;  
+    }
+    
+    curved = f.IT.clone();
+  }
+
+  private void calcUMsg() throws Exception {
+    umsg = null;
+    uumsg = null;
+    if (curved == null) return;
+
+    ZTS_VED_S[] curveda = curved.clone();
+
+    int n = curveda.length;
+    ArrayList<ComplScanData> scanData = d.getScanData();
+
+    for (int i = 0; i < n; i++) {
+      for (ComplScanData sd : scanData) {
+        if (sd.matnr.equals(curveda[i].MATNR)) {
+          if (curveda[i].CHARG.length() > 0) {
+            if ((sd.qtyP.signum() > 0) && sd.charg.equals(curveda[i].CHARG)) {
+              curveda[i].QTY = curveda[i].QTY.subtract(sd.qtyP);
+            }
+          } 
+        }
+      }
+    }
+    
+    n = curveda.length;
+    if (n < 1) return;
+    String cell = d.getCell();
+    ZTS_VED_S r1 = null;
+    ZTS_VED_S r2 = null;
+    boolean cell_found = false;
+    if (strEq(cell, "")) {
+      r1 = curveda[0];
+    } else {
+      for (int i = 0; i < n; i++) {
+        if (strEq(curveda[i].LGPLA, cell)) {
+          if (curveda[i].QTY.signum() > 0 && r1 == null) 
+              r1 = curveda[i];
+          cell_found = true;
+        } else if (cell_found && r2 == null) {
+          r2 = curveda[i];
+        }
+      }
+      if (r2 == null && !strEq(curveda[0].LGPLA, cell)) {
+        r2 = curveda[0];
+      }
+    }
+
+    if (r1 != null) {
+      r1.VBELN = delZeros(r1.VBELN);
+      r1.MATNR = delZeros(r1.MATNR);
+      r1.CHARG = delZeros(r1.CHARG);
+
+      umsg = "<b><font color=red>" + r1.LGPLA + "</font>";
+      umsg = umsg + " " + r1.MATNR;
+      if (r1.CHARG.length() > 0) {
+        umsg = umsg + " / " + r1.CHARG;
+      }
+      umsg = umsg + "</b> " + RefMat.getFullName(r1.MATNR) + " <b>" + 
+              delDecZeros(r1.QTY.toString()) + " ед</b>";
+      
+    }
+
+    if (r2 != null) {
+      r2.VBELN = delZeros(r2.VBELN);
+      r2.MATNR = delZeros(r2.MATNR);
+      r2.CHARG = delZeros(r2.CHARG);
+
+      uumsg = "<b><font color=red>Сл яч: " + r2.LGPLA + "</font>";
+      uumsg = uumsg + " " + r2.MATNR;
+      if (r2.CHARG.length() > 0) {
+        uumsg = uumsg + " / " + r2.CHARG;
+      }
+      uumsg = uumsg + "</b> " + RefMat.getFullName(r2.MATNR) + " <b>" + 
+              delDecZeros(r2.QTY.toString()) + " ед</b>";
+      
+    }
+  }
+  
   private FileData handleScanVbeln(String scan, TaskContext ctx) throws Exception {
     // первоначальное сканирование поставки (выбор комплектуемых поставок)
     if (!isScanVbeln(scan)) {
@@ -313,6 +471,9 @@ public class ProcessCompl extends ProcessTask {
     d.callAddVbeln(vbeln, f.IT, f.IT_FP, crossDoc ? TaskState.CNF_CROSSDOC : TaskState.CELL_VBELN, ctx);
     d.callSetInfCompl(f.INF_COMPL, ctx);
     d.callSetCheckCompl(f.CHECK_COMPL, ctx);
+    
+    refreshCurVed();
+    calcUMsg();
 
     String s = "Поставка " + vbeln + " выбрана для комплектации; кол-во "
             + delDecZeros(d.getVbelnQty(vbeln).toString());
@@ -449,6 +610,8 @@ public class ProcessCompl extends ProcessTask {
       d.callSetCell(cell, d.getFP(cell) ? TaskState.FROM_PAL_CELL : TaskState.TOV_CELL, ctx);
     }
     sendCurCellInf(cell, ctx);
+    refreshCurVed();
+    calcUMsg();
     return htmlGet(true, ctx);
   }
 
@@ -998,6 +1161,7 @@ public class ProcessCompl extends ProcessTask {
                   + d.getPalQtyScan() + ")";
           callSetMsg(s, ctx);
           callAddHist(s, ctx);
+          calcUMsg();
         } else {
           callSetErr("Взято " + delDecZeros(qty.toString()) + " ед, нужно не более "
                   + delDecZeros(tq.qty.toString()) + " ед\r\n" + s, ctx);
@@ -1008,6 +1172,7 @@ public class ProcessCompl extends ProcessTask {
                 + d.getPalQtyScan() + ")";
         callSetMsg(s, ctx);
         callAddHist(s, ctx);
+        calcUMsg();
       }
       callSetTaskState(TaskState.TOV_CELL, ctx);
       return htmlGet(true, ctx);
@@ -1221,8 +1386,38 @@ public class ProcessCompl extends ProcessTask {
     return p.getPage();
   }
 
+  private TaskState getSelIpTaskState(String lg, TaskContext ctx) throws Exception {
+    Z_TS_COMPL23 f = new Z_TS_COMPL23();
+    f.LGORT = lg;
+    f.USER_SHK = ctx.user.getUserSHK();
+    f.execute();
+
+    if (f.isErr) {
+      callSetErr(f.err, ctx);
+      return TaskState.VBELN;
+    }
+
+    int n = f.IT.length;
+    if (n == 0) {
+      return TaskState.VBELN;
+    }
+    return TaskState.SEL_IP;
+  }
+  
   private FileData handleMenu(String menu, TaskContext ctx) throws Exception {
-    if (getTaskState() == TaskState.SEL_SKL) {
+    if (getTaskState() == TaskState.SEL_IP) {
+      callClearErrMsg(ctx);  
+      if (menu.startsWith("selipn")) {
+        String ip = menu.substring(6);
+        return handleScanVbeln(ip, ctx);
+      } else if (menu.startsWith("selipm")) {
+        callSetTaskState(TaskState.VBELN, ctx);
+        return htmlGet(true, ctx);
+      } else {
+        callSetErr("Ошибка программы: неверный выбор ИП: " + menu, ctx);
+        return htmlGet(true, ctx);
+      }
+    } else if (getTaskState() == TaskState.SEL_SKL) {
       boolean playSnd = false;
 
       // обработка выбора склада
@@ -1244,15 +1439,16 @@ public class ProcessCompl extends ProcessTask {
             return p.getPage();
           }
 
+          TaskState tsSelIp = getSelIpTaskState(lg, ctx);
           if (!f.SGM.equalsIgnoreCase("X")) {
-            d.callSetLgort(lg, f.NO_FREE_COMPL, f.COMPL_TO_PAL, TaskState.VBELN, ctx);
+            d.callSetLgort(lg, f.NO_FREE_COMPL, f.COMPL_TO_PAL, tsSelIp, ctx);
             callTaskNameChange(ctx);
           } else if (f.SGM_ASK.equalsIgnoreCase("X")) {
             d.callSetLgort(lg, f.NO_FREE_COMPL, f.COMPL_TO_PAL, TaskState.ASK_SEL_SGM, ctx);
             callTaskNameChange(ctx);
           } else {
-            d.callSetLgort(lg, f.NO_FREE_COMPL, f.COMPL_TO_PAL, TaskState.VBELN, ctx);
-            d.callSetIsSGM(true, TaskState.VBELN, ctx);
+            d.callSetLgort(lg, f.NO_FREE_COMPL, f.COMPL_TO_PAL, tsSelIp, ctx);
+            d.callSetIsSGM(true, tsSelIp, ctx);
             callTaskNameChange(ctx);
           }
         }
@@ -1275,9 +1471,9 @@ public class ProcessCompl extends ProcessTask {
       callClearErrMsg(ctx);
       if ((menu.length() == 7) && menu.startsWith("selsgm")) {
         if (menu.substring(6).equalsIgnoreCase("1")) {
-          d.callSetIsSGM(true, TaskState.VBELN, ctx);
+          d.callSetIsSGM(true, getSelIpTaskState(d.getLgort(), ctx), ctx);
         } else {
-          callSetTaskState(TaskState.VBELN, ctx);
+          callSetTaskState(getSelIpTaskState(d.getLgort(), ctx), ctx);
         }
       } else {
         callSetErr("Ошибка программы: неверный выбор признака санирования СГМ: " + menu, ctx);
@@ -1375,7 +1571,12 @@ public class ProcessCompl extends ProcessTask {
     } else if (menu.equals("mod_sgm_save")) {
       callClearErrMsg(ctx);
       return handleMenuModSgmSave(ctx);
-    } else {
+    } else if (menu.startsWith("selcell")) {
+      callClearErrMsg(ctx);
+      return handleScanCell("C" + menu.substring(7), ctx, false);
+    }    
+    
+    {
       return htmlGet(false, ctx);
     }
   }
@@ -1396,6 +1597,46 @@ public class ProcessCompl extends ProcessTask {
     return htmlGet(false, ctx);
   }
 
+  private FileData handleScanQtyPal(String scan, TaskContext ctx) throws Exception {
+    if (!isAllDigits(scan)) {
+      callSetErr("Требуется ввести количество паллет"
+              + " (сканирование " + scan + " не принято)", ctx);
+      return htmlGet(true, ctx);
+    }
+    
+    int pal_qty = Integer.parseInt(scan);
+    if (pal_qty > 50) {
+      callSetErr("Слишком большое количество паллет"
+              + " (сканирование " + scan + " не принято)", ctx);
+      return htmlGet(true, ctx);
+    }
+    d.callSetPalQty(pal_qty, TaskState.QTY_BOX, ctx);  
+    if (pal_qty > 0) {
+      callSetMsg("Паллета " + String.valueOf(d.getBoxQty().size() + 1) + 
+        "/" + String.valueOf(pal_qty), ctx);
+      return htmlGet(true, ctx);
+    } else
+      return ComplDoneFin(ctx);
+  }
+
+  private FileData handleScanQtyBox(String scan, TaskContext ctx) throws Exception {
+    if (!isAllDigits(scan)) {
+      callSetErr("Требуется ввести количество коробов"
+              + " (сканирование " + scan + " не принято)", ctx);
+      return htmlGet(true, ctx);
+    }
+    
+    int box_qty = Integer.parseInt(scan);
+    d.callAddBoxQty(box_qty, TaskState.QTY_BOX, ctx);  
+    if (d.getBoxQty().size() >= d.getPalQty())
+      return ComplDoneFin(ctx);
+    else {
+      callSetMsg("Паллета " + String.valueOf(d.getBoxQty().size() + 1) + 
+        "/" + String.valueOf(d.getPalQty()), ctx);
+      return htmlGet(true, ctx);
+    }
+  }
+  
   private FileData handleScanZone(String scan, TaskContext ctx) throws Exception {
     if (!isScanZone(scan)) {
       callSetErr("Требуется отсканировать зону склада, в которую помещена паллета "
@@ -1877,48 +2118,78 @@ public class ProcessCompl extends ProcessTask {
       return htmlGet(false, ctx);
     }
 
-    HtmlPage p = new HtmlPage();
-    p.title = "Нескомплектованные позиции";
-    p.sound = "ask.wav";
-    p.fontSize = TSparams.fontSize2;
-    p.scrollToTop = true;
-
-    p.addLine("<b>Нескомплектованные позиции:</b>");
-    p.addNewLine();
     String s;
     ZTS_VED_S r;
-    for (int i = 0; i < n; i++) {
-      r = f.IT[i];
-      r.VBELN = delZeros(r.VBELN);
-      r.MATNR = delZeros(r.MATNR);
-      r.CHARG = delZeros(r.CHARG);
-      if (r.LENUM.length() == 20) {
-        r.LENUM = r.LENUM.substring(10);
-      }
+    
+    if (d.getLgort().equals("1403") && d.getIs1vbeln()) {    
+        
+        String def = "cont:Назад";
+        String def0 = "cont";
 
-      s = "<b><font color=red>" + r.LGPLA + "</font>";
-      if (canScanVbeln()) {
-        s = s + " <font color=blue>" + r.VBELN + "</font>";
-      }
-      if (r.LENUM.length() > 0) {
-        s = s + " <font color=#CC7700>" + r.LENUM + "</font>";
-      }
-      s = s + " " + r.MATNR;
-      if (r.CHARG.length() > 0) {
-        s = s + " / " + r.CHARG;
-      }
-      s = s + "</b> " + RefMat.getFullName(r.MATNR) + " <b>"
-              + delDecZeros(r.QTY.toString()) + " ед</b>";
-      p.addLine(s);
+        for (int i = 0; i < n; i++) {
+          r = f.IT[i];
+          r.VBELN = delZeros(r.VBELN);
+          r.MATNR = delZeros(r.MATNR);
+          r.CHARG = delZeros(r.CHARG);
+          
+          s = "<b><font color=red>" + r.LGPLA + "</font>";
+          s = s + " " + r.MATNR;
+          if (r.CHARG.length() > 0) {
+            s = s + " / " + r.CHARG;
+          }
+          s = s + "</b> " + RefMat.getFullName(r.MATNR) + " <b>"
+                  + delDecZeros(r.QTY.toString()) + " ед</b>";          
+          
+          def = def + ";selcell" + f.IT[i].LGPLA + ":" + s;
+        }
+
+        HtmlPageMenu p = new HtmlPageMenu("Нескомплектованные позиции", 
+                "Выберите ячейку:", def, def0, null, null);
+        return p.getPage();
+        
+    } else {
+
+        HtmlPage p = new HtmlPage();
+        p.title = "Нескомплектованные позиции";
+        p.sound = "ask.wav";
+        p.fontSize = TSparams.fontSize2;
+        p.scrollToTop = true;
+
+        p.addLine("<b>Нескомплектованные позиции:</b>");
+        p.addNewLine();
+        for (int i = 0; i < n; i++) {
+          r = f.IT[i];
+          r.VBELN = delZeros(r.VBELN);
+          r.MATNR = delZeros(r.MATNR);
+          r.CHARG = delZeros(r.CHARG);
+          if (r.LENUM.length() == 20) {
+            r.LENUM = r.LENUM.substring(10);
+          }
+
+          s = "<b><font color=red>" + r.LGPLA + "</font>";
+          if (canScanVbeln()) {
+            s = s + " <font color=blue>" + r.VBELN + "</font>";
+          }
+          if (r.LENUM.length() > 0) {
+            s = s + " <font color=#CC7700>" + r.LENUM + "</font>";
+          }
+          s = s + " " + r.MATNR;
+          if (r.CHARG.length() > 0) {
+            s = s + " / " + r.CHARG;
+          }
+          s = s + "</b> " + RefMat.getFullName(r.MATNR) + " <b>"
+                  + delDecZeros(r.QTY.toString()) + " ед</b>";
+          p.addLine(s);
+        }
+
+        p.addNewLine();
+
+        p.addFormStart("work.html", "f");
+        p.addFormButtonSubmitGo("Продолжить");
+        p.addFormEnd();
+
+        return p.getPage();
     }
-
-    p.addNewLine();
-
-    p.addFormStart("work.html", "f");
-    p.addFormButtonSubmitGo("Продолжить");
-    p.addFormEnd();
-
-    return p.getPage();
   }
 
   private FileData htmlShowComplCell(TaskContext ctx, String add_charg_stocks) throws Exception {
@@ -2177,6 +2448,35 @@ public class ProcessCompl extends ProcessTask {
     return p.getPage();
   }
 
+  private FileData ComplDoneFin(TaskContext ctx) throws Exception {
+    if (d.getPalQty() > 0 && d.getIs1vbeln()) {
+      Z_TS_COMPL24 f = new Z_TS_COMPL24();
+      f.VBELN = fillZeros(d.getVbelns(), 10);
+      f.PAL_QTY = BigDecimal.valueOf(d.getPalQty());
+      ArrayList<Integer> bl = d.getBoxQty();
+      f.BOX_QTY = BigDecimal.valueOf(0);
+      f.PAL_BOX_QTIES = "";
+      for (Integer b : bl) {
+        f.BOX_QTY = f.BOX_QTY.add(BigDecimal.valueOf(b));
+        if (f.PAL_BOX_QTIES.isEmpty())
+          f.PAL_BOX_QTIES = String.valueOf(b);
+        else
+          f.PAL_BOX_QTIES = f.PAL_BOX_QTIES + "," + String.valueOf(b);
+      }
+      f.execute();
+    }
+      
+    String finMsg = getFinMsg();
+    if (finMsg == null) {
+      callTaskFinish(ctx);
+      return null;
+    } else {
+      callSetErrMsg("", finMsg, ctx);
+      callSetTaskState(TaskState.FIN_MSG, ctx);
+      return htmlGet(false, ctx);
+    }
+  }
+  
   private FileData handleMenuFin1(TaskContext ctx) throws Exception {
     if (d.getScanDataSize() > 0) {
       callSetErr("Имеются несохраненные данные комплектации, завершение невозможно", ctx);
@@ -2211,15 +2511,12 @@ public class ProcessCompl extends ProcessTask {
       return htmlCnfExit();
     } else {
       // нескомплектованных позиций нет, завершаем
-      String finMsg = getFinMsg();
-      if (finMsg == null) {
-        callTaskFinish(ctx);
-        return null;
-      } else {
-        callSetErrMsg("", finMsg, ctx);
-        callSetTaskState(TaskState.FIN_MSG, ctx);
+      if (d.getLgort().equals("1403") && d.getIs1vbeln()) {
+        callSetTaskState(TaskState.QTY_PAL, ctx);
         return htmlGet(false, ctx);
-      }
+      } else {
+        return ComplDoneFin(ctx);
+      }  
     }
   }
 
@@ -2526,6 +2823,16 @@ class ComplData extends ProcData {
   private final ArrayList<TovPos> modSgmTov = new ArrayList<TovPos>(); // отсканированный товар (при пересканировании СГМ)
   private int modSgmPrevState = 0;
   private String lastScan = "";
+  private int palQty = 0;
+  private final ArrayList<Integer> boxQty = new ArrayList<Integer>();
+  
+  public int getPalQty() {
+    return palQty;
+  }
+
+  public ArrayList<Integer> getBoxQty() {
+    return boxQty;
+  }
 
   public String getNextCellScan() {
     return nextCellScan;
@@ -3169,6 +3476,26 @@ class ComplData extends ProcData {
     Track.saveProcessChange(dr, ctx.task, ctx);
   }
 
+  public void callSetPalQty(int pal_qty, TaskState state, TaskContext ctx) throws Exception {
+    DataRecord dr = new DataRecord();
+    dr.procId = ctx.task.getProcId();
+    dr.setI(FieldType.QTY_PAL, pal_qty);
+    if ((state != null) && (state != ctx.task.getTaskState())) {
+      dr.setI(FieldType.TASK_STATE, state.ordinal());
+    }
+    Track.saveProcessChange(dr, ctx.task, ctx);
+  }
+
+  public void callAddBoxQty(int box_qty, TaskState state, TaskContext ctx) throws Exception {
+    DataRecord dr = new DataRecord();
+    dr.procId = ctx.task.getProcId();
+    dr.setI(FieldType.QTY_BOX, box_qty);
+    if ((state != null) && (state != ctx.task.getTaskState())) {
+      dr.setI(FieldType.TASK_STATE, state.ordinal());
+    }
+    Track.saveProcessChange(dr, ctx.task, ctx);
+  }
+  
   public void callSetToPalPrevState(TaskState prevState, TaskState state, TaskContext ctx) throws Exception {
     DataRecord dr = new DataRecord();
     dr.procId = ctx.task.getProcId();
@@ -3800,6 +4127,15 @@ class ComplData extends ProcData {
                   (BigDecimal) dr.getVal(FieldType.MOD_SGM_QTY)));
         }
 
+        if (dr.haveVal(FieldType.QTY_PAL)) {
+          palQty = (Integer) dr.getVal(FieldType.QTY_PAL);
+          boxQty.clear();
+        }
+        
+        if (dr.haveVal(FieldType.QTY_BOX)) {
+          Integer box_qty = (Integer) dr.getVal(FieldType.QTY_BOX);
+          boxQty.add(box_qty);
+        }
         break;
     }
   }

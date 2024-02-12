@@ -121,6 +121,9 @@ public class Track {
       case CDLVMOVE:
         ret = new ProcessCDlvMove(procId);
         break;
+      case STELL_SAMTEKS:
+        ret = new ProcessStellSamteks(procId);
+        break;            
     }
     if (ret == null) {
       throw new Exception("Ошибка программы: не создан процесс типа " + pType.text);

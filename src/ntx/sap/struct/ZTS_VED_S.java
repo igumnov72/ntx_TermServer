@@ -13,4 +13,6 @@ public class ZTS_VED_S {
   public String CHARG = ""; // Номер партии
   public BigDecimal QTY = new BigDecimal(0); // Количество
   public BigDecimal STOCK = new BigDecimal(0); // Количество
+  public String FLOOR = ""; // Индикатор из одной позиции
+  public String SRT = ""; // Текст длиной 20 знаков
 }

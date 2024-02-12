@@ -150,7 +150,10 @@ public enum FieldType {
   CHARG_PU(ValType.STRING),     // номер партии ПУ 
   SHK_ZEQ(ValType.STRING),      // ШК станка 
   SHK_CHARG(ValType.STRING),    // ШК партии 
-  DEL_HIST(ValType.VOID) // удаление всех сообщений в истории
+  DEL_HIST(ValType.VOID), // удаление всех сообщений в истории
+  QTY_PAL(ValType.INT), // количество паллет
+  QTY_BOX(ValType.INT), // количество коробов
+  STELL(ValType.STRING)    // ШК партии 
   ;
   //
   public final ValType valType;

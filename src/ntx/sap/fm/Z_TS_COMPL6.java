@@ -15,6 +15,12 @@ public class Z_TS_COMPL6 {
   public String LGPLA = ""; // Складское место
   public String INF_COMPL = ""; // Признак информационной комплектации
   public String ADD_CHARG_STOCKS = ""; // Общий флаг
+  public String CUR_CELL = ""; // Текущая выбранная ячейка
+  public String VBELN = ""; // Номер документа сбыта
+  //
+  // exporting params
+  public String UMSG = ""; // Доп строка 1 после скана ячейки
+  public String UUMSG = ""; // Доп строка 2 после скана ячейки
   //
   // table params
   public ZTS_VBELN_S[] IT_V = new ZTS_VBELN_S[0]; // Номера поставок
@@ -61,6 +67,8 @@ public class Z_TS_COMPL6 {
       System.out.println("  LGPLA=" + LGPLA);
       System.out.println("  INF_COMPL=" + INF_COMPL);
       System.out.println("  ADD_CHARG_STOCKS=" + ADD_CHARG_STOCKS);
+      System.out.println("  CUR_CELL=" + CUR_CELL);
+      System.out.println("  VBELN=" + VBELN);
       System.out.println("  IT_V.length=" + IT_V.length);
       System.out.println("  IT.length=" + IT.length);
     }
@@ -71,6 +79,8 @@ public class Z_TS_COMPL6 {
     if (e == null) {
       if (TSparams.logDocLevel >= 2) {
         System.out.println("Возврат из ФМ Z_TS_COMPL6:");
+        System.out.println("  UMSG=" + UMSG);
+        System.out.println("  UUMSG=" + UUMSG);
         System.out.println("  err=" + err);
         System.out.println("  IT_V.length=" + IT_V.length);
         System.out.println("  IT.length=" + IT.length);
@@ -120,6 +130,8 @@ public class Z_TS_COMPL6 {
       impParams.setValue("LGPLA", params.LGPLA);
       impParams.setValue("INF_COMPL", params.INF_COMPL);
       impParams.setValue("ADD_CHARG_STOCKS", params.ADD_CHARG_STOCKS);
+      impParams.setValue("CUR_CELL", params.CUR_CELL);
+      impParams.setValue("VBELN", params.VBELN);
 
       IT_V_t.appendRows(params.IT_V.length);
       for (int i = 0; i < params.IT_V.length; i++) {
@@ -139,11 +151,15 @@ public class Z_TS_COMPL6 {
         IT_t.setValue("CHARG", params.IT[i].CHARG);
         IT_t.setValue("QTY", params.IT[i].QTY);
         IT_t.setValue("STOCK", params.IT[i].STOCK);
+        IT_t.setValue("FLOOR", params.IT[i].FLOOR);
+        IT_t.setValue("SRT", params.IT[i].SRT);
       }
 
       ret = SAPconn.executeFunction(function);
 
       if (ret == null) {
+        params.UMSG = expParams.getString("UMSG");
+        params.UUMSG = expParams.getString("UUMSG");
         params.err = expParams.getString("ERR");
         if (!params.err.isEmpty()) {
           params.isErr = true;
@@ -173,6 +189,8 @@ public class Z_TS_COMPL6 {
           IT_r.CHARG = IT_t.getString("CHARG");
           IT_r.QTY = IT_t.getBigDecimal("QTY");
           IT_r.STOCK = IT_t.getBigDecimal("STOCK");
+          IT_r.FLOOR = IT_t.getString("FLOOR");
+          IT_r.SRT = IT_t.getString("SRT");
           params.IT[i] = IT_r;
         }
       }

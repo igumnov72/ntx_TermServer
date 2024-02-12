@@ -190,6 +190,24 @@ public abstract class ProcessUtil extends Process {
     return p.getPage();
   }
 
+  public FileData htmlWork(String title, boolean playSound, String deflt, 
+          ProcessContext ctx, String umsg, String uumsg) throws Exception {
+    // помимо форматирования тут нужно вывести имя пользователя и склад (если есть)
+    HtmlPageWork p = new HtmlPageWork(
+            title,
+            playSound ? (isErr() ? "err.wav" : "ok.wav") : "ask.wav",
+            title + " (" + getUserAndSkl(ctx) + ")",
+            lastErr,
+            lastMsg,
+            stateText,
+            getTaskState().actionText,
+            getHist(),
+            deflt,
+            umsg,
+            uumsg);
+
+    return p.getPage();
+  }
   public static boolean isScanPal(String scan) {
     if ((scan.length() == 11) && (scan.charAt(0) == 'P')
             && isAllDigits(scan.substring(1))) {

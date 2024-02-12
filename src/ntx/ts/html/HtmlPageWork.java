@@ -8,6 +8,8 @@ public class HtmlPageWork extends HtmlPage {
   public String workTask;
   public String err;
   public String msg;
+  public String umsg;
+  public String uumsg;
   public String stateText;
   public String workAction;
   public String deflt;
@@ -23,7 +25,7 @@ public class HtmlPageWork extends HtmlPage {
           String action,
           String[] hist,
           String deflt) {
-    init(a_title, a_sound, task, err, msg, stateText, action, hist, deflt);
+    init(a_title, a_sound, task, err, msg, stateText, action, hist, deflt, null, null);
     refreshByEnter = true;
   }
 
@@ -36,7 +38,24 @@ public class HtmlPageWork extends HtmlPage {
           String stateText,
           String action,
           String[] hist) {
-    init(a_title, a_sound, task, err, msg, stateText, action, hist, null);
+    init(a_title, a_sound, task, err, msg, stateText, action, hist, null, null, null);
+    refreshByEnter = true;
+  }
+
+  public HtmlPageWork(
+          String a_title,
+          String a_sound,
+          String task,
+          String err,
+          String msg,
+          String stateText,
+          String action,
+          String[] hist,
+          String deflt,
+          String umsg,
+          String uumsg
+          ) {
+    init(a_title, a_sound, task, err, msg, stateText, action, hist, deflt, umsg, uumsg);
     refreshByEnter = true;
   }
 
@@ -49,7 +68,10 @@ public class HtmlPageWork extends HtmlPage {
           String stateText,
           String action,
           String[] hist,
-          String deflt) {
+          String deflt,
+          String umsg,
+          String uumsg
+  ) {
     title = a_title;
     sound = a_sound;
     workTask = task;
@@ -62,6 +84,8 @@ public class HtmlPageWork extends HtmlPage {
     fontSize2 = TSparams.fontSize2;
     fontSize3 = TSparams.fontSize3;
     this.deflt = deflt;
+    this.umsg = umsg;
+    this.uumsg = uumsg;
   }
 
   @Override
@@ -78,6 +102,12 @@ public class HtmlPageWork extends HtmlPage {
     }
     if (msg != null) {
       addBlock("<b>" + msg + "</b>", 0, "blue");
+    }
+    if (umsg != null) {
+      addBlock(umsg, fontSize2, null);
+    }
+    if (uumsg != null) {
+      addBlock(uumsg, fontSize2, null);
     }
     if (err != null) {
       addBlock("<b>" + err + "</b>", 0, "red");

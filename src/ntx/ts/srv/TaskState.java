@@ -61,7 +61,11 @@ public enum TaskState {
   SEL_CHARG("Номер партии ПУ:"),
   SEL_ZEQ("ШК станка:"),
   SEL_NAVOI("ШК Навоя:"),
-  K_VBELN("Комплексная поставка:")
+  K_VBELN("Комплексная поставка:"),
+  SEL_IP("Выберите ИП:"),
+  QTY_PAL("Количество паллет:"),
+  QTY_BOX("Количество коробов:"),
+  SEL_STELL("ШК Стеллажа:")
   ;
   //
   public final String actionText;
