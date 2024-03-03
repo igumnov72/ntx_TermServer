@@ -153,7 +153,8 @@ public enum FieldType {
   DEL_HIST(ValType.VOID), // удаление всех сообщений в истории
   QTY_PAL(ValType.INT), // количество паллет
   QTY_BOX(ValType.INT), // количество коробов
-  STELL(ValType.STRING)    // ШК партии 
+  STELL(ValType.STRING),    // ШК партии 
+  CHARGS2(ValType.STRING_AR) // массив номеров партий 2
   ;
   //
   public final ValType valType;

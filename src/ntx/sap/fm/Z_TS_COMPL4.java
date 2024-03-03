@@ -26,6 +26,7 @@ public class Z_TS_COMPL4 {
   // table params
   public ZTS_COMPL_CELL_S[] IT = new ZTS_COMPL_CELL_S[0]; // Ячейки для комплектации
   public ZTS_COMPL_FP_S[] IT_FP = new ZTS_COMPL_FP_S[0]; // Признак комплектации с паллеты
+  public ZTS_CHARG_PROPS_S[] IT_CH = new ZTS_CHARG_PROPS_S[0]; // Свойства партий
   //
   // переменные для работы с ошибками
   public boolean isErr;
@@ -54,6 +55,13 @@ public class Z_TS_COMPL4 {
     }
   }
 
+  public void IT_CH_create(int n) {
+    IT_CH = new ZTS_CHARG_PROPS_S[n];
+    for (int i = 0; i < n; i++) {
+      IT_CH[i] = new ZTS_CHARG_PROPS_S();
+    }
+  }
+
   public void execute() {
     isErr = false;
     isSapErr = false;
@@ -71,6 +79,7 @@ public class Z_TS_COMPL4 {
       System.out.println("  USER_SHK=" + USER_SHK);
       System.out.println("  IT.length=" + IT.length);
       System.out.println("  IT_FP.length=" + IT_FP.length);
+      System.out.println("  IT_CH.length=" + IT_CH.length);
     }
 
     // вызов САПовской процедуры
@@ -86,6 +95,7 @@ public class Z_TS_COMPL4 {
         System.out.println("  err=" + err);
         System.out.println("  IT.length=" + IT.length);
         System.out.println("  IT_FP.length=" + IT_FP.length);
+        System.out.println("  IT_CH.length=" + IT_CH.length);
       }
     } else {
       // обработка ошибки
@@ -127,6 +137,7 @@ public class Z_TS_COMPL4 {
 
       JCoTable IT_t = tabParams.getTable("IT");
       JCoTable IT_FP_t = tabParams.getTable("IT_FP");
+      JCoTable IT_CH_t = tabParams.getTable("IT_CH");
 
       impParams.setValue("LGORT", params.LGORT);
       impParams.setValue("VBELN", params.VBELN);
@@ -147,6 +158,13 @@ public class Z_TS_COMPL4 {
         IT_FP_t.setRow(i);
         IT_FP_t.setValue("LGPLA", params.IT_FP[i].LGPLA);
         IT_FP_t.setValue("COMPL_FROM", params.IT_FP[i].COMPL_FROM);
+      }
+
+      IT_CH_t.appendRows(params.IT_CH.length);
+      for (int i = 0; i < params.IT_CH.length; i++) {
+        IT_CH_t.setRow(i);
+        IT_CH_t.setValue("CHARG", params.IT_CH[i].CHARG);
+        IT_CH_t.setValue("NO_CORP_SHK_BOX", params.IT_CH[i].NO_CORP_SHK_BOX);
       }
 
       ret = SAPconn.executeFunction(function);
@@ -181,6 +199,16 @@ public class Z_TS_COMPL4 {
           IT_FP_r.LGPLA = IT_FP_t.getString("LGPLA");
           IT_FP_r.COMPL_FROM = IT_FP_t.getString("COMPL_FROM");
           params.IT_FP[i] = IT_FP_r;
+        }
+
+        params.IT_CH = new ZTS_CHARG_PROPS_S[IT_CH_t.getNumRows()];
+        ZTS_CHARG_PROPS_S IT_CH_r;
+        for (int i = 0; i < params.IT_CH.length; i++) {
+          IT_CH_t.setRow(i);
+          IT_CH_r = new ZTS_CHARG_PROPS_S();
+          IT_CH_r.CHARG = IT_CH_t.getString("CHARG");
+          IT_CH_r.NO_CORP_SHK_BOX = IT_CH_t.getString("NO_CORP_SHK_BOX");
+          params.IT_CH[i] = IT_CH_r;
         }
       }
     } catch (Exception e) {

@@ -475,7 +475,8 @@ public class ProcessCompl extends ProcessTask {
 
     boolean crossDoc = f.ZCOMP_CLIENT.equals("X");
 
-    d.callAddVbeln(vbeln, f.IT, f.IT_FP, crossDoc ? TaskState.CNF_CROSSDOC : TaskState.CELL_VBELN, ctx);
+    d.callAddVbeln(vbeln, f.IT, f.IT_FP, f.IT_CH,
+      crossDoc ? TaskState.CNF_CROSSDOC : TaskState.CELL_VBELN, ctx);
     d.callSetInfCompl(f.INF_COMPL, ctx);
     d.callSetCheckCompl(f.CHECK_COMPL, ctx);
     
@@ -1033,6 +1034,14 @@ public class ProcessCompl extends ProcessTask {
       }
       
       String charg = scanInf.charg;// getScanCharg(scan);
+      
+      if (d.getNoCorpBoxShkChargs().contains(charg) && 
+            scanInf.qty.compareTo(BigDecimal.ONE) > 0 &&
+            !isScanMk(scan) ) {
+        callSetErr("Необходимо сканирование марок (сканирование " + scan + " не принято)", ctx);
+        return htmlGet(true, ctx);
+      }
+      
       RefChargStruct c = RefCharg.get(charg, null);
       if (c == null) {
         callSetErr("Нет такой партии (сканирование " + scan + " не принято)", ctx);
@@ -2853,6 +2862,11 @@ class ComplData extends ProcData {
   private String lastScan = "";
   private int palQty = 0;
   private final ArrayList<Integer> boxQty = new ArrayList<Integer>();
+  private final ArrayList<String> noCorpBoxShkChargs = new ArrayList<String>();
+  
+  public ArrayList<String> getNoCorpBoxShkChargs() {
+    return noCorpBoxShkChargs;
+  }
   
   public int getPalQty() {
     return palQty;
@@ -3356,7 +3370,9 @@ class ComplData extends ProcData {
   }
 
   public void callAddVbeln(String vbeln,
-          ZTS_COMPL_CELL_S[] it, ZTS_COMPL_FP_S[] it_fp,
+          ZTS_COMPL_CELL_S[] it, 
+          ZTS_COMPL_FP_S[] it_fp,
+          ZTS_CHARG_PROPS_S[] it_ch,
           TaskState state, TaskContext ctx) throws Exception {
     DataRecord dr = new DataRecord();
     dr.procId = ctx.task.getProcId();
@@ -3385,6 +3401,12 @@ class ComplData extends ProcData {
     }
     dr.setSa(FieldType.LGPLAS_FP, t1);
     dr.setSa(FieldType.COMPL_FROMS, t2);
+    
+    String[] t4 = new String[it_ch.length];
+    for (int i = 0; i < it_ch.length; i++) 
+//        if (strEq(it_ch[i].NO_CORP_SHK_BOX, "X"))
+          t4[i] = it_ch[i].CHARG;
+    dr.setSa(FieldType.CHARGS2, t4);
 
     if ((state != null) && (state != ctx.task.getTaskState())) {
       dr.setI(FieldType.TASK_STATE, state.ordinal());
@@ -4164,6 +4186,16 @@ class ComplData extends ProcData {
           Integer box_qty = (Integer) dr.getVal(FieldType.QTY_BOX);
           boxQty.add(box_qty);
         }
+
+        if (dr.haveVal(FieldType.CHARGS2)) {
+          noCorpBoxShkChargs.clear();
+          String[] chargs2 = (String[]) dr.getVal(FieldType.CHARGS2);
+          int n_chargs2 = chargs2.length;
+          for (int i = 0; i < n_chargs2; i++) {
+            noCorpBoxShkChargs.add(chargs2[i]);
+          }
+        }
+                
         break;
     }
   }
