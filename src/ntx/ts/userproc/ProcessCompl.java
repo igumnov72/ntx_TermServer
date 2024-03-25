@@ -349,14 +349,14 @@ public class ProcessCompl extends ProcessTask {
   
   private void refreshCurVed(TaskContext ctx) {
     curved = null;
-    
+/*    
     if (
          !strEq(ctx.user.getUserSHK(), "0100005375A") &&
          !strEq(ctx.user.getUserSHK(), "0100004795A") &&
          !strEq(ctx.user.getUserSHK(), "0100006365A") 
        ) 
          return;
-
+*/
     Z_TS_COMPL6 f = new Z_TS_COMPL6();
     f.LGORT = d.getLgort();
     f.VBELN = fillZeros(d.getVbeln(), 10);
@@ -1403,14 +1403,14 @@ public class ProcessCompl extends ProcessTask {
   }
 
   private TaskState getSelIpTaskState(String lg, TaskContext ctx) throws Exception {
-      
+/*      
     if (
          !strEq(ctx.user.getUserSHK(), "0100005375A") &&
          !strEq(ctx.user.getUserSHK(), "0100004795A") &&
          !strEq(ctx.user.getUserSHK(), "0100006365A") 
        ) 
          return TaskState.VBELN;      
-      
+*/      
     Z_TS_COMPL23 f = new Z_TS_COMPL23();
     f.LGORT = lg;
     f.USER_SHK = ctx.user.getUserSHK();
@@ -2146,12 +2146,15 @@ public class ProcessCompl extends ProcessTask {
     String s;
     ZTS_VED_S r;
     
-    if (d.getLgort().equals("1403") && d.getIs1vbeln() &&
+    if (d.getLgort().equals("1403") && d.getIs1vbeln() 
+/*            
+            &&
             (
             strEq(ctx.user.getUserSHK(), "0100005375A") ||
             strEq(ctx.user.getUserSHK(), "0100004795A") ||
             strEq(ctx.user.getUserSHK(), "0100006365A") 
             )
+*/
             ) {    
         
         String def = "cont:Назад";
@@ -2543,11 +2546,13 @@ public class ProcessCompl extends ProcessTask {
     } else {
       // нескомплектованных позиций нет, завершаем
       if (d.getLgort().equals("1403") && d.getIs1vbeln()
+/*
             && (
               strEq(ctx.user.getUserSHK(), "0100005375A")  ||
               strEq(ctx.user.getUserSHK(), "0100004795A")  ||
               strEq(ctx.user.getUserSHK(), "0100006365A")  
               )
+*/
               ) {
         callSetTaskState(TaskState.QTY_PAL, ctx);
         return htmlGet(false, ctx);
