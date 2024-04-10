@@ -141,8 +141,9 @@ public class ProcessStellSamteks extends ProcessTask {
                     
           d.callAddScan(scan, this, ctx);                    
 
-          BigDecimal d_qty = d.getSummaQty();       
-          callSetMsg("Стеллаж №" + d.getStell() + ";" + f.INF + "[" + d_qty.toString() + "/" + Integer.toString(d.getNScan()) + "]", ctx);       
+//          BigDecimal d_qty = d.getSummaQty();       
+//          callSetMsg("Стеллаж №" + d.getStell() + ";" + f.INF + "[" + d_qty.toString() + "/" + Integer.toString(d.getNScan()) + "]", ctx);       
+          callSetMsg("Стеллаж №" + d.getStell() + ";" + f.INF + "[" + Integer.toString(d.getNScan()) + "]", ctx);       
 
 //          callSetTaskState(TaskState.SEL_STELL, ctx); 
 //          scan = null;
@@ -259,8 +260,9 @@ public class ProcessStellSamteks extends ProcessTask {
             return htmlWork("Стеллажи Самтекс", true, ctx);
           }
           else {
-              BigDecimal d_qty = d.getSummaQty();       
-              callSetMsg("Стеллаж №" + d.getStell() + "установлен для партии:" + d.getCharg_PU() + "   [" + d_qty.toString() + "/" + Integer.toString(d.getNScan()) + "]", ctx);       
+//               BigDecimal d_qty = d.getSummaQty();       // AM 03.04.2024
+//              callSetMsg("Стеллаж №" + d.getStell() + "установлен для партии:" + d.getCharg_PU() + "   [" + d_qty.toString() + "/" + Integer.toString(d.getNScan()) + "]", ctx);       
+              callSetMsg("Стеллаж №" + d.getStell() + "установлен для партии:" + d.getCharg_PU() + "   [" + Integer.toString(d.getNScan()) + "]", ctx);       
 
             callSetTaskState(TaskState.SEL_STELL, ctx);             
             menu = null;          

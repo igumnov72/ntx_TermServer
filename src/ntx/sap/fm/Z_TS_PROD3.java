@@ -20,6 +20,7 @@ public class Z_TS_PROD3 {
   // exporting params
   public String J_CREATED = ""; // Признак создания записи в журнале
   public String VBELN = ""; // Номер документа сбыта
+  public String INF = ""; // внутреннее управление - заголовок
   //
   // table params
   public ZTS_PRT_QTY_S[] IT_TOV = new ZTS_PRT_QTY_S[0]; // Кол-во по партии
@@ -70,6 +71,7 @@ public class Z_TS_PROD3 {
         System.out.println("Возврат из ФМ Z_TS_PROD3:");
         System.out.println("  J_CREATED=" + J_CREATED);
         System.out.println("  VBELN=" + VBELN);
+        System.out.println("  INF=" + INF);
         System.out.println("  err=" + err);
         System.out.println("  IT_TOV.length=" + IT_TOV.length);
       }
@@ -124,6 +126,7 @@ public class Z_TS_PROD3 {
         IT_TOV_t.setRow(i);
         IT_TOV_t.setValue("CHARG", params.IT_TOV[i].CHARG);
         IT_TOV_t.setValue("QTY", params.IT_TOV[i].QTY);
+        IT_TOV_t.setValue("SHK", params.IT_TOV[i].SHK);
       }
 
       ret = SAPconn.executeFunction(function);
@@ -131,6 +134,7 @@ public class Z_TS_PROD3 {
       if (ret == null) {
         params.J_CREATED = expParams.getString("J_CREATED");
         params.VBELN = expParams.getString("VBELN");
+        params.INF = expParams.getString("INF");
         params.err = expParams.getString("ERR");
         if (!params.err.isEmpty()) {
           params.isErr = true;
@@ -144,6 +148,7 @@ public class Z_TS_PROD3 {
           IT_TOV_r = new ZTS_PRT_QTY_S();
           IT_TOV_r.CHARG = IT_TOV_t.getString("CHARG");
           IT_TOV_r.QTY = IT_TOV_t.getBigDecimal("QTY");
+          IT_TOV_r.SHK = IT_TOV_t.getString("SHK");
           params.IT_TOV[i] = IT_TOV_r;
         }
       }

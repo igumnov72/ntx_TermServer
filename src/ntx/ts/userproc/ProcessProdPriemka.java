@@ -279,7 +279,8 @@ public class ProcessProdPriemka extends ProcessTask {
 
     if (!f.isErr) {
       d.callSetCellVbeln(f.LGPLA, f.VBELN, TaskState.TOV, ctx);
-      callSetMsg("Товар размещен в " + f.LGPLA + "; создана поставка " + vbeln, ctx);
+      callSetMsg("Товар размещен в " + f.LGPLA + "; создана поставка " + vbeln +
+              ". " + f.INF, ctx);
       callAddHist("Ячейка " + f.LGPLA + "; создана поставка " + vbeln, ctx);
     } else {
       callSetErr(f.err, ctx);
