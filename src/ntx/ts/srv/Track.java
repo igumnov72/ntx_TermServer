@@ -124,7 +124,9 @@ public class Track {
       case STELL_SAMTEKS:
         ret = new ProcessStellSamteks(procId);
         break;            
-    }
+      case OPIS_SUROV:
+        ret = new ProcessOpisSurov(procId);
+        break;       }
     if (ret == null) {
       throw new Exception("Ошибка программы: не создан процесс типа " + pType.text);
     }

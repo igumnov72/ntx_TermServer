@@ -12,6 +12,10 @@ import java.util.HashMap;
 import ntx.sap.fm.Z_TS_IS_CHARG_PU;
 import ntx.sap.fm.Z_TS_IS_OPIS;
 import ntx.sap.fm.Z_TS_IS_STELL_ZNS;
+import ntx.sap.fm.Z_TS_OPISSUROV_LGORT;
+import ntx.sap.fm.Z_TS_OPISSUROV_OPIS;
+import ntx.sap.fm.Z_TS_OPISSUROV_SHK;
+import ntx.sap.fm.Z_TS_OPISSUROV_SHKLIST_SAVE;
 import ntx.sap.fm.Z_TS_SHKLIST3_CHECK_STELL;
 import ntx.sap.fm.Z_TS_SHKLIST3_IS_CHARG_PU;
 import ntx.sap.fm.Z_TS_SHKLIST3_SET_STELL;
@@ -49,12 +53,12 @@ import ntx.ts.sysproc.UserContext;
  *
  * @author amolchanov
  */
-public class ProcessStellSamteks extends ProcessTask {
+public class ProcessOpisSurov extends ProcessTask {
     
-  private final StellSamteksData d = new StellSamteksData();
+  private final OpisSurovData d = new OpisSurovData();
 
-  public ProcessStellSamteks(long procId) throws Exception {
-    super(ProcType.STELL_SAMTEKS, procId);
+  public ProcessOpisSurov(long procId) throws Exception {
+    super(ProcType.OPIS_SUROV, procId);
   }
     
     
@@ -66,7 +70,7 @@ public class ProcessStellSamteks extends ProcessTask {
     String menu = (tq.params == null ? null : tq.params.getParNull("menu"));    
     
     if (getTaskState() == TaskState.START && scan == null && menu == null) {
-        callSetTaskState(TaskState.SEL_STELL, ctx);
+        callSetTaskState(TaskState.SEL_SKL, ctx);
     } else if (scan != null) {
       if (!scan.equals("00")) {
         callClearErrMsg(ctx);
@@ -75,7 +79,7 @@ public class ProcessStellSamteks extends ProcessTask {
     } else if (menu != null) {
       return handleMenu(menu, ctx);
     }    
-      return htmlWork("Стеллажи Самтекс", false, ctx);
+      return htmlWork("Опись суровья", false, ctx);
   }
 
   public FileData handleScan(String scan, boolean isHtext, UserContext ctx) throws Exception {
@@ -83,82 +87,85 @@ public class ProcessStellSamteks extends ProcessTask {
       return htmlMenu();
     }
     
-    if (getTaskState() == TaskState.SEL_STELL) {   
+    if (getTaskState() == TaskState.SEL_SKL) { //SEL_STELL) {   
         if (isAllDigitsComma(scan)) {            
-// Проверка стеллажа
-          Z_TS_IS_STELL_ZNS ff = new Z_TS_IS_STELL_ZNS();
-          ff.W_STELL = scan;
+// Проверка склада - Z_TS_OPISSUROV_LGORT
+          Z_TS_OPISSUROV_LGORT ff = new Z_TS_OPISSUROV_LGORT();
+          ff.W_LGORT = scan;
           ff.execute();
           if (ff.isErr) {  
             callSetErr(ff.err, ctx);
           }
           else {  
-          callSetMsg("Стеллаж № " + scan, ctx); 
-          d.callSetStell(scan, TaskState.SEL_CHARG, this, ctx); 
+          callSetMsg("Склад:" + scan, ctx); 
+          d.callSetLGORT(scan, TaskState.SEL_OPIS, this, ctx); 
           }        
-          return htmlWork("Стеллажи Самтекс", true, ctx);
+          return htmlWork("Опись суровья", true, ctx);
         }
     }
  
     
-    if (getTaskState() == TaskState.SEL_CHARG) {
+    if (getTaskState() == TaskState.SEL_OPIS) {
 
-          Z_TS_SHKLIST3_IS_CHARG_PU ff1 = new Z_TS_SHKLIST3_IS_CHARG_PU();
-          ff1.W_CHARG_PU = scan;
+          Z_TS_OPISSUROV_OPIS ff1 = new Z_TS_OPISSUROV_OPIS();
+          ff1.W_OPIS = scan;
           ff1.execute();
           if (ff1.isErr) {  
             callSetErr(ff1.err, ctx);
           }
           else {                  
-            callSetMsg("Номер партии ПУ № " + ff1.W_NEW_CHARG_PU, ctx);         
-            d.callSetChargPU(scan, TaskState.SEL_SHK, this, ctx);  
-          }
-          return htmlWork("Стеллажи Самтекс", true, ctx);    
+            callSetMsg("Склад:" + d.getLGORT() + "Опись:" + scan, ctx);         
+            d.callSetOPIS(scan, TaskState.SEL_SHK, this, ctx);  
+    }
+//          callSetMsg("Опись: " + scan, ctx); 
+//          d.callSetChargPU(scan, TaskState.SEL_SHK, this, ctx);  
+
+          return htmlWork("Опись суровья", true, ctx);    
     }    
   
 
     if (d.scanIsDouble(scan)) {
       callSetErr("ШК дублирован (сканирование " + scan + " не принято)", ctx);
-      return htmlWork("Стеллажи Самтекс", true, ctx);
+      return htmlWork("Опись суровья", true, ctx);
     }
     
-    if (isAllDigitsComma(scan)) {
+//    if (isAllDigitsComma(scan)) {
+    if (isScanSur(scan)) {
+//       d.callAddScan(scan, this, ctx);                    
+//       String s = scan;
+//       callAddHist(s, ctx);
+
         
-        Z_TS_SHKLIST3_STELL f = new Z_TS_SHKLIST3_STELL();
+        Z_TS_OPISSUROV_SHK f = new Z_TS_OPISSUROV_SHK();
         
-        f.SHK = scan;
-        f.W_CHARG_PU = d.getCharg_PU();
+        f.W_SHK = scan;
+        f.W_OPIS = d.getOPIS();
+        f.W_LGORT = d.getLGORT();
         f.execute();
         
         if (f.isErr) {
           callSetErr(f.err, ctx);
-//          return htmlWork("Стеллажи Самтекс", false, ctx);
         }
         else {        
           BigDecimal w_qty = f.QTY;
-//          String s = scan + "/" + w_qty.toString();
-          String s = scan;
+//          BigDecimal w_qty = d.getSummaQty();
+          
+//          String s = scan;
+          String s = scan + "/" + w_qty.toString();          
           callAddHist(s, ctx);
-                    
+
+          String sInfo = f.INFO;
+                   
           d.callAddScan(scan, this, ctx);                    
+          callSetMsg("Склад:" + d.getLGORT() + "; Опись:" + d.getOPIS() + "; " + sInfo + "  " + d.getSummaQty() + "[" + Integer.toString(d.getNScan()) + "]", ctx);       
 
-//          BigDecimal d_qty = d.getSummaQty();       
-//          callSetMsg("Стеллаж №" + d.getStell() + ";" + f.INF + "[" + d_qty.toString() + "/" + Integer.toString(d.getNScan()) + "]", ctx);       
-          callSetMsg("Стеллаж №" + d.getStell() + ";" + f.INF + "[" + Integer.toString(d.getNScan()) + "]", ctx);       
-
-//          callSetTaskState(TaskState.SEL_STELL, ctx); 
-//          scan = null;
-//          menu = null;
-          
-          //return htmlWork("Стеллажи Самтекс", false, ctx);
-          
-//          callSetMsg(" " + "[" + "0" + "/" + Integer.toString(d.getNScan()) + "]", ctx);       
-      
+//          callSetMsg("Склад:" + d.getLGORT() + "; Опись:" + d.getOPIS() + "; " + f.INFO + "[" + Integer.toString(d.getNScan()) + "]", ctx);       
+     
         }
     }
     else {
       callSetErr("Неизвестный тип ШК (сканирование " + scan + " не принято)", ctx);
-      return htmlWork("Стеллажи Самтекс", true, ctx);        
+      return htmlWork("Опись суровья", true, ctx);        
     }
   
 /*           
@@ -174,7 +181,7 @@ public class ProcessStellSamteks extends ProcessTask {
 
 //        if (f.isErr) {
 //          callSetErr(f.err, ctx);
-//          return htmlWork("Стеллажи Самтекс", true, ctx);
+//          return htmlWork("Опись суровья", true, ctx);
 //        }
 //        else {
           callAddHist(scan, ctx);
@@ -190,23 +197,23 @@ public class ProcessStellSamteks extends ProcessTask {
               Integer.toString(d.getGoodCount()), 
               ctx);
       callTaskNameChange(ctx);
-      return htmlWork("Стеллажи Самтекс", true, ctx);
+      return htmlWork("Опись суровья", true, ctx);
     } else {
       callSetErr("Неизвестный тип ШК (сканирование " + scan + " не принято)", ctx);
-      return htmlWork("Стеллажи Самтекс", true, ctx);
+      return htmlWork("Опись суровья", true, ctx);
     }*/
 
-  return htmlWork("Стеллажи Самтекс", false, ctx);  
+  return htmlWork("Опись суровья", false, ctx);  
   }
 
   public FileData htmlMenu() throws Exception {
     String definition = "cont:Назад;later:Отложить;fin:Завершить";
 
     if (d.getNScan() > 0) {
-      definition = definition + ";check:Проверить;del_last:Отменить последнее сканирование";
+      definition = definition + ";save:Сохранить;del_last:Отменить последнее сканирование";
     }
 
-    HtmlPageMenu p = new HtmlPageMenu("Меню", "Стеллажи Самтекс",
+    HtmlPageMenu p = new HtmlPageMenu("Меню", "Опись суровья",
             definition, null, null, null);
     return p.getPage();
   }
@@ -219,11 +226,17 @@ public class ProcessStellSamteks extends ProcessTask {
     } else if (menu.equals("later")) {
       callTaskDeactivate(ctx);
       return null;
-    } else if (menu.equals("check")) {       
+    } else if (menu.equals("save")) {       
 
-        Z_TS_SHKLIST3_CHECK_STELL f = new Z_TS_SHKLIST3_CHECK_STELL();        
-        f.W_STELL = d.getStell();
-        f.W_CHARG_PU = d.getCharg_PU();
+/*        callSetTaskState(TaskState.SEL_OPIS, ctx);             
+        menu = null; 
+        callDelHist(ctx);
+        d.callClearScanData(this, ctx);
+*/        
+
+        Z_TS_OPISSUROV_SHKLIST_SAVE f = new Z_TS_OPISSUROV_SHKLIST_SAVE();        
+        f.W_LGORT = d.getLGORT();
+        f.W_OPIS = d.getOPIS();
         f.USER_SHK = ctx.user.getUserSHK();
         int nn = d.getScanDataCount();
         String sd;
@@ -237,12 +250,19 @@ public class ProcessStellSamteks extends ProcessTask {
         f.execute();
         if (f.isErr) {
           callSetErr(f.err, ctx);
-          return htmlWork("Стеллажи Самтекс", true, ctx);
+          return htmlWork("Опись суровья", true, ctx);
         }
         else {
 // Сохранение стеллажа
+            callSetMsg("Создана Опись №" + f.OPIS, ctx);       
 
-          Z_TS_SHKLIST3_SET_STELL f1 = new Z_TS_SHKLIST3_SET_STELL();
+            callSetTaskState(TaskState.SEL_STELL, ctx);             
+            menu = null; 
+            callDelHist(ctx);
+            d.callClearScanData(this, ctx);
+            return htmlWork("Опись суровья", false, ctx);
+
+/*          Z_TS_SHKLIST3_SET_STELL f1 = new Z_TS_SHKLIST3_SET_STELL();
           f1.W_STELL = d.getStell();
           f1.W_CHARG_PU = d.getCharg_PU();
           f1.USER_SHK = ctx.user.getUserSHK();
@@ -258,23 +278,20 @@ public class ProcessStellSamteks extends ProcessTask {
           f1.execute();
           if (f1.isErr) {
             callSetErr(f1.err, ctx);
-            return htmlWork("Стеллажи Самтекс", true, ctx);
+            return htmlWork("Опись суровья", true, ctx);
           }
           else {
-//               BigDecimal d_qty = d.getSummaQty();       // AM 03.04.2024
-//              callSetMsg("Стеллаж №" + d.getStell() + "установлен для партии:" + d.getCharg_PU() + "   [" + d_qty.toString() + "/" + Integer.toString(d.getNScan()) + "]", ctx);       
               callSetMsg("Стеллаж №" + d.getStell() + " установлен для партии:" + d.getCharg_PU() + "   [" + Integer.toString(d.getNScan()) + "]", ctx);       
 
             callSetTaskState(TaskState.SEL_STELL, ctx);             
             menu = null; 
             callDelHist(ctx);
             d.callClearScanData(this, ctx);
-            return htmlWork("Стеллажи Самтекс", false, ctx);
+            return htmlWork("Опись суровья", false, ctx);
           }
-          }
+*/
+    }
          
-        //}
-//        d.callClearScanData(this, ctx);              
     } else if (menu.equals("del_last")) {
 
         int nn = d.getScanDataCount();
@@ -287,7 +304,7 @@ public class ProcessStellSamteks extends ProcessTask {
         }      
     }
     
-    return htmlWork("Стеллажи Самтекс", false, ctx);
+    return htmlWork("Опись суровья", false, ctx);
   }
  
   @Override
@@ -306,15 +323,15 @@ public class ProcessStellSamteks extends ProcessTask {
 }
 
 //AM 12.01.2024
-class StellSamteksData extends ProcData {
+class OpisSurovData extends ProcData {
 
   private final ArrayList<String> scanData
           = new ArrayList<String>(); // отсканированные ШК
   private final HashMap<String, Integer> mapMatCount
           = new HashMap<String, Integer>(); // кол-во сканов по ОЗМ
     private String vbeln;
-    private String Stell;
-    private String Charg_PU;
+    private String LGORT;
+    private String OPIS; //Charg_PU;
 
   public BigDecimal getSummaQty() {
     BigDecimal qty = new BigDecimal(0);
@@ -324,31 +341,37 @@ class StellSamteksData extends ProcData {
     for (int i = n; i >= 0; i--) {
         scan = scanData.get(i);
 
-        Z_TS_SHKLIST3_STELL f = new Z_TS_SHKLIST3_STELL();
+        Z_TS_OPISSUROV_SHK f = new Z_TS_OPISSUROV_SHK();
+        
+        f.W_SHK = scan;
+        f.W_OPIS = OPIS;
+        f.execute();        
+        
+/*        Z_TS_SHKLIST3_STELL f = new Z_TS_SHKLIST3_STELL();
         f.SHK = scan;
         f.W_CHARG_PU = Charg_PU; //d.getCharg_PU();
         f.execute();
-        
+*/        
         if (f.isErr) {
 //          callSetErr(f.err, ctx);
-//          return htmlWork("Стеллажи Самтекс", true, ctx);
+//          return htmlWork("Опись суровья", true, ctx);
         }
         else {  
             
             qty = f.QTY;
             s_qty = s_qty.add(qty);
         }
-                
+  
     }
     return s_qty;
   }    
     
-  public String getStell() {
-     return Stell;
+  public String getLGORT() {
+     return LGORT;
   }    
 
-  public String getCharg_PU() {
-     return Charg_PU;
+  public String getOPIS() {
+     return OPIS; //Charg_PU;
   }   
   
   public int getNScan() {
@@ -460,11 +483,11 @@ class StellSamteksData extends ProcData {
     return ret;
   }
   
-  public void callSetStell(String Stell, TaskState state, ProcessTask p, UserContext ctx) throws Exception {
+  public void callSetLGORT(String LGORT, TaskState state, ProcessTask p, UserContext ctx) throws Exception {
     DataRecord dr = new DataRecord();
     dr.procId = p.getProcId();
-    if (!strEq(Stell, this.Stell)) {
-      dr.setS(FieldType.STELL, Stell);
+    if (!strEq(LGORT, this.LGORT)) {
+      dr.setS(FieldType.LGORT, LGORT);
     }
     if ((state != null) && (state != p.getTaskState())) {
 
@@ -473,12 +496,12 @@ class StellSamteksData extends ProcData {
     }
     Track.saveProcessChange(dr, p, ctx);
   }    
-  
-  public void callSetChargPU(String Charg_PU, TaskState state, ProcessTask p, UserContext ctx) throws Exception {
+
+  public void callSetOPIS(String Opis, TaskState state, ProcessTask p, UserContext ctx) throws Exception {
     DataRecord dr = new DataRecord();
     dr.procId = p.getProcId();
-    if (!strEq(Charg_PU, this.Charg_PU)) {
-      dr.setS(FieldType.CHARG_PU, Charg_PU);
+    if (!strEq(Opis, this.OPIS)) {
+      dr.setS(FieldType.OPIS, Opis);
     }
     if ((state != null) && (state != p.getTaskState())) {
 
@@ -526,12 +549,12 @@ class StellSamteksData extends ProcData {
             scanData.remove(n - 1);
           }
         }
-        if (dr.haveVal(FieldType.STELL)) {
-          Stell = (String) dr.getVal(FieldType.STELL);
+        if (dr.haveVal(FieldType.LGORT)) {
+          LGORT = (String) dr.getVal(FieldType.LGORT);
         }        
 
-        if (dr.haveVal(FieldType.CHARG_PU)) {
-          Charg_PU = (String) dr.getVal(FieldType.CHARG_PU);
+        if (dr.haveVal(FieldType.OPIS)) {
+          OPIS = (String) dr.getVal(FieldType.OPIS);
         }        
 
         break;
