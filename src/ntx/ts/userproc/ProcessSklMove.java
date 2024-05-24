@@ -119,6 +119,9 @@ public class ProcessSklMove extends ProcessTask {
       case TO_PAL:
         return handleScanPal2(scan, ctx);
 
+      case SEL_OZM:
+        return handleScanOzm(scan, ctx);
+
       default:
         callSetErr("Ошибка программы: недопустимое состояние "
                 + getTaskState().name() + " (сканирование не принято)", ctx);
@@ -166,6 +169,9 @@ public class ProcessSklMove extends ProcessTask {
     } else if (menu.equals("abc")) {
       callClearErrMsg(ctx);
       return htmlShowABC(ctx);
+    } else if (menu.equals("foto")) {
+      d.callSetPrevState(ctx.task.getTaskState(), TaskState.SEL_OZM, ctx);
+      return htmlGet(false, ctx);
     } else {
       return htmlGet(false, ctx);
     }
@@ -236,7 +242,9 @@ public class ProcessSklMove extends ProcessTask {
         }
       } else {
         d.callSetCell1(f.LGPLA, f.LGTYP, TaskState.SEL_PAL, ctx);
-        callSetMsg("Перемещение из " + d.getCell1(), ctx);
+        String s = "Перемещение из " + d.getCell1();
+        if (!f.PAL1.isEmpty()) s = s  + " " + f.PAL1;
+        callSetMsg(s, ctx);
       }
     } else {
       callSetErr(f.err, ctx);
@@ -451,18 +459,22 @@ public class ProcessSklMove extends ProcessTask {
         d.callSetPal2(f.PAL2, f.KEY1, ctx);
         String s;
         if (haveTov()) {
-          s = "Перемещение части товара из " + d.getCell1() + " " + d.getPal1() + " в " + d.getCell2() + " " + d.getPal2() + " успешно проведено";
+          s = "Перемещение части товара из " + d.getCell1() + " " + 
+            d.getPal1() + " в " + d.getCell2() + " " + d.getPal2() + " успешно проведено";
         } else if (d.getPal1().equals(d.getPal2())) {
           s = "Перемещение паллеты " + d.getPal1() + " из " + d.getCell1() + " в " + d.getCell2() + " успешно проведено";
         } else {
-          s = "Перемещение всего товара из " + d.getCell1() + " " + d.getPal1() + " в " + d.getCell2() + " " + d.getPal2() + " успешно проведено";
+          s = "Перемещение всего товара из " + d.getCell1() + " " + d.getPal1() + 
+            " в " + d.getCell2() + " " + d.getPal2() + " успешно проведено";
         }
         callSetMsg(s, ctx);
         callAddHist(s, ctx);
         d.callClearTovData(ctx);
       } else {
         d.callSetCell2(scan.substring(1), f.LGTYP2, TaskState.TO_PAL, ctx);
-        callSetMsg("Перемещение в " + d.getCell2(), ctx);
+        String s = "Перемещение в " + d.getCell2();
+        if (!f.PAL2.isEmpty()) s = s  + " " + f.PAL2;
+        callSetMsg(s, ctx);
         callAddHist("Получатель: " + d.getCell2(), ctx);
       }
     } else if (!f.isSapErr) {
@@ -545,6 +557,11 @@ public class ProcessSklMove extends ProcessTask {
     return htmlGet(true, ctx);
   }
 
+  private FileData handleScanOzm(String scan, TaskContext ctx) throws Exception {
+    callSetTaskState(TaskState.values()[d.getPrevState()], ctx);
+    return htmlMatFoto(scan);
+  }
+  
   private FileData htmlMenu(TaskContext ctx) throws Exception {
     String definition;
     String askQtyMenu;
@@ -584,6 +601,8 @@ public class ProcessSklMove extends ProcessTask {
     if (RefInfo.haveInfo(ProcType.SKL_MOVE)) {
       definition = definition + ";manuals:Инструкции";
     }
+
+    definition = definition + ";foto:Фото ОЗМ";
 
     HtmlPageMenu p = new HtmlPageMenu("Перемещение", "Выберите действие",
             definition, null, null, null);
@@ -681,6 +700,11 @@ class SklMoveData extends ProcData {
   private final ArrayList<ZTS_LG_STOCK_S> stock = new ArrayList<ZTS_LG_STOCK_S>();
   private final ArrayList<String> tovScans = new ArrayList<String>();
   private HashMap<String, BigDecimal> tovDataK = new HashMap<String, BigDecimal>(); // куски по партиям
+  private int prevState = 0; // предыдущее состояние
+
+  public int getPrevState() {
+    return prevState;
+  }
 
   public boolean scanIsDouble(String scan) {
     int n = tovScans.size();
@@ -913,6 +937,16 @@ public String getLastScan() {
     Track.saveProcessChange(dr, ctx.task, ctx);
   }
 
+  public void callSetPrevState(TaskState prevState, TaskState state, TaskContext ctx) throws Exception {
+    DataRecord dr = new DataRecord();
+    dr.procId = ctx.task.getProcId();
+    dr.setI(FieldType.PREV_TASK_STATE, prevState.ordinal());
+    if ((state != null) && (state != ctx.task.getTaskState())) {
+      dr.setI(FieldType.TASK_STATE, state.ordinal());
+    }
+    Track.saveProcessChange(dr, ctx.task, ctx);
+  }
+
   @Override
   public void handleData(DataRecord dr, ProcessContext ctx) throws Exception {
     switch (dr.recType) {
@@ -998,6 +1032,9 @@ public String getLastScan() {
         }
         if (dr.haveVal(FieldType.LAST_SCAN)) {
           lastScan = dr.getValStr(FieldType.LAST_SCAN);
+        }
+        if (dr.haveVal(FieldType.PREV_TASK_STATE)) {
+          prevState = (Integer) dr.getVal(FieldType.PREV_TASK_STATE);
         }
         break;
     }

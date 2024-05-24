@@ -256,7 +256,7 @@ public class ProcessOpisSurov extends ProcessTask {
 // Сохранение стеллажа
             callSetMsg("Создана Опись №" + f.OPIS, ctx);       
 
-            callSetTaskState(TaskState.SEL_STELL, ctx);             
+            callSetTaskState(TaskState.SEL_OPIS, ctx);             
             menu = null; 
             callDelHist(ctx);
             d.callClearScanData(this, ctx);

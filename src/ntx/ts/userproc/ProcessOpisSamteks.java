@@ -273,6 +273,9 @@ class OpisSamteksData extends ProcData {
 //    String zvv_opis;
     private String opis;
 
+/*  
+AM 21.05.2024 - Переделка кол-во берем из разбраковки, а не из ШК !
+    
   public BigDecimal getSummaQty() {
     BigDecimal qty = new BigDecimal(0);
     BigDecimal s_qty = new BigDecimal(0);
@@ -281,35 +284,47 @@ class OpisSamteksData extends ProcData {
     for (int i = n; i >= 0; i--) {
         scan = scanData.get(i);
         if (scan.length() == 15) {
-
           switch (scan.charAt(4)) {
           case 'Z':
             BigDecimal ret = new BigDecimal(Long.parseLong(scan.substring(0,4)));
             ret = ret.setScale(3);
             ret = ret.divide(new BigDecimal(10));
-
-//            ret = ret.divide(new BigDecimal(1000));
-//            qty = expParams.getBigDecimal("ret"); 
             s_qty = s_qty.add(ret);
-//            s_qty = s_qty + ret;
             break;
-          }
-
-//        if (scan.startsWith("Z")) 
-        
+          }       
         }
     }
-/*          switch (scan.charAt(5)) {
-          case 'Z':
-//            ret = ret.divide(new BigDecimal(1000));
-            qty = 0.1; 
-            s_qty = s_qty + qty;
-            break;
-          }    
-  */  
     return s_qty;
   }    
-    
+  */  
+  
+  public BigDecimal getSummaQty() {
+    BigDecimal qty = new BigDecimal(0);
+    BigDecimal s_qty = new BigDecimal(0);
+    int n = scanData.size() - 1;
+    String scan;
+    for (int i = n; i >= 0; i--) {
+        scan = scanData.get(i);
+
+        Z_TS_SHKLIST_IS_OPIS f = new Z_TS_SHKLIST_IS_OPIS();
+        f.SHK = scan;
+        f.W_OPIS = opis; //Charg_PU; 
+        f.execute();
+        
+        if (f.isErr) {
+//          callSetErr(f.err, ctx);
+//          return htmlWork("Опись Самтекс", true, ctx);
+        }
+        else {              
+            qty = f.QTY;
+            s_qty = s_qty.add(qty);
+        }                
+    }
+    return s_qty;
+  }   
+//  AM 21.05.2024 - Переделка кол-во берем из разбраковки, а не из ШК !
+
+  
   public String getOpis() {
 //    if (opis.startsWith("I")) return "Приход";
 //    else if (opis.startsWith("O")) return "Расход";

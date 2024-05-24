@@ -1,8 +1,3 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
 package ntx.sap.fm;
 
 import ntx.ts.srv.TSparams;
@@ -16,6 +11,7 @@ public class Z_TS_SHKLIST3_IS_CHARG_PU {
 
   // importing params
   public String USER_SHK = ""; // Штрих-код
+  public String W_STELL = ""; // Номер стеллажа
   public String W_CHARG_PU = ""; // Номер партии
   //
   // exporting params
@@ -45,6 +41,7 @@ public class Z_TS_SHKLIST3_IS_CHARG_PU {
     } else if (TSparams.logDocLevel >= 2) {
       System.out.println("Вызов ФМ Z_TS_SHKLIST3_IS_CHARG_PU:");
       System.out.println("  USER_SHK=" + USER_SHK);
+      System.out.println("  W_STELL=" + W_STELL);
       System.out.println("  W_CHARG_PU=" + W_CHARG_PU);
     }
 
@@ -96,6 +93,7 @@ public class Z_TS_SHKLIST3_IS_CHARG_PU {
       expParams.clear();
 
       impParams.setValue("USER_SHK", params.USER_SHK);
+      impParams.setValue("W_STELL", params.W_STELL);
       impParams.setValue("W_CHARG_PU", params.W_CHARG_PU);
 
       ret = SAPconn.executeFunction(function);
@@ -135,4 +133,3 @@ public class Z_TS_SHKLIST3_IS_CHARG_PU {
     return null;
   }
 }
-

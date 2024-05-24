@@ -4,28 +4,34 @@
  * and open the template in the editor.
  */
 
+/**
+ * Инф по ШК
+ */
 package ntx.sap.fm;
 
 import ntx.ts.srv.TSparams;
 import ntx.sap.sys.*;
 import com.sap.conn.jco.*;
+import java.math.BigDecimal;
 
 /**
- * Инф по ШК
+ * Инф по ШК и контроль ШК в описи
  */
 public class Z_TS_SHKLIST_IS_OPIS {
 
   // importing params
   public String SHK = ""; // Штрих-код
-  public String W_OPIS = ""; // Опись
+  public String W_OPIS = ""; // Идентификатор описи
   //
   // exporting params
   public String INF = "";
+  public BigDecimal QTY = new BigDecimal(0); // Метраж
   //
   // переменные для работы с ошибками
   public boolean isErr;
   public String err;
   public String errFull;
+  public boolean isSapErr;
   //
   // вспомогательные переменные
   private static volatile JCoFunction function;
@@ -35,6 +41,7 @@ public class Z_TS_SHKLIST_IS_OPIS {
 
   public void execute() {
     isErr = false;
+    isSapErr = false;
     err = "";
     errFull = "";
 
@@ -53,10 +60,13 @@ public class Z_TS_SHKLIST_IS_OPIS {
       if (TSparams.logDocLevel >= 2) {
         System.out.println("Возврат из ФМ Z_TS_SHKLIST_IS_OPIS:");
         System.out.println("  INF=" + INF);
+        System.out.println("  QTY=" + QTY);
+        System.out.println("  err=" + err);
       }
     } else {
       // обработка ошибки
       isErr = true;
+      isSapErr = true;
       errFull = e.toString();
       ErrDescr ed = SAPconn.describeErr(errFull);
       err = ed.err;
@@ -94,9 +104,10 @@ public class Z_TS_SHKLIST_IS_OPIS {
       impParams.setValue("W_OPIS", params.W_OPIS);
 
       ret = SAPconn.executeFunction(function);
-               
+
       if (ret == null) {
         params.INF = expParams.getString("INF");
+        params.QTY = expParams.getBigDecimal("QTY");
         params.err = expParams.getString("ERR");
         if (!params.err.isEmpty()) {
           params.isErr = true;
@@ -129,12 +140,3 @@ public class Z_TS_SHKLIST_IS_OPIS {
     return null;
   }
 }
-
-
-/**
- *
- * @author amolchanov
- */
-/*public class Z_TS_SHKLIST_IS_OPIS {
-    
-}*/

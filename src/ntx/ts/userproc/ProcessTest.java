@@ -56,6 +56,10 @@ public class ProcessTest extends ProcessTask {
     if (scan.equals("00")) {
       return htmlMenu();
     }
+    
+    if (scan.length() == 6) {
+      return htmlMatFoto(scan);
+    }
 
     Z_TS_DESCR f = new Z_TS_DESCR();
     f.SHK = scan;

@@ -94,7 +94,7 @@ public class ProcessStellSamteks extends ProcessTask {
           }
           else {  
           callSetMsg("Стеллаж № " + scan, ctx); 
-          d.callSetStell(scan, TaskState.SEL_CHARG, this, ctx); 
+          d.callSetStell(scan, TaskState.SEL_CHARG, this, ctx);  
           }        
           return htmlWork("Стеллажи Самтекс", true, ctx);
         }
@@ -104,6 +104,7 @@ public class ProcessStellSamteks extends ProcessTask {
     if (getTaskState() == TaskState.SEL_CHARG) {
 
           Z_TS_SHKLIST3_IS_CHARG_PU ff1 = new Z_TS_SHKLIST3_IS_CHARG_PU();
+          ff1.W_STELL = d.getStell();
           ff1.W_CHARG_PU = scan;
           ff1.execute();
           if (ff1.isErr) {  
@@ -111,7 +112,7 @@ public class ProcessStellSamteks extends ProcessTask {
           }
           else {                  
             callSetMsg("Номер партии ПУ № " + ff1.W_NEW_CHARG_PU, ctx);         
-            d.callSetChargPU(scan, TaskState.SEL_SHK, this, ctx);  
+            d.callSetChargPU(ff1.W_NEW_CHARG_PU, TaskState.SEL_SHK, this, ctx);   
           }
           return htmlWork("Стеллажи Самтекс", true, ctx);    
     }    
@@ -326,19 +327,17 @@ class StellSamteksData extends ProcData {
 
         Z_TS_SHKLIST3_STELL f = new Z_TS_SHKLIST3_STELL();
         f.SHK = scan;
-        f.W_CHARG_PU = Charg_PU; //d.getCharg_PU();
+        f.W_CHARG_PU = Charg_PU; 
         f.execute();
         
         if (f.isErr) {
 //          callSetErr(f.err, ctx);
 //          return htmlWork("Стеллажи Самтекс", true, ctx);
         }
-        else {  
-            
+        else {              
             qty = f.QTY;
             s_qty = s_qty.add(qty);
-        }
-                
+        }                
     }
     return s_qty;
   }    
