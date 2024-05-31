@@ -93,7 +93,7 @@ public class ProcessStellSamteks extends ProcessTask {
             callSetErr(ff.err, ctx);
           }
           else {  
-          callSetMsg("Стеллаж № " + scan, ctx); 
+          callSetMsg("Стеллаж № " + scan + "  " + ff.INFO, ctx); 
           d.callSetStell(scan, TaskState.SEL_CHARG, this, ctx);  
           }        
           return htmlWork("Стеллажи Самтекс", true, ctx);
@@ -111,7 +111,7 @@ public class ProcessStellSamteks extends ProcessTask {
             callSetErr(ff1.err, ctx);
           }
           else {                  
-            callSetMsg("Номер партии ПУ № " + ff1.W_NEW_CHARG_PU, ctx);         
+            callSetMsg("Стеллаж №" + d.getStell() + ", Номер партии ПУ № " + ff1.W_NEW_CHARG_PU, ctx);         
             d.callSetChargPU(ff1.W_NEW_CHARG_PU, TaskState.SEL_SHK, this, ctx);   
           }
           return htmlWork("Стеллажи Самтекс", true, ctx);    
@@ -264,7 +264,13 @@ public class ProcessStellSamteks extends ProcessTask {
           else {
 //               BigDecimal d_qty = d.getSummaQty();       // AM 03.04.2024
 //              callSetMsg("Стеллаж №" + d.getStell() + "установлен для партии:" + d.getCharg_PU() + "   [" + d_qty.toString() + "/" + Integer.toString(d.getNScan()) + "]", ctx);       
-              callSetMsg("Стеллаж №" + d.getStell() + " установлен для партии:" + d.getCharg_PU() + "   [" + Integer.toString(d.getNScan()) + "]", ctx);       
+
+               if (f1.NEW == "X") {    
+                 callSetMsg("Данные Стеллажа №" + d.getStell() + " партии:" + d.getCharg_PU() + " сохранены   [" + Integer.toString(d.getNScan()) + "]", ctx);       
+               }             
+               else {
+                 callSetMsg("Стеллаж №" + d.getStell() + " установлен для партии:" + d.getCharg_PU() + "   [" + Integer.toString(d.getNScan()) + "]", ctx);       
+               }  
 
             callSetTaskState(TaskState.SEL_STELL, ctx);             
             menu = null; 

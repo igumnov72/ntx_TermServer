@@ -1,8 +1,3 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
 package ntx.sap.fm;
 
 import ntx.ts.srv.TSparams;
@@ -22,6 +17,7 @@ public class Z_TS_SHKLIST3_SET_STELL {
   //
   // exporting params
   public String ISERR = ""; // Признак ошибки
+  public String NEW = ""; // Признак новой партии
   //
   // table params
   public ZTS_SHK_S[] IT = new ZTS_SHK_S[0]; // Table of zts_shk
@@ -69,6 +65,7 @@ public class Z_TS_SHKLIST3_SET_STELL {
       if (TSparams.logDocLevel >= 2) {
         System.out.println("Возврат из ФМ Z_TS_SHKLIST3_SET_STELL:");
         System.out.println("  ISERR=" + ISERR);
+        System.out.println("  NEW=" + NEW);
         System.out.println("  err=" + err);
         System.out.println("  IT.length=" + IT.length);
       }
@@ -127,6 +124,7 @@ public class Z_TS_SHKLIST3_SET_STELL {
 
       if (ret == null) {
         params.ISERR = expParams.getString("ISERR");
+        params.NEW = expParams.getString("NEW");
         params.err = expParams.getString("ERR");
         if (!params.err.isEmpty()) {
           params.isErr = true;
@@ -170,4 +168,3 @@ public class Z_TS_SHKLIST3_SET_STELL {
     return null;
   }
 }
-

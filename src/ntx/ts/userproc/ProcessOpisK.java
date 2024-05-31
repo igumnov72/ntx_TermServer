@@ -86,6 +86,9 @@ public class ProcessOpisK extends ProcessTask {
       case TOV:
         return handleScanTov(scan, ctx);
 
+      case TOV_PAL:
+        return handleScanTovPal(scan, ctx);
+
       case QTY:
         return handleScanQty(scan, ctx);
 
@@ -254,6 +257,14 @@ public class ProcessOpisK extends ProcessTask {
     //return handleScanTovDo(d.getLastMatnr(), qty, ctx);
   }
 
+  private FileData handleScanTovPal(String scan, TaskContext ctx) throws Exception {
+    if (isScanPal(scan)) {
+      return handleScanPal(getScanPal(scan), ctx);
+    } else {
+      return handleScanTov(scan, ctx);
+    }
+  }
+  
   private boolean getHaveMat(String matnr, TaskContext ctx) throws Exception {
     Boolean haveMat = d.getHaveMat(matnr);
 
@@ -288,6 +299,7 @@ public class ProcessOpisK extends ProcessTask {
         definition = "later:Отложить;fin:Завершить";
         break;
       case TOV:
+      case TOV_PAL:
         definition = "later:Отложить";
         if (d.getScanCount() > 0) {
           if (d.isMarked()) 
@@ -387,7 +399,7 @@ public class ProcessOpisK extends ProcessTask {
     callAddHist(s, ctx);
     callSetMsg(s, ctx);
 
-    d.callSetKorob(delZeros(f.KOROB), ctx);
+    d.callSetKorob(delZeros(f.KOROB), f.KOROB_SSCC, TaskState.TOV_PAL, ctx);
 
     if (!f.ERR2.isEmpty()) {
       callSetErr(f.ERR2, ctx);
@@ -443,6 +455,53 @@ public class ProcessOpisK extends ProcessTask {
     }
   }
 
+  private FileData handleScanPal(String pal, TaskContext ctx) throws Exception {
+    // тип ШК уже проверен
+    
+    if (d.getScanCount() > 0) {
+      callSetErr("Сначала сохраните короб (сканирование номера паллеты не принято)", ctx);
+      return htmlGet(true, ctx);
+    }
+
+    Z_TS_SKOROB2 f = new Z_TS_SKOROB2();
+    f.ZV = d.getVbelnVa();
+    f.LENUM = fillZeros(pal, 20);
+
+    ArrayList<String> palData = d.getPalData();
+
+    if (palData.size() == 0) {
+      callSetErr("Нет отсканированных коробов, сохранять на паллету нечего (сканирование номера паллеты не принято)", ctx);
+      return htmlGet(true, ctx);
+    }
+
+    ZTS_SKOROB_SHK_S[] palDataFM = new ZTS_SKOROB_SHK_S[palData.size()];
+    ZTS_SKOROB_SHK_S r;
+    for (int i = 0; i < palData.size(); i++) {
+      r = new ZTS_SKOROB_SHK_S();
+      r.SHK_KOR = palData.get(i);
+      r.N_KOR = 1;
+      palDataFM[i] = r;
+    }
+
+    f.IT = palDataFM;
+    
+    f.execute();
+
+    if (!f.isErr) {
+      int nn = palData.size();
+      String s = "паллета " + pal + " (" + nn + " коробов)";
+      String s2 = s;
+      if (!f.INF.isEmpty()) s2 = s2 + ". " + f.INF;
+      callSetMsg("Сохранена " + s2, ctx);
+      callAddHist(s, ctx);
+      d.callClearPal(ctx, TaskState.TOV);
+    } else {
+      callSetErr(f.err, ctx);
+    }
+
+    return htmlGet(true, ctx);
+  }
+  
   @Override
   public void handleData(DataRecord dr, ProcessContext ctx) throws Exception {
     super.handleData(dr, ctx);
@@ -472,6 +531,8 @@ class OpisKData extends ProcData {
   private BigDecimal lastQty = BigDecimal.ZERO;
   private final ArrayList<OpisKScanData> scanData
           = new ArrayList<OpisKScanData>(); // отсканированный товар
+  private final ArrayList<String> palData
+          = new ArrayList<String>(); 
 
   private final HashMap<String, Boolean> haveMat = new HashMap<String, Boolean>();
 
@@ -481,6 +542,10 @@ class OpisKData extends ProcData {
 
   public BigDecimal getLastQty() {
     return lastQty;
+  }
+  
+  public ArrayList<String> getPalData() {
+    return palData;
   }
 
   public String getVbelnVa() {
@@ -573,6 +638,16 @@ class OpisKData extends ProcData {
     Track.saveProcessChange(dr, ctx.task, ctx);
   }
 
+  public void callClearPal(TaskContext ctx, TaskState state) throws Exception {
+    DataRecord dr = new DataRecord();
+    dr.procId = ctx.task.getProcId();
+    dr.setV(FieldType.CLEAR_PAL_DATA);
+    if ((state != null) && (state != ctx.task.getTaskState())) {
+      dr.setI(FieldType.TASK_STATE, state.ordinal());
+    }
+    Track.saveProcessChange(dr, ctx.task, ctx);
+  }
+
   public void callDelLast(TaskContext ctx) throws Exception {
     DataRecord dr = new DataRecord();
     dr.procId = ctx.task.getProcId();
@@ -598,10 +673,14 @@ class OpisKData extends ProcData {
     Track.saveProcessChange(dr, ctx.task, ctx);
   }
 
-  public void callSetKorob(String korob, TaskContext ctx) throws Exception {
+  public void callSetKorob(String korob, String sscc, TaskState state, TaskContext ctx) throws Exception {
     DataRecord dr = new DataRecord();
     dr.procId = ctx.task.getProcId();
     dr.setS(FieldType.KOROB, ProcessTask.delZeros(korob));
+    dr.setS(FieldType.SSCC, sscc);
+    if ((state != null) && (state != ctx.task.getTaskState())) {
+      dr.setI(FieldType.TASK_STATE, state.ordinal());
+    }
     Track.saveProcessChange(dr, ctx.task, ctx);
   }
 
@@ -635,8 +714,16 @@ class OpisKData extends ProcData {
           scanData.clear();
         }
 
+        if (dr.haveVal(FieldType.CLEAR_PAL_DATA)) {
+          palData.clear();
+        }
+
         if (dr.haveVal(FieldType.KOROB)) {
           scanData.clear();
+        }
+
+        if (dr.haveVal(FieldType.SSCC)) {
+          palData.add(dr.getValStr(FieldType.SSCC));
         }
 
         if (dr.haveVal(FieldType.DEL_LAST)) {

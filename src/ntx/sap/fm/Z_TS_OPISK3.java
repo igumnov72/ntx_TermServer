@@ -19,6 +19,7 @@ public class Z_TS_OPISK3 {
   public String KOROB = ""; // Номер короба
   public BigDecimal QTY_TOT = new BigDecimal(0); // Общее кол-во
   public String ERR2 = ""; // ошибка печати
+  public String KOROB_SSCC = ""; // SSCC
   //
   // table params
   public ZTS_MAT_QTY_S[] IT = new ZTS_MAT_QTY_S[0]; // Кол-во по материалу
@@ -67,6 +68,7 @@ public class Z_TS_OPISK3 {
         System.out.println("  KOROB=" + KOROB);
         System.out.println("  QTY_TOT=" + QTY_TOT);
         System.out.println("  ERR2=" + ERR2);
+        System.out.println("  KOROB_SSCC=" + KOROB_SSCC);
         System.out.println("  err=" + err);
         System.out.println("  IT.length=" + IT.length);
       }
@@ -127,6 +129,7 @@ public class Z_TS_OPISK3 {
         params.KOROB = expParams.getString("KOROB");
         params.QTY_TOT = expParams.getBigDecimal("QTY_TOT");
         params.ERR2 = expParams.getString("ERR2");
+        params.KOROB_SSCC = expParams.getString("KOROB_SSCC");
         params.err = expParams.getString("ERR");
         if (!params.err.isEmpty()) {
           params.isErr = true;
