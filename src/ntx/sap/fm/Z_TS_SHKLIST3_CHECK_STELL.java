@@ -1,8 +1,3 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
 package ntx.sap.fm;
 
 import ntx.ts.srv.TSparams;
@@ -19,13 +14,14 @@ public class Z_TS_SHKLIST3_CHECK_STELL {
   public String USER_SHK = ""; // Штрих-код
   public String W_STELL = ""; // Номер стеллажа
   public String W_CHARG_PU = ""; // Номер партии ПУ
+  public String W_BATCH_ID = ""; // Идентификатор партии ПУ
   //
   // exporting params
   public String ISERR = ""; // Признак ошибки
   public String INFO = ""; // Текст проверки
   //
   // table params
-  public ZTS_SHK_S[] IT = new ZTS_SHK_S[0]; // Table of zts_shk
+  public ZTS_SHK_S[] IT = new ZTS_SHK_S[0]; // ШК и название
   //
   // переменные для работы с ошибками
   public boolean isErr;
@@ -60,6 +56,7 @@ public class Z_TS_SHKLIST3_CHECK_STELL {
       System.out.println("  USER_SHK=" + USER_SHK);
       System.out.println("  W_STELL=" + W_STELL);
       System.out.println("  W_CHARG_PU=" + W_CHARG_PU);
+      System.out.println("  W_BATCH_ID=" + W_BATCH_ID);
       System.out.println("  IT.length=" + IT.length);
     }
 
@@ -117,6 +114,7 @@ public class Z_TS_SHKLIST3_CHECK_STELL {
       impParams.setValue("USER_SHK", params.USER_SHK);
       impParams.setValue("W_STELL", params.W_STELL);
       impParams.setValue("W_CHARG_PU", params.W_CHARG_PU);
+      impParams.setValue("W_BATCH_ID", params.W_BATCH_ID);
 
       IT_t.appendRows(params.IT.length);
       for (int i = 0; i < params.IT.length; i++) {

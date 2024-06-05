@@ -94,7 +94,7 @@ public class ProcessStellSamteks extends ProcessTask {
           }
           else {  
           callSetMsg("Стеллаж № " + scan + "  " + ff.INFO, ctx); 
-          d.callSetStell(scan, TaskState.SEL_CHARG, this, ctx);  
+          d.callSetStell(scan, ff.INFO, TaskState.SEL_CHARG, this, ctx);  
           }        
           return htmlWork("Стеллажи Самтекс", true, ctx);
         }
@@ -111,8 +111,8 @@ public class ProcessStellSamteks extends ProcessTask {
             callSetErr(ff1.err, ctx);
           }
           else {                  
-            callSetMsg("Стеллаж №" + d.getStell() + ", Номер партии ПУ № " + ff1.W_NEW_CHARG_PU, ctx);         
-            d.callSetChargPU(ff1.W_NEW_CHARG_PU, TaskState.SEL_SHK, this, ctx);   
+            callSetMsg("Стеллаж №" + d.getStell() + "  " + d.getStell_ML() + ", Номер партии ПУ № " + ff1.W_NEW_CHARG_PU, ctx);         
+            d.callSetChargPU(ff1.W_NEW_CHARG_PU, ff1.W_BATCH_ID, TaskState.SEL_SHK, this, ctx);   
           }
           return htmlWork("Стеллажи Самтекс", true, ctx);    
     }    
@@ -129,6 +129,7 @@ public class ProcessStellSamteks extends ProcessTask {
         
         f.SHK = scan;
         f.W_CHARG_PU = d.getCharg_PU();
+        f.W_BATCH_ID = d.getBATCH_ID();
         f.execute();
         
         if (f.isErr) {
@@ -145,7 +146,7 @@ public class ProcessStellSamteks extends ProcessTask {
 
 //          BigDecimal d_qty = d.getSummaQty();       
 //          callSetMsg("Стеллаж №" + d.getStell() + ";" + f.INF + "[" + d_qty.toString() + "/" + Integer.toString(d.getNScan()) + "]", ctx);       
-          callSetMsg("Стеллаж №" + d.getStell() + ";" + f.INF + "[" + Integer.toString(d.getNScan()) + "]", ctx);       
+          callSetMsg("Стеллаж №" + d.getStell() + "  " + d.getStell_ML() + ";" + f.INF + "[" + Integer.toString(d.getNScan()) + "]", ctx);       
 
 //          callSetTaskState(TaskState.SEL_STELL, ctx); 
 //          scan = null;
@@ -225,6 +226,7 @@ public class ProcessStellSamteks extends ProcessTask {
         Z_TS_SHKLIST3_CHECK_STELL f = new Z_TS_SHKLIST3_CHECK_STELL();        
         f.W_STELL = d.getStell();
         f.W_CHARG_PU = d.getCharg_PU();
+        f.W_BATCH_ID = d.getBATCH_ID();
         f.USER_SHK = ctx.user.getUserSHK();
         int nn = d.getScanDataCount();
         String sd;
@@ -246,6 +248,7 @@ public class ProcessStellSamteks extends ProcessTask {
           Z_TS_SHKLIST3_SET_STELL f1 = new Z_TS_SHKLIST3_SET_STELL();
           f1.W_STELL = d.getStell();
           f1.W_CHARG_PU = d.getCharg_PU();
+          f1.W_BATCH_ID = d.getBATCH_ID();          
           f1.USER_SHK = ctx.user.getUserSHK();
           int nn1 = d.getScanDataCount();
           String sd1;
@@ -269,7 +272,7 @@ public class ProcessStellSamteks extends ProcessTask {
                  callSetMsg("Данные Стеллажа №" + d.getStell() + " партии:" + d.getCharg_PU() + " сохранены   [" + Integer.toString(d.getNScan()) + "]", ctx);       
                }             
                else {
-                 callSetMsg("Стеллаж №" + d.getStell() + " установлен для партии:" + d.getCharg_PU() + "   [" + Integer.toString(d.getNScan()) + "]", ctx);       
+                 callSetMsg("Стеллаж №" + d.getStell() + "  " + d.getStell_ML() + " установлен для партии:" + d.getCharg_PU() + "   [" + Integer.toString(d.getNScan()) + "]", ctx);       
                }  
 
             callSetTaskState(TaskState.SEL_STELL, ctx);             
@@ -321,7 +324,9 @@ class StellSamteksData extends ProcData {
           = new HashMap<String, Integer>(); // кол-во сканов по ОЗМ
     private String vbeln;
     private String Stell;
+    private String Stell_ML;
     private String Charg_PU;
+    private String BATCH_ID;
 
   public BigDecimal getSummaQty() {
     BigDecimal qty = new BigDecimal(0);
@@ -352,8 +357,16 @@ class StellSamteksData extends ProcData {
      return Stell;
   }    
 
+    public String getStell_ML() {
+     return Stell_ML;
+  }    
+
   public String getCharg_PU() {
      return Charg_PU;
+  }   
+
+  public String getBATCH_ID() {
+     return BATCH_ID;
   }   
   
   public int getNScan() {
@@ -465,12 +478,16 @@ class StellSamteksData extends ProcData {
     return ret;
   }
   
-  public void callSetStell(String Stell, TaskState state, ProcessTask p, UserContext ctx) throws Exception {
+  public void callSetStell(String Stell, String Stell_ML, TaskState state, ProcessTask p, UserContext ctx) throws Exception {
     DataRecord dr = new DataRecord();
     dr.procId = p.getProcId();
     if (!strEq(Stell, this.Stell)) {
       dr.setS(FieldType.STELL, Stell);
     }
+    if (!strEq(Stell_ML, this.Stell_ML)) {
+      dr.setS(FieldType.STELL_ML, Stell_ML);
+    }
+
     if ((state != null) && (state != p.getTaskState())) {
 
       dr.setI(FieldType.TASK_STATE, state.ordinal());
@@ -479,11 +496,14 @@ class StellSamteksData extends ProcData {
     Track.saveProcessChange(dr, p, ctx);
   }    
   
-  public void callSetChargPU(String Charg_PU, TaskState state, ProcessTask p, UserContext ctx) throws Exception {
+  public void callSetChargPU(String Charg_PU, String BATCH_ID, TaskState state, ProcessTask p, UserContext ctx) throws Exception {
     DataRecord dr = new DataRecord();
     dr.procId = p.getProcId();
     if (!strEq(Charg_PU, this.Charg_PU)) {
       dr.setS(FieldType.CHARG_PU, Charg_PU);
+    }
+    if (!strEq(BATCH_ID, this.BATCH_ID)) {
+      dr.setS(FieldType.BATCH_ID, BATCH_ID);
     }
     if ((state != null) && (state != p.getTaskState())) {
 
@@ -535,8 +555,16 @@ class StellSamteksData extends ProcData {
           Stell = (String) dr.getVal(FieldType.STELL);
         }        
 
+        if (dr.haveVal(FieldType.STELL_ML)) {
+          Stell_ML = (String) dr.getVal(FieldType.STELL_ML);
+        }        
+
         if (dr.haveVal(FieldType.CHARG_PU)) {
           Charg_PU = (String) dr.getVal(FieldType.CHARG_PU);
+        }        
+
+        if (dr.haveVal(FieldType.BATCH_ID)) {
+          BATCH_ID = (String) dr.getVal(FieldType.BATCH_ID);
         }        
 
         break;

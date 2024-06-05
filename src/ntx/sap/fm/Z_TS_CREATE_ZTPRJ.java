@@ -1,66 +1,34 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
 package ntx.sap.fm;
 
-import com.sap.conn.jco.JCoException;
-import com.sap.conn.jco.JCoFunction;
-import com.sap.conn.jco.JCoParameterList;
-import ntx.sap.sys.ErrDescr;
-import ntx.sap.sys.SAPconn;
 import ntx.ts.srv.TSparams;
+import ntx.sap.sys.*;
+import com.sap.conn.jco.*;
 
 /**
- *
- * @author amolchanov
- */
-//public class Z_TS_CREATE_ZTPRJ {
-//    
-//}
-
-
-/**
- * Определение имеется ли станок
+ * Создание Наряда
  */
 public class Z_TS_CREATE_ZTPRJ {
 
   // importing params
-//  public String USER_SHK = ""; // Штрих-код
+  public String USER_SHK = ""; // ШК пользователя
+  public String W_SHK_ZEQ = ""; // ШК Станка
+  public String W_SHK_CHARG = ""; // ШК Навоя
   //
   // exporting params
-
-    /**
-     *
-     */
-  public String W_SHK_ZEQ   = "";      // ШК станка
-  public String W_SHK_CHARG = "";      // ШК Навоя
-//  public String SHKLIST = ""; // Список ШК
-  //
-  // table params
-//  public ZTS_SHK_S[] IT = new ZTS_SHK_S[0]; // Table of zts_shk
+  public String ISERR = ""; // Признак ошибки
+  public String ZTPRJ = ""; // Наряды
   //
   // переменные для работы с ошибками
   public boolean isErr;
   public String err;
   public String errFull;
   public boolean isSapErr;
-  public String ZTPRJ;
   //
   // вспомогательные переменные
   private static volatile JCoFunction function;
   private static volatile JCoParameterList impParams;
   private static volatile JCoParameterList expParams;
-//  private static volatile JCoParameterList tabParams;
   private static volatile boolean isInit = false;
-
-//  public void IT_create(int n) {
-//    IT = new ZTS_SHK_S[n];
-//    for (int i = 0; i < n; i++) {
-//      IT[i] = new ZTS_SHK_S();
-//    }
-//  }
 
   public void execute() {
     isErr = false;
@@ -72,10 +40,9 @@ public class Z_TS_CREATE_ZTPRJ {
       System.out.println("Вызов ФМ Z_TS_CREATE_ZTPRJ");
     } else if (TSparams.logDocLevel >= 2) {
       System.out.println("Вызов ФМ Z_TS_CREATE_ZTPRJ:");
-//      System.out.println("  USER_SHK=" + USER_SHK);
+      System.out.println("  USER_SHK=" + USER_SHK);
       System.out.println("  W_SHK_ZEQ=" + W_SHK_ZEQ);
       System.out.println("  W_SHK_CHARG=" + W_SHK_CHARG);
-//      System.out.println("  IT.length=" + IT.length);
     }
 
     // вызов САПовской процедуры
@@ -84,10 +51,9 @@ public class Z_TS_CREATE_ZTPRJ {
     if (e == null) {
       if (TSparams.logDocLevel >= 2) {
         System.out.println("Возврат из ФМ Z_TS_CREATE_ZTPRJ:");
-//        System.out.println("  SHKLIST=" + SHKLIST);
+        System.out.println("  ISERR=" + ISERR);
+        System.out.println("  ZTPRJ=" + ZTPRJ);
         System.out.println("  err=" + err);
-        System.out.println("  ZTPRJ=" + ZTPRJ);        
-//        System.out.println("  IT.length=" + IT.length);
       }
     } else {
       // обработка ошибки
@@ -125,41 +91,21 @@ public class Z_TS_CREATE_ZTPRJ {
 
       impParams.clear();
       expParams.clear();
-//      tabParams.clear();
 
-//      JCoTable IT_t = tabParams.getTable("IT");
-
-//      impParams.setValue("USER_SHK", params.USER_SHK);
+      impParams.setValue("USER_SHK", params.USER_SHK);
       impParams.setValue("W_SHK_ZEQ", params.W_SHK_ZEQ);
       impParams.setValue("W_SHK_CHARG", params.W_SHK_CHARG);
-
-//      IT_t.appendRows(params.IT.length);
-//      for (int i = 0; i < params.IT.length; i++) {
-//        IT_t.setRow(i);
-//        IT_t.setValue("SHK", params.IT[i].SHK);
-//        IT_t.setValue("SHK_NAME", params.IT[i].SHK_NAME);
-//      }
 
       ret = SAPconn.executeFunction(function);
 
       if (ret == null) {
-//        params.SHKLIST = expParams.getString("SHKLIST");
+        params.ISERR = expParams.getString("ISERR");
+        params.ZTPRJ = expParams.getString("ZTPRJ");
         params.err = expParams.getString("ERR");
-        params.ZTPRJ = expParams.getString("ZTPRJ");        
         if (!params.err.isEmpty()) {
           params.isErr = true;
           params.errFull = params.err;
         }
-
-//        params.IT = new ZTS_SHK_S[IT_t.getNumRows()];
-//        ZTS_SHK_S IT_r;
-//        for (int i = 0; i < params.IT.length; i++) {
-//          IT_t.setRow(i);
-//          IT_r = new ZTS_SHK_S();
-//          IT_r.SHK = IT_t.getString("SHK");
-//          IT_r.SHK_NAME = IT_t.getString("SHK_NAME");
-//          params.IT[i] = IT_r;
-//        }
       }
     } catch (Exception e) {
       return e;
@@ -181,21 +127,9 @@ public class Z_TS_CREATE_ZTPRJ {
 
     impParams = function.getImportParameterList();
     expParams = function.getExportParameterList();
-//    tabParams = function.getTableParameterList();
 
     isInit = true;
 
     return null;
   }
 }
-
-
-
-/**
- *
- * @author amolchanov
- */
-//public class Z_TS_IS_OPIS {
-    
-//}
-

@@ -94,6 +94,7 @@ public class ProcessNewZTPRJ extends ProcessTask {
             callSetMsg("ШК Навоя:" + ff1.W_SHK_NAVOI, ctx);         
 // Все данные есть - создаем Наряд
             Z_TS_CREATE_ZTPRJ ff2 = new Z_TS_CREATE_ZTPRJ();
+            ff2.USER_SHK = ctx.user.getUserSHK();
             ff2.W_SHK_ZEQ = d.getSHK_EQ(); 
             ff2.W_SHK_CHARG = ff1.W_SHK_NAVOI; 
             ff2.execute();

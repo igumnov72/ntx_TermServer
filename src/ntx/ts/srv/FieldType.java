@@ -155,7 +155,10 @@ public enum FieldType {
   QTY_BOX(ValType.INT), // количество коробов
   STELL(ValType.STRING),    // ШК партии 
   CHARGS2(ValType.STRING_AR), // массив номеров партий 2
-  SSCC(ValType.STRING)    // SSCC код 
+  SSCC(ValType.STRING),    // SSCC код 
+  BATCH_ID(ValType.STRING),    // SSCC код 
+  STELL_ML(ValType.STRING)    // Примечение стеллажа 
+
   ;
   //
   public final ValType valType;

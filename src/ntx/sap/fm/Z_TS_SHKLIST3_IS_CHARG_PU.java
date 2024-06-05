@@ -17,6 +17,7 @@ public class Z_TS_SHKLIST3_IS_CHARG_PU {
   // exporting params
   public String ISERR = ""; // Признак ошибки
   public String W_NEW_CHARG_PU = ""; // Номер партии
+  public String W_BATCH_ID = ""; // Идентификатор партии ПУ
   //
   // переменные для работы с ошибками
   public boolean isErr;
@@ -53,6 +54,7 @@ public class Z_TS_SHKLIST3_IS_CHARG_PU {
         System.out.println("Возврат из ФМ Z_TS_SHKLIST3_IS_CHARG_PU:");
         System.out.println("  ISERR=" + ISERR);
         System.out.println("  W_NEW_CHARG_PU=" + W_NEW_CHARG_PU);
+        System.out.println("  W_BATCH_ID=" + W_BATCH_ID);
         System.out.println("  err=" + err);
       }
     } else {
@@ -101,6 +103,7 @@ public class Z_TS_SHKLIST3_IS_CHARG_PU {
       if (ret == null) {
         params.ISERR = expParams.getString("ISERR");
         params.W_NEW_CHARG_PU = expParams.getString("W_NEW_CHARG_PU");
+        params.W_BATCH_ID = expParams.getString("W_BATCH_ID");
         params.err = expParams.getString("ERR");
         if (!params.err.isEmpty()) {
           params.isErr = true;

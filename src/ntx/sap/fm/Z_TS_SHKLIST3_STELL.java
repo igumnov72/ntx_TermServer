@@ -13,6 +13,7 @@ public class Z_TS_SHKLIST3_STELL {
   // importing params
   public String SHK = ""; // Штрих-код
   public String W_CHARG_PU = ""; // Номер партии
+  public String W_BATCH_ID = ""; // Идентификатор партии ПУ
   //
   // exporting params
   public String ISERR = ""; // Признак ошибки
@@ -43,6 +44,7 @@ public class Z_TS_SHKLIST3_STELL {
       System.out.println("Вызов ФМ Z_TS_SHKLIST3_STELL:");
       System.out.println("  SHK=" + SHK);
       System.out.println("  W_CHARG_PU=" + W_CHARG_PU);
+      System.out.println("  W_BATCH_ID=" + W_BATCH_ID);
     }
 
     // вызов САПовской процедуры
@@ -95,6 +97,7 @@ public class Z_TS_SHKLIST3_STELL {
 
       impParams.setValue("SHK", params.SHK);
       impParams.setValue("W_CHARG_PU", params.W_CHARG_PU);
+      impParams.setValue("W_BATCH_ID", params.W_BATCH_ID);
 
       ret = SAPconn.executeFunction(function);
 
