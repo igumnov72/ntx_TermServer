@@ -14,6 +14,7 @@ public class Z_TS_OPISK3 {
   // importing params
   public String VBELN = ""; // Торговый документ
   public String TDDEST = ""; // Спул: устройство вывода (если надо печатать)
+  public String USER_SHK = ""; // Штрих-код
   //
   // exporting params
   public String KOROB = ""; // Номер короба
@@ -56,6 +57,7 @@ public class Z_TS_OPISK3 {
       System.out.println("Вызов ФМ Z_TS_OPISK3:");
       System.out.println("  VBELN=" + VBELN);
       System.out.println("  TDDEST=" + TDDEST);
+      System.out.println("  USER_SHK=" + USER_SHK);
       System.out.println("  IT.length=" + IT.length);
     }
 
@@ -114,6 +116,7 @@ public class Z_TS_OPISK3 {
 
       impParams.setValue("VBELN", params.VBELN);
       impParams.setValue("TDDEST", params.TDDEST);
+      impParams.setValue("USER_SHK", params.USER_SHK);
 
       IT_t.appendRows(params.IT.length);
       for (int i = 0; i < params.IT.length; i++) {

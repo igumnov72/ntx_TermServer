@@ -159,6 +159,7 @@ public class ProcessSKorob extends ProcessTask {
     f.ZV = d.getVbelnVa();
     f.LENUM = fillZeros(pal, 20);
     f.IT = d.getScanData();
+    f.USER_SHK = ctx.user.getUserSHK();
 
     if (f.IT == null) {
       callSetErr("Нет отсканированных коробов, сохранять на паллету нечего (сканирование номера паллеты не принято)", ctx);

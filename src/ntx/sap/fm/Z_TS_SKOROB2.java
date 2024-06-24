@@ -13,6 +13,7 @@ public class Z_TS_SKOROB2 {
   // importing params
   public String ZV = ""; // Номер заказа или поставки
   public String LENUM = ""; // № единицы складирования
+  public String USER_SHK = ""; // Штрих-код
   //
   // exporting params
   public String INF = "";
@@ -52,6 +53,7 @@ public class Z_TS_SKOROB2 {
       System.out.println("Вызов ФМ Z_TS_SKOROB2:");
       System.out.println("  ZV=" + ZV);
       System.out.println("  LENUM=" + LENUM);
+      System.out.println("  USER_SHK=" + USER_SHK);
       System.out.println("  IT.length=" + IT.length);
     }
 
@@ -107,6 +109,7 @@ public class Z_TS_SKOROB2 {
 
       impParams.setValue("ZV", params.ZV);
       impParams.setValue("LENUM", params.LENUM);
+      impParams.setValue("USER_SHK", params.USER_SHK);
 
       IT_t.appendRows(params.IT.length);
       for (int i = 0; i < params.IT.length; i++) {

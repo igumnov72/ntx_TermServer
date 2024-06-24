@@ -157,8 +157,9 @@ public enum FieldType {
   CHARGS2(ValType.STRING_AR), // массив номеров партий 2
   SSCC(ValType.STRING),    // SSCC код 
   BATCH_ID(ValType.STRING),    // SSCC код 
-  STELL_ML(ValType.STRING)    // Примечение стеллажа 
-
+  STELL_ML(ValType.STRING),    // Примечение стеллажа 
+  QTY_MESH(ValType.INT), // количество мешков
+  ASK_MESH(ValType.STRING) // признак запроса кол-ва мешков (X)
   ;
   //
   public final ValType valType;

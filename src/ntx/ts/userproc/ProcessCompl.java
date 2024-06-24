@@ -38,6 +38,7 @@ public class ProcessCompl extends ProcessTask {
   private String umsg = null;
   private String uumsg = null;
   private ZTS_VED_S[] curved;
+  private String new_kor = ""; //новые короба
 
   public ProcessCompl(long procId) throws Exception {
     super(ProcType.COMPL, procId);
@@ -134,7 +135,15 @@ public class ProcessCompl extends ProcessTask {
       callSetErr(f.err, ctx);
       return (new HtmlPageMessage(getLastErr(), null, null, null)).getPage();
     }
+    
+    def = "selipm:Указать вручную";
+    def0 = "selipm"; 
 
+    for (int i = 0; i < f.IT.length; i++) {
+      def = def + ";selipn" + f.IT[i].VBELN + ":" + f.IT[i].VBELN_DESC;
+    }
+    
+/*
     for (int i = 0; i < f.IT.length; i++) {
       if (def == null) {
         def = "selipn" + f.IT[i].VBELN + ":" + f.IT[i].VBELN_DESC;
@@ -148,6 +157,7 @@ public class ProcessCompl extends ProcessTask {
     } else 
         def = def + ";selipm";
     def = def + ":Указать вручную";
+*/
 
     HtmlPageMenu p = new HtmlPageMenu("Выбор ИП", "Выберите ИП:", def,
             def0, null, null);
@@ -247,6 +257,9 @@ public class ProcessCompl extends ProcessTask {
       case QTY_BOX:
         return handleScanQtyBox(scan, ctx);
 
+      case QTY_MESH:
+        return handleScanQtyMesh(scan, ctx);
+        
       default:
         callSetErr("Ошибка программы: недопустимое состояние "
                 + getTaskState().name() + " (сканирование не принято)", ctx);
@@ -473,12 +486,25 @@ public class ProcessCompl extends ProcessTask {
       return htmlGet(true, ctx);
     }
 
-    boolean crossDoc = f.ZCOMP_CLIENT.equals("X");
+    Z_TS_COMPL15 f2 = new Z_TS_COMPL15();
+    f2.LGORT = d.getLgort();
+    f2.execute();
 
-    d.callAddVbeln(vbeln, f.IT, f.IT_FP, f.IT_CH,
-      crossDoc ? TaskState.CNF_CROSSDOC : TaskState.CELL_VBELN, ctx);
+    if (f2.isErr) {
+      HtmlPageMessage p = new HtmlPageMessage("Ошибка Z_TS_COMPL15: " + f2.err, "устраните ошибку", null, null);
+      return p.getPage();
+    }
+    
+    boolean crossDoc = false; //f.ZCOMP_CLIENT.equals("X");
+    TaskState nextState = TaskState.CELL_VBELN;
+    if (f2.SGM.equalsIgnoreCase("X") && f2.SGM_ASK.equalsIgnoreCase("X")) 
+        nextState = TaskState.ASK_SEL_SGM;
+
+    d.callAddVbeln(vbeln, f.IT, f.IT_FP, f.IT_CH, nextState, ctx);
+//      crossDoc ? TaskState.CNF_CROSSDOC : TaskState.CELL_VBELN, ctx);
     d.callSetInfCompl(f.INF_COMPL, ctx);
     d.callSetCheckCompl(f.CHECK_COMPL, ctx);
+    d.callSetAskMesh(f.ASK_MESH, ctx);
     
     refreshCurVed(ctx);
     calcUMsg();
@@ -1464,6 +1490,7 @@ public class ProcessCompl extends ProcessTask {
           }
 
           TaskState tsSelIp = getSelIpTaskState(lg, ctx);
+          /*
           if (!f.SGM.equalsIgnoreCase("X")) {
             d.callSetLgort(lg, f.NO_FREE_COMPL, f.COMPL_TO_PAL, tsSelIp, ctx);
             callTaskNameChange(ctx);
@@ -1475,6 +1502,11 @@ public class ProcessCompl extends ProcessTask {
             d.callSetIsSGM(true, tsSelIp, ctx);
             callTaskNameChange(ctx);
           }
+          */
+          d.callSetLgort(lg, f.NO_FREE_COMPL, f.COMPL_TO_PAL, tsSelIp, ctx);
+          if (!f.SGM_ASK.equalsIgnoreCase("X")) 
+            d.callSetIsSGM(f.SGM.equalsIgnoreCase("X"), tsSelIp, ctx);
+          callTaskNameChange(ctx);
         }
       } else {
         callSetErr("Ошибка программы: неверный выбор склада: " + menu, ctx);
@@ -1495,9 +1527,12 @@ public class ProcessCompl extends ProcessTask {
       callClearErrMsg(ctx);
       if ((menu.length() == 7) && menu.startsWith("selsgm")) {
         if (menu.substring(6).equalsIgnoreCase("1")) {
-          d.callSetIsSGM(true, getSelIpTaskState(d.getLgort(), ctx), ctx);
+          //d.callSetIsSGM(true, getSelIpTaskState(d.getLgort(), ctx), ctx);
+          d.callSetIsSGM(true, TaskState.CELL_VBELN, ctx);
         } else {
-          callSetTaskState(getSelIpTaskState(d.getLgort(), ctx), ctx);
+          //callSetTaskState(getSelIpTaskState(d.getLgort(), ctx), ctx);
+          //callSetTaskState(TaskState.CELL_VBELN, ctx);
+          d.callSetIsSGM(false, TaskState.CELL_VBELN, ctx);
         }
       } else {
         callSetErr("Ошибка программы: неверный выбор признака санирования СГМ: " + menu, ctx);
@@ -1598,11 +1633,13 @@ public class ProcessCompl extends ProcessTask {
     } else if (menu.startsWith("selcell")) {
       callClearErrMsg(ctx);
       return handleScanCell("C" + menu.substring(7), ctx, false);
-    }    
-    
-    {
-      return htmlGet(false, ctx);
+    } else if (menu.startsWith("sel_nk")) {
+        new_kor = "";
+        if (menu.equals("sel_nk1")) new_kor = "X";
+        return ComplDoneFin(ctx);
     }
+    
+    return htmlGet(false, ctx);
   }
 
   private FileData handleMenuToPal(TaskContext ctx) throws Exception {
@@ -1654,7 +1691,11 @@ public class ProcessCompl extends ProcessTask {
     int box_qty = Integer.parseInt(scan);
     d.callAddBoxQty(box_qty, TaskState.QTY_BOX, ctx);  
     if (d.getBoxQty().size() >= d.getPalQty())
-      return ComplDoneFin(ctx);
+      if (d.getAskMesh().equals("X")) {
+        callSetTaskState(TaskState.QTY_MESH, ctx);
+        return htmlGet(true, ctx);
+      }
+      else return htmlAskNK(ctx); //ComplDoneFin(ctx);
     else {
       callSetMsg("Паллета " + String.valueOf(d.getBoxQty().size() + 1) + 
         "/" + String.valueOf(d.getPalQty()), ctx);
@@ -1662,6 +1703,24 @@ public class ProcessCompl extends ProcessTask {
     }
   }
   
+  private FileData handleScanQtyMesh(String scan, TaskContext ctx) throws Exception {
+    if (!isAllDigits(scan)) {
+      callSetErr("Требуется ввести количество мешков"
+              + " (сканирование " + scan + " не принято)", ctx);
+      return htmlGet(true, ctx);
+    }
+    
+    int mesh_qty = Integer.parseInt(scan);
+    d.callSetMeshQty(mesh_qty, ctx);  
+    return htmlAskNK(ctx); //ComplDoneFin(ctx);
+  }
+  
+  public FileData htmlAskNK(UserContext ctx) throws Exception {
+    HtmlPageMenu p = new HtmlPageMenu("Новые короба", "Новые короба?",
+            "sel_nk0:нет;sel_nk1:да", "sel_nk0", null, null, false);
+    return p.getPage();
+  }
+
   private FileData handleScanZone(String scan, TaskContext ctx) throws Exception {
     if (!isScanZone(scan)) {
       callSetErr("Требуется отсканировать зону склада, в которую помещена паллета "
@@ -2487,6 +2546,8 @@ public class ProcessCompl extends ProcessTask {
       Z_TS_COMPL24 f = new Z_TS_COMPL24();
       f.VBELN = fillZeros(d.getVbelns(), 10);
       f.PAL_QTY = BigDecimal.valueOf(d.getPalQty());
+      f.MESH_QTY = BigDecimal.valueOf(d.getMeshQty());
+      f.ZDC_NK = new_kor;
       ArrayList<Integer> bl = d.getBoxQty();
       f.BOX_QTY = BigDecimal.valueOf(0);
       f.PAL_BOX_QTIES = "";
@@ -2850,6 +2911,7 @@ class ComplData extends ProcData {
   private BigDecimal lastQty = BigDecimal.ZERO; // предыдущее сканирование кол-ва
   private String infCompl = "-"; // признак информационной комплектации (X)
   private String checkCompl = "-"; // признак проверки наличия под комплектацию (X)
+  private String askMesh = ""; // признак запроса кол-ва мешков (X)
   private boolean freeCompl = false; // признак режима свободной комплектации
   private final HashMap<String, ComplVCqty> vcq
           = new HashMap<String, ComplVCqty>(); // ведомости на комплектацию (только ячейки и кол-во) (ключ - номер поставки)
@@ -2868,6 +2930,7 @@ class ComplData extends ProcData {
   private int palQty = 0;
   private final ArrayList<Integer> boxQty = new ArrayList<Integer>();
   private final ArrayList<String> noCorpBoxShkChargs = new ArrayList<String>();
+  private int meshQty = 0;
   
   public ArrayList<String> getNoCorpBoxShkChargs() {
     return noCorpBoxShkChargs;
@@ -2875,6 +2938,10 @@ class ComplData extends ProcData {
   
   public int getPalQty() {
     return palQty;
+  }
+
+  public int getMeshQty() {
+    return meshQty;
   }
 
   public ArrayList<Integer> getBoxQty() {
@@ -3029,6 +3096,10 @@ class ComplData extends ProcData {
 
   public String getCheckCompl() {
     return checkCompl;
+  }
+
+  public String getAskMesh() {
+    return askMesh;
   }
 
   public ZTS_COMPL_DONE_TO_PAL_S[] getScanDataArray() throws Exception {
@@ -3550,6 +3621,13 @@ class ComplData extends ProcData {
     }
     Track.saveProcessChange(dr, ctx.task, ctx);
   }
+
+  public void callSetMeshQty(int mesh_qty, TaskContext ctx) throws Exception {
+    DataRecord dr = new DataRecord();
+    dr.procId = ctx.task.getProcId();
+    dr.setI(FieldType.QTY_MESH, mesh_qty);
+    Track.saveProcessChange(dr, ctx.task, ctx);
+  }
   
   public void callSetToPalPrevState(TaskState prevState, TaskState state, TaskContext ctx) throws Exception {
     DataRecord dr = new DataRecord();
@@ -3636,6 +3714,15 @@ class ComplData extends ProcData {
     Track.saveProcessChange(dr, ctx.task, ctx);
   }
 
+  public void callSetAskMesh(String askMesh, TaskContext ctx) throws Exception {
+    DataRecord dr = new DataRecord();
+    dr.procId = ctx.task.getProcId();
+    if (!strEq(this.askMesh, askMesh)) {
+      dr.setS(FieldType.ASK_MESH, askMesh);
+    }
+    Track.saveProcessChange(dr, ctx.task, ctx);
+  }
+  
   public void callAddTov(String matnr, String charg, int sgm, BigDecimal qty, 
           String shk, TaskContext ctx) throws Exception {
     // добавление данных о товаре (партия - без ведущих нулей)
@@ -4125,6 +4212,10 @@ class ComplData extends ProcData {
           checkCompl = (String) dr.getVal(FieldType.CHECK_COMPL);
         }
 
+        if (dr.haveVal(FieldType.ASK_MESH)) {
+          askMesh = (String) dr.getVal(FieldType.ASK_MESH);
+        }
+
         if (dr.haveVal(FieldType.FREE_COMPL)) {
           freeCompl = (Boolean) dr.getVal(FieldType.FREE_COMPL);
         }
@@ -4201,6 +4292,10 @@ class ComplData extends ProcData {
           }
         }
                 
+        if (dr.haveVal(FieldType.QTY_MESH)) {
+          meshQty = (Integer) dr.getVal(FieldType.QTY_MESH);
+        }
+
         break;
     }
   }

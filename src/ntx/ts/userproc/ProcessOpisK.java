@@ -375,6 +375,7 @@ public class ProcessOpisK extends ProcessTask {
     Z_TS_OPISK3 f = new Z_TS_OPISK3();
     f.VBELN = fillZeros(d.getVbelnVa(), 10);
     f.TDDEST = printer;
+    f.USER_SHK = ctx.user.getUserSHK();
 
     int nn = d.getScanCount();
     OpisKScanData sd;
@@ -466,6 +467,7 @@ public class ProcessOpisK extends ProcessTask {
     Z_TS_SKOROB2 f = new Z_TS_SKOROB2();
     f.ZV = d.getVbelnVa();
     f.LENUM = fillZeros(pal, 20);
+    f.USER_SHK = ctx.user.getUserSHK();
 
     ArrayList<String> palData = d.getPalData();
 

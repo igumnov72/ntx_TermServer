@@ -22,6 +22,7 @@ public class Z_TS_COMPL4 {
   public String LGNUM = ""; // Номер склада/комплекс
   public String CHECK_COMPL = ""; // Контроль возможности комплектации
   public String ZCOMP_CLIENT = ""; // Комплектация под клиента
+  public String ASK_MESH = ""; // Общий флаг
   //
   // table params
   public ZTS_COMPL_CELL_S[] IT = new ZTS_COMPL_CELL_S[0]; // Ячейки для комплектации
@@ -92,6 +93,7 @@ public class Z_TS_COMPL4 {
         System.out.println("  LGNUM=" + LGNUM);
         System.out.println("  CHECK_COMPL=" + CHECK_COMPL);
         System.out.println("  ZCOMP_CLIENT=" + ZCOMP_CLIENT);
+        System.out.println("  ASK_MESH=" + ASK_MESH);
         System.out.println("  err=" + err);
         System.out.println("  IT.length=" + IT.length);
         System.out.println("  IT_FP.length=" + IT_FP.length);
@@ -174,6 +176,7 @@ public class Z_TS_COMPL4 {
         params.LGNUM = expParams.getString("LGNUM");
         params.CHECK_COMPL = expParams.getString("CHECK_COMPL");
         params.ZCOMP_CLIENT = expParams.getString("ZCOMP_CLIENT");
+        params.ASK_MESH = expParams.getString("ASK_MESH");
         params.err = expParams.getString("ERR");
         if (!params.err.isEmpty()) {
           params.isErr = true;

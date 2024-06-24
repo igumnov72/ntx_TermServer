@@ -123,11 +123,11 @@ public class ProcessOpisSurov extends ProcessTask {
           return htmlWork("Опись суровья", true, ctx);    
     }    
   
-
-    if (d.scanIsDouble(scan)) {
-      callSetErr("ШК дублирован (сканирование " + scan + " не принято)", ctx);
-      return htmlWork("Опись суровья", true, ctx);
-    }
+// AM 10.06.2024
+//    if (d.scanIsDouble(scan)) {
+//      callSetErr("ШК дублирован (сканирование " + scan + " не принято)", ctx);
+//      return htmlWork("Опись суровья", true, ctx);
+//    }
     
 //    if (isAllDigitsComma(scan)) {
     if (isScanSur(scan)) {
@@ -147,8 +147,9 @@ public class ProcessOpisSurov extends ProcessTask {
           callSetErr(f.err, ctx);
         }
         else {        
+          d.callAddScan(scan, this, ctx);                    
           BigDecimal w_qty = f.QTY;
-//          BigDecimal w_qty = d.getSummaQty();
+          BigDecimal w1_qty = d.getSummaQty();
           
 //          String s = scan;
           String s = scan + "/" + w_qty.toString();          
@@ -156,8 +157,7 @@ public class ProcessOpisSurov extends ProcessTask {
 
           String sInfo = f.INFO;
                    
-          d.callAddScan(scan, this, ctx);                    
-          callSetMsg("Склад:" + d.getLGORT() + "; Опись:" + d.getOPIS() + "; " + sInfo + "  " + d.getSummaQty() + "[" + Integer.toString(d.getNScan()) + "]", ctx);       
+          callSetMsg("Склад:" + d.getLGORT() + "; Опись:" + d.getOPIS() + "; " + sInfo + "  " + w1_qty.toString() + "[" + Integer.toString(d.getNScan()) + "]", ctx);       
 
 //          callSetMsg("Склад:" + d.getLGORT() + "; Опись:" + d.getOPIS() + "; " + f.INFO + "[" + Integer.toString(d.getNScan()) + "]", ctx);       
      
@@ -345,6 +345,7 @@ class OpisSurovData extends ProcData {
         
         f.W_SHK = scan;
         f.W_OPIS = OPIS;
+        f.W_LGORT = LGORT;
         f.execute();        
         
 /*        Z_TS_SHKLIST3_STELL f = new Z_TS_SHKLIST3_STELL();
@@ -352,16 +353,14 @@ class OpisSurovData extends ProcData {
         f.W_CHARG_PU = Charg_PU; //d.getCharg_PU();
         f.execute();
 */        
-        if (f.isErr) {
-//          callSetErr(f.err, ctx);
-//          return htmlWork("Опись суровья", true, ctx);
-        }
-        else {  
-            
+        if (!f.isErr) {              
             qty = f.QTY;
             s_qty = s_qty.add(qty);
         }
-  
+//        else {
+//            callSetErr(f.err, ctx);
+//            return htmlWork("Опись суровья", true, ctx);
+//        }  
     }
     return s_qty;
   }    

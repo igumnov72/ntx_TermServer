@@ -15,6 +15,8 @@ public class Z_TS_COMPL24 {
   public BigDecimal PAL_QTY = new BigDecimal(0); // 5 знаков
   public BigDecimal BOX_QTY = new BigDecimal(0); // 5 знаков
   public String PAL_BOX_QTIES = "";
+  public BigDecimal MESH_QTY = new BigDecimal(0); // 5 знаков
+  public String ZDC_NK = ""; // Общий флаг
   //
   // переменные для работы с ошибками
   public boolean isErr;
@@ -42,6 +44,8 @@ public class Z_TS_COMPL24 {
       System.out.println("  PAL_QTY=" + PAL_QTY);
       System.out.println("  BOX_QTY=" + BOX_QTY);
       System.out.println("  PAL_BOX_QTIES=" + PAL_BOX_QTIES);
+      System.out.println("  MESH_QTY=" + MESH_QTY);
+      System.out.println("  ZDC_NK=" + ZDC_NK);
     }
 
     // вызов САПовской процедуры
@@ -93,6 +97,8 @@ public class Z_TS_COMPL24 {
       impParams.setValue("PAL_QTY", params.PAL_QTY);
       impParams.setValue("BOX_QTY", params.BOX_QTY);
       impParams.setValue("PAL_BOX_QTIES", params.PAL_BOX_QTIES);
+      impParams.setValue("MESH_QTY", params.MESH_QTY);
+      impParams.setValue("ZDC_NK", params.ZDC_NK);
 
       ret = SAPconn.executeFunction(function);
 
