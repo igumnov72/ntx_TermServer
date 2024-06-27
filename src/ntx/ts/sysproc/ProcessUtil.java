@@ -33,6 +33,11 @@ public abstract class ProcessUtil extends Process {
   public static DateFormat parseDf1 = new SimpleDateFormat("ddMMyy");
   public static DateFormat parseDf2 = new SimpleDateFormat("yyyyMMdd");
   public static DateFormat parseDf3 = new SimpleDateFormat("yyyyMMdd HHmmss");
+  private String specSound = null; // one-time sound, example att.wav
+  
+  public void setSpecSound(String sound) {
+    specSound = sound;
+  }
 
   public String[] getHist() {
     int n = hist.size();
@@ -153,11 +158,20 @@ public abstract class ProcessUtil extends Process {
     return lastErr != null;
   }
 
+  private String getSound(boolean playSound) {
+    String sound = playSound ? (isErr() ? "err.wav" : "ok.wav") : "ask.wav";
+    if (specSound != null) {
+        sound = specSound;
+        specSound = null;
+    }
+    return sound;
+  }
+  
   public FileData htmlWork(String title, boolean playSound, ProcessContext ctx) throws Exception {
     // помимо форматирования тут нужно вывести имя пользователя и склад (если есть)
     HtmlPageWork p = new HtmlPageWork(
             title,
-            playSound ? (isErr() ? "err.wav" : "ok.wav") : "ask.wav",
+            getSound(playSound),
             title + " (" + getUserAndSkl(ctx) + ")",
             lastErr,
             lastMsg,
@@ -178,7 +192,7 @@ public abstract class ProcessUtil extends Process {
     // помимо форматирования тут нужно вывести имя пользователя и склад (если есть)
     HtmlPageWork p = new HtmlPageWork(
             title,
-            playSound ? (isErr() ? "err.wav" : "ok.wav") : "ask.wav",
+            getSound(playSound),
             title + " (" + getUserAndSkl(ctx) + ")",
             lastErr,
             lastMsg,
@@ -195,7 +209,7 @@ public abstract class ProcessUtil extends Process {
     // помимо форматирования тут нужно вывести имя пользователя и склад (если есть)
     HtmlPageWork p = new HtmlPageWork(
             title,
-            playSound ? (isErr() ? "err.wav" : "ok.wav") : "ask.wav",
+            getSound(playSound),
             title + " (" + getUserAndSkl(ctx) + ")",
             lastErr,
             lastMsg,

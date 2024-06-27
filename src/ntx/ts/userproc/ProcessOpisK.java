@@ -159,6 +159,7 @@ public class ProcessOpisK extends ProcessTask {
     
     if (!f.INF.isEmpty()) callAddHist(f.INF, ctx);
     if (!f.INF2.isEmpty()) callAddHist(f.INF2, ctx);
+    if (!f.INF.isEmpty() || !f.INF2.isEmpty()) setSpecSound("att.wav");
     q2 = f.QTY2.subtract(f.QTY3).subtract(d.getMatQty(c.matnr)).subtract(q);
     
     return handleScanTovDo(c.matnr, q, q2, scan, ctx);    

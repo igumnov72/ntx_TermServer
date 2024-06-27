@@ -1314,6 +1314,7 @@ public class ProcessCompl extends ProcessTask {
                 " ячейке " + d.getCell() + " сохранены. " + f.INF;
         callSetMsg(s, ctx);
         callAddHist(s, ctx);
+        if (!f.INF.isEmpty()) setSpecSound("att.wav");
       }
       d.callSetSaved(ctx);
       return new ComplRetSave(null, null);
