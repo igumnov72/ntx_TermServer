@@ -116,7 +116,18 @@ public class ProcessCompl extends ProcessTask {
           return htmlWork("Комплектация", playSound, null, ctx, umsg, uumsg);
 //        else
 //          return htmlWork("Комплектация", playSound, ctx);  
-        
+
+      case QTY_PAL:
+        return htmlWork("Комплектация", playSound, String.valueOf(d.getPalQty()), ctx);
+      case QTY_BOX:
+        String defBoxQty = "";
+        int iBox = d.getBoxQty().size();
+        if (d.getBoxQtySaved().size() > iBox)
+            defBoxQty = String.valueOf(d.getBoxQtySaved().get(iBox));
+        return htmlWork("Комплектация", playSound, defBoxQty, ctx);
+      case QTY_MESH:
+        return htmlWork("Комплектация", playSound, String.valueOf(d.getMeshQty()), ctx);
+          
       default:
         return htmlWork("Комплектация", playSound, ctx);
     }
@@ -486,40 +497,48 @@ public class ProcessCompl extends ProcessTask {
       return htmlGet(true, ctx);
     }
 
-    Z_TS_COMPL15 f2 = new Z_TS_COMPL15();
-    f2.LGORT = d.getLgort();
-    f2.execute();
+    if (f.IT.length > 0) {
+        Z_TS_COMPL15 f2 = new Z_TS_COMPL15();
+        f2.LGORT = d.getLgort();
+        f2.execute();
 
-    if (f2.isErr) {
-      HtmlPageMessage p = new HtmlPageMessage("Ошибка Z_TS_COMPL15: " + f2.err, "устраните ошибку", null, null);
-      return p.getPage();
-    }
-    
-    boolean crossDoc = false; //f.ZCOMP_CLIENT.equals("X");
-    TaskState nextState = TaskState.CELL_VBELN;
-    if (f2.SGM.equalsIgnoreCase("X") && f2.SGM_ASK.equalsIgnoreCase("X")) 
-        nextState = TaskState.ASK_SEL_SGM;
+        if (f2.isErr) {
+          HtmlPageMessage p = new HtmlPageMessage("Ошибка Z_TS_COMPL15: " + f2.err, "устраните ошибку", null, null);
+          return p.getPage();
+        }
 
-    d.callAddVbeln(vbeln, f.IT, f.IT_FP, f.IT_CH, nextState, ctx);
-//      crossDoc ? TaskState.CNF_CROSSDOC : TaskState.CELL_VBELN, ctx);
-    d.callSetInfCompl(f.INF_COMPL, ctx);
-    d.callSetCheckCompl(f.CHECK_COMPL, ctx);
-    d.callSetAskMesh(f.ASK_MESH, ctx);
-    
-    refreshCurVed(ctx);
-    calcUMsg();
+        boolean crossDoc = false; //f.ZCOMP_CLIENT.equals("X");
+        TaskState nextState = TaskState.CELL_VBELN;
+        if (f2.SGM.equalsIgnoreCase("X") && f2.SGM_ASK.equalsIgnoreCase("X")) 
+            nextState = TaskState.ASK_SEL_SGM;
 
-    String s = "Поставка " + vbeln + " выбрана для комплектации; кол-во "
-            + delDecZeros(d.getVbelnQty(vbeln).toString());
-    if (crossDoc) {
-      s += "; ПОДТВЕРДИТЕ КРОССДОКИНГ";
-      callSetMsg2(s, "", ctx);
+        d.callAddVbeln(vbeln, f.IT, f.IT_FP, f.IT_CH, nextState, ctx);
+    //      crossDoc ? TaskState.CNF_CROSSDOC : TaskState.CELL_VBELN, ctx);
+        d.callSetInfCompl(f.INF_COMPL, ctx);
+        d.callSetCheckCompl(f.CHECK_COMPL, ctx);
+        d.callSetAskMesh(f.ASK_MESH, ctx);
+
+        refreshCurVed(ctx);
+        calcUMsg();
+
+        String s = "Поставка " + vbeln + " выбрана для комплектации; кол-во "
+                + delDecZeros(d.getVbelnQty(vbeln).toString());
+        if (crossDoc) {
+          s += "; ПОДТВЕРДИТЕ КРОССДОКИНГ";
+          callSetMsg2(s, "", ctx);
+        } else {
+          callSetMsg2(s, "", ctx);
+          callAddHist(s, ctx);
+        }
+
+        if (!f.TREB_SBOR.isEmpty())
+          return htmlShowInf(ctx, "Требования к сборке", f.TREB_SBOR);
+
+        return htmlGet(true, ctx);
     } else {
-      callSetMsg2(s, "", ctx);
-      callAddHist(s, ctx);
+      d.callAddVbelnBoxQties(vbeln, f.BOX_QTIES, TaskState.QTY_PAL, ctx);
+      return htmlGet(true, ctx);
     }
-
-    return htmlGet(true, ctx);
   }
 
   private FileData cnfCrossDocDone(boolean crossDoc, TaskContext ctx) throws Exception {
@@ -1672,6 +1691,22 @@ public class ProcessCompl extends ProcessTask {
               + " (сканирование " + scan + " не принято)", ctx);
       return htmlGet(true, ctx);
     }
+    
+    if (pal_qty < d.getBoxQty().size()) {
+      callSetErr("Введено количество коробов на " + String.valueOf(d.getBoxQty().size())
+              + " паллет (сканирование " + scan + " не принято)", ctx);
+      return htmlGet(true, ctx);
+    }
+
+    if (pal_qty == d.getBoxQty().size()) {
+      if (d.getAskMesh().equals("X")) {
+        callSetTaskState(TaskState.QTY_MESH, ctx);
+        return htmlGet(true, ctx);
+      }
+      else 
+        return htmlAskNK(ctx); 
+    }
+    
     d.callSetPalQty(pal_qty, TaskState.QTY_BOX, ctx);  
     if (pal_qty > 0) {
       callSetMsg("Паллета " + String.valueOf(d.getBoxQty().size() + 1) + 
@@ -2390,6 +2425,22 @@ public class ProcessCompl extends ProcessTask {
     return p.getPage();
   }
 
+  private FileData htmlShowInf(TaskContext ctx, String title, String inf) throws Exception {
+    HtmlPage p = new HtmlPage();
+    p.title = title;
+    p.sound = "ask.wav";
+    p.fontSize = TSparams.fontSize2;
+    p.scrollToTop = true;
+    p.addLine("<b>" + title + "</b>");
+    p.addNewLine();
+    p.addLine(inf);
+    p.addNewLine();
+    p.addFormStart("work.html", "f");
+    p.addFormButtonSubmitGo("Продолжить");
+    p.addFormEnd();
+    return p.getPage();
+  }
+
   private FileData htmlShowFoto(TaskContext ctx) throws Exception {
     // отображение фото материалов (по текущей ячейке)
 
@@ -2930,6 +2981,7 @@ class ComplData extends ProcData {
   private String lastScan = "";
   private int palQty = 0;
   private final ArrayList<Integer> boxQty = new ArrayList<Integer>();
+  private final ArrayList<Integer> boxQtySaved = new ArrayList<Integer>();
   private final ArrayList<String> noCorpBoxShkChargs = new ArrayList<String>();
   private int meshQty = 0;
   
@@ -2947,6 +2999,10 @@ class ComplData extends ProcData {
 
   public ArrayList<Integer> getBoxQty() {
     return boxQty;
+  }
+
+  public ArrayList<Integer> getBoxQtySaved() {
+    return boxQtySaved;
   }
 
   public String getNextCellScan() {
@@ -3484,6 +3540,20 @@ class ComplData extends ProcData {
 //        if (strEq(it_ch[i].NO_CORP_SHK_BOX, "X"))
           t4[i] = it_ch[i].CHARG;
     dr.setSa(FieldType.CHARGS2, t4);
+
+    if ((state != null) && (state != ctx.task.getTaskState())) {
+      dr.setI(FieldType.TASK_STATE, state.ordinal());
+    }
+    Track.saveProcessChange(dr, ctx.task, ctx);
+  }
+
+  public void callAddVbelnBoxQties(String vbeln, String boxQties,
+          TaskState state, TaskContext ctx) throws Exception {
+    DataRecord dr = new DataRecord();
+    dr.procId = ctx.task.getProcId();
+    dr.setS(FieldType.VBELN, vbeln);
+    dr.setI(FieldType.LOG, LogType.ADD_VBELN.ordinal());
+    dr.setS(FieldType.QTIES, boxQties);
 
     if ((state != null) && (state != ctx.task.getTaskState())) {
       dr.setI(FieldType.TASK_STATE, state.ordinal());
@@ -4157,6 +4227,7 @@ class ComplData extends ProcData {
         if (dr.haveVal(FieldType.VBELN)) {
           vbeln = dr.getValStr(FieldType.VBELN);
           lastVbeln = vbeln;
+          boxQtySaved.clear();
         }
 
         if (dr.haveVal(FieldType.TAB3)) {
@@ -4295,6 +4366,17 @@ class ComplData extends ProcData {
                 
         if (dr.haveVal(FieldType.QTY_MESH)) {
           meshQty = (Integer) dr.getVal(FieldType.QTY_MESH);
+        }
+
+        if (dr.haveVal(FieldType.QTIES)) {
+          String[] boxQties = dr.getValStr(FieldType.QTIES).split(",");
+          if (boxQties.length > 0) palQty = Integer.parseInt(boxQties[0]);
+          if (boxQties.length > 1) meshQty = Integer.parseInt(boxQties[1]);
+          if (boxQties.length > 2) {
+            boxQtySaved.clear();
+            for (int i = 2; i < boxQties.length; i++)
+              boxQtySaved.add(Integer.parseInt(boxQties[i]));
+          }
         }
 
         break;

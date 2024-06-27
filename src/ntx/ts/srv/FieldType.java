@@ -159,7 +159,8 @@ public enum FieldType {
   BATCH_ID(ValType.STRING),    // SSCC код 
   STELL_ML(ValType.STRING),    // Примечение стеллажа 
   QTY_MESH(ValType.INT), // количество мешков
-  ASK_MESH(ValType.STRING) // признак запроса кол-ва мешков (X)
+  ASK_MESH(ValType.STRING), // признак запроса кол-ва мешков (X)
+  QTIES(ValType.STRING) // количества через запятую
   ;
   //
   public final ValType valType;

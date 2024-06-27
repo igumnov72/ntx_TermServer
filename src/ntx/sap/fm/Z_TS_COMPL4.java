@@ -23,6 +23,8 @@ public class Z_TS_COMPL4 {
   public String CHECK_COMPL = ""; // Контроль возможности комплектации
   public String ZCOMP_CLIENT = ""; // Комплектация под клиента
   public String ASK_MESH = ""; // Общий флаг
+  public String TREB_SBOR = "";
+  public String BOX_QTIES = "";
   //
   // table params
   public ZTS_COMPL_CELL_S[] IT = new ZTS_COMPL_CELL_S[0]; // Ячейки для комплектации
@@ -94,6 +96,8 @@ public class Z_TS_COMPL4 {
         System.out.println("  CHECK_COMPL=" + CHECK_COMPL);
         System.out.println("  ZCOMP_CLIENT=" + ZCOMP_CLIENT);
         System.out.println("  ASK_MESH=" + ASK_MESH);
+        System.out.println("  TREB_SBOR=" + TREB_SBOR);
+        System.out.println("  BOX_QTIES=" + BOX_QTIES);
         System.out.println("  err=" + err);
         System.out.println("  IT.length=" + IT.length);
         System.out.println("  IT_FP.length=" + IT_FP.length);
@@ -177,6 +181,8 @@ public class Z_TS_COMPL4 {
         params.CHECK_COMPL = expParams.getString("CHECK_COMPL");
         params.ZCOMP_CLIENT = expParams.getString("ZCOMP_CLIENT");
         params.ASK_MESH = expParams.getString("ASK_MESH");
+        params.TREB_SBOR = expParams.getString("TREB_SBOR");
+        params.BOX_QTIES = expParams.getString("BOX_QTIES");
         params.err = expParams.getString("ERR");
         if (!params.err.isEmpty()) {
           params.isErr = true;
