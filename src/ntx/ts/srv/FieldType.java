@@ -160,7 +160,8 @@ public enum FieldType {
   STELL_ML(ValType.STRING),    // Примечение стеллажа 
   QTY_MESH(ValType.INT), // количество мешков
   ASK_MESH(ValType.STRING), // признак запроса кол-ва мешков (X)
-  QTIES(ValType.STRING) // количества через запятую
+  QTIES(ValType.STRING), // количества через запятую
+  PAL_BOX_QTY_PREV_STATE(ValType.INT) // сост перед вводом кол-ва коробов на паллете
   ;
   //
   public final ValType valType;

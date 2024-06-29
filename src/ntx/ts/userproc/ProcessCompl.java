@@ -1411,6 +1411,7 @@ public class ProcessCompl extends ProcessTask {
                   + "delpal:Отменить по паллете;" 
                   + askQtyMenu;
         }
+        definition = definition + "palboxqty:Короба на паллете;";
         break;
 
       case QTY:
@@ -1657,6 +1658,10 @@ public class ProcessCompl extends ProcessTask {
         new_kor = "";
         if (menu.equals("sel_nk1")) new_kor = "X";
         return ComplDoneFin(ctx);
+    } else if (menu.equals("palboxqty")) {
+        String palBoxNum = String.valueOf(d.getBoxQty().size() + 1);
+        callSetMsg("Паллета " + palBoxNum + "/" + palBoxNum, ctx);
+        d.callSetPalBoxQtyPrevState(ctx);
     }
     
     return htmlGet(false, ctx);
@@ -1726,16 +1731,24 @@ public class ProcessCompl extends ProcessTask {
     
     int box_qty = Integer.parseInt(scan);
     d.callAddBoxQty(box_qty, TaskState.QTY_BOX, ctx);  
-    if (d.getBoxQty().size() >= d.getPalQty())
-      if (d.getAskMesh().equals("X")) {
-        callSetTaskState(TaskState.QTY_MESH, ctx);
+    
+    if (d.getPalBoxQtyPrevState() != 0) {
+        callSetTaskState(TaskState.values()[d.getPalBoxQtyPrevState()], ctx);
+        d.callClearPalBoxQtyPrevState(ctx);
         return htmlGet(true, ctx);
-      }
-      else return htmlAskNK(ctx); //ComplDoneFin(ctx);
+    }
     else {
-      callSetMsg("Паллета " + String.valueOf(d.getBoxQty().size() + 1) + 
-        "/" + String.valueOf(d.getPalQty()), ctx);
-      return htmlGet(true, ctx);
+        if (d.getBoxQty().size() >= d.getPalQty())
+          if (d.getAskMesh().equals("X")) {
+            callSetTaskState(TaskState.QTY_MESH, ctx);
+            return htmlGet(true, ctx);
+          }
+          else return htmlAskNK(ctx); //ComplDoneFin(ctx);
+        else {
+          callSetMsg("Паллета " + String.valueOf(d.getBoxQty().size() + 1) + 
+            "/" + String.valueOf(d.getPalQty()), ctx);
+          return htmlGet(true, ctx);
+        }
     }
   }
   
@@ -2984,6 +2997,7 @@ class ComplData extends ProcData {
   private final ArrayList<Integer> boxQtySaved = new ArrayList<Integer>();
   private final ArrayList<String> noCorpBoxShkChargs = new ArrayList<String>();
   private int meshQty = 0;
+  private int palBoxQtyPrevState = 0; 
   
   public ArrayList<String> getNoCorpBoxShkChargs() {
     return noCorpBoxShkChargs;
@@ -3019,6 +3033,10 @@ class ComplData extends ProcData {
 
   public int getModSgmPrevState() {
     return modSgmPrevState;
+  }
+
+  public int getPalBoxQtyPrevState() {
+    return palBoxQtyPrevState;
   }
 
   public ArrayList<TovPos> getModSgmTov() {
@@ -3722,6 +3740,21 @@ class ComplData extends ProcData {
     Track.saveProcessChange(dr, ctx.task, ctx);
   }
 
+  public void callSetPalBoxQtyPrevState(TaskContext ctx) throws Exception {
+    DataRecord dr = new DataRecord();
+    dr.procId = ctx.task.getProcId();
+    dr.setI(FieldType.PAL_BOX_QTY_PREV_STATE, ctx.task.getTaskState().ordinal());
+    dr.setI(FieldType.TASK_STATE, TaskState.QTY_BOX.ordinal());
+    Track.saveProcessChange(dr, ctx.task, ctx);
+  }
+
+  public void callClearPalBoxQtyPrevState(TaskContext ctx) throws Exception {
+    DataRecord dr = new DataRecord();
+    dr.procId = ctx.task.getProcId();
+    dr.setI(FieldType.PAL_BOX_QTY_PREV_STATE, 0);
+    Track.saveProcessChange(dr, ctx.task, ctx);
+  }
+
   public void callSetVbeln1(String vbeln, TaskContext ctx) throws Exception {
     DataRecord dr = new DataRecord();
     dr.procId = ctx.task.getProcId();
@@ -4332,6 +4365,10 @@ class ComplData extends ProcData {
 
         if (dr.haveVal(FieldType.PREV_TASK_STATE)) {
           modSgmPrevState = (Integer) dr.getVal(FieldType.PREV_TASK_STATE);
+        }
+
+        if (dr.haveVal(FieldType.PAL_BOX_QTY_PREV_STATE)) {
+          palBoxQtyPrevState = (Integer) dr.getVal(FieldType.PAL_BOX_QTY_PREV_STATE);
         }
 
         if (dr.haveVal(FieldType.MOD_SGM_CLEAR)) {
