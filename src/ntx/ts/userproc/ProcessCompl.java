@@ -120,7 +120,8 @@ public class ProcessCompl extends ProcessTask {
       case QTY_PAL:
         return htmlWork("Комплектация", playSound, String.valueOf(d.getPalQty()), ctx);
       case QTY_BOX:
-        String defBoxQty = "";
+
+          String defBoxQty = "";
         int iBox = d.getBoxQty().size();
         if (d.getBoxQtySaved().size() > iBox)
             defBoxQty = String.valueOf(d.getBoxQtySaved().get(iBox));
@@ -537,6 +538,7 @@ public class ProcessCompl extends ProcessTask {
         return htmlGet(true, ctx);
     } else {
       d.callAddVbelnBoxQties(vbeln, f.BOX_QTIES, TaskState.QTY_PAL, ctx);
+      d.callSetAskMesh(f.ASK_MESH, ctx);
       return htmlGet(true, ctx);
     }
   }
@@ -2607,9 +2609,9 @@ public class ProcessCompl extends ProcessTask {
   }
 
   private FileData ComplDoneFin(TaskContext ctx) throws Exception {
-    if (d.getPalQty() > 0 && d.getIs1vbeln()) {
+    if (d.getLgort().equals("1403")) { // (d.getPalQty() > 0) { // && d.getIs1vbeln()
       Z_TS_COMPL24 f = new Z_TS_COMPL24();
-      f.VBELN = fillZeros(d.getVbelns(), 10);
+      f.VBELN = fillZeros(d.getVbeln(), 10);
       f.PAL_QTY = BigDecimal.valueOf(d.getPalQty());
       f.MESH_QTY = BigDecimal.valueOf(d.getMeshQty());
       f.ZDC_NK = new_kor;
@@ -4406,7 +4408,8 @@ class ComplData extends ProcData {
         }
 
         if (dr.haveVal(FieldType.QTIES)) {
-          String[] boxQties = dr.getValStr(FieldType.QTIES).split(",");
+          String boxQtiesStr = dr.getValStr(FieldType.QTIES); 
+          String[] boxQties = boxQtiesStr.split(",");
           if (boxQties.length > 0) palQty = Integer.parseInt(boxQties[0]);
           if (boxQties.length > 1) meshQty = Integer.parseInt(boxQties[1]);
           if (boxQties.length > 2) {
