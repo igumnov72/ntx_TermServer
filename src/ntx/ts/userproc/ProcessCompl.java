@@ -39,6 +39,7 @@ public class ProcessCompl extends ProcessTask {
   private String uumsg = null;
   private ZTS_VED_S[] curved;
   private String new_kor = ""; //новые короба
+  private String treb_sbor = ""; 
 
   public ProcessCompl(long procId) throws Exception {
     super(ProcType.COMPL, procId);
@@ -532,6 +533,7 @@ public class ProcessCompl extends ProcessTask {
           callAddHist(s, ctx);
         }
 
+        treb_sbor = f.TREB_SBOR;
         if (!f.TREB_SBOR.isEmpty())
           return htmlShowInf(ctx, "Требования к сборке", f.TREB_SBOR);
 
@@ -1414,6 +1416,7 @@ public class ProcessCompl extends ProcessTask {
                   + askQtyMenu;
         }
         definition = definition + "palboxqty:Короба на паллете;";
+        definition = definition + "treb_sbor:Требования к сборке;";
         break;
 
       case QTY:
@@ -1664,6 +1667,8 @@ public class ProcessCompl extends ProcessTask {
         String palBoxNum = String.valueOf(d.getBoxQty().size() + 1);
         callSetMsg("Паллета " + palBoxNum + "/" + palBoxNum, ctx);
         d.callSetPalBoxQtyPrevState(ctx);
+    } else if (menu.equals("treb_sbor")) {
+      return htmlShowInf(ctx, "Требования к сборке", treb_sbor);        
     }
     
     return htmlGet(false, ctx);
@@ -4262,6 +4267,7 @@ class ComplData extends ProcData {
         if (dr.haveVal(FieldType.VBELN)) {
           vbeln = dr.getValStr(FieldType.VBELN);
           lastVbeln = vbeln;
+          boxQty.clear();
           boxQtySaved.clear();
         }
 
@@ -4386,7 +4392,7 @@ class ComplData extends ProcData {
 
         if (dr.haveVal(FieldType.QTY_PAL)) {
           palQty = (Integer) dr.getVal(FieldType.QTY_PAL);
-          boxQty.clear();
+          //boxQty.clear();
         }
         
         if (dr.haveVal(FieldType.QTY_BOX)) {
