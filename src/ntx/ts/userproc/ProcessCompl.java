@@ -119,6 +119,8 @@ public class ProcessCompl extends ProcessTask {
 //          return htmlWork("Комплектация", playSound, ctx);  
 
       case QTY_PAL:
+        if (d.getBoxQty().size() > 0) 
+            callSetMsg("Уже введено " + String.valueOf(d.getBoxQty().size()) + " паллет" , ctx);
         return htmlWork("Комплектация", playSound, String.valueOf(d.getPalQty()), ctx);
       case QTY_BOX:
 
