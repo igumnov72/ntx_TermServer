@@ -44,8 +44,12 @@ public class TermServer {
     }
 
     if ((tq.sf.length == 2) && (tq.sf[1].equalsIgnoreCase("wav"))
-            && (tq.sf[0].equalsIgnoreCase("ok") || tq.sf[0].equalsIgnoreCase("err")
-            || tq.sf[0].equalsIgnoreCase("done") || tq.sf[0].equalsIgnoreCase("ask"))) {
+            && (
+            tq.sf[0].equalsIgnoreCase("ok") || 
+            tq.sf[0].equalsIgnoreCase("err")|| 
+            tq.sf[0].equalsIgnoreCase("done") || 
+            tq.sf[0].equalsIgnoreCase("ask") || 
+            tq.sf[0].equalsIgnoreCase("att"))) {
       // выдача звукового файла
       FileData ret = getFile(tq);
       return ret;
@@ -323,8 +327,13 @@ public class TermServer {
     }
 
     if ((tq.sf.length == 2) && (tq.sf[1].equalsIgnoreCase("wav"))
-            && (tq.sf[0].equalsIgnoreCase("ok") || tq.sf[0].equalsIgnoreCase("err")
-            || tq.sf[0].equalsIgnoreCase("done") || tq.sf[0].equalsIgnoreCase("ask"))) {
+            && (
+            tq.sf[0].equalsIgnoreCase("ok") || 
+            tq.sf[0].equalsIgnoreCase("err") || 
+            tq.sf[0].equalsIgnoreCase("done") || 
+            tq.sf[0].equalsIgnoreCase("ask") || 
+            tq.sf[0].equalsIgnoreCase("att")
+            )) {
       // выдача звукового файла
       FileData ret = getFile(tq);
       return ret;
