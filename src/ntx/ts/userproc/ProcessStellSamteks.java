@@ -123,6 +123,11 @@ public class ProcessStellSamteks extends ProcessTask {
       return htmlWork("Стеллажи Самтекс", true, ctx);
     }
     
+    int n = scan.length();
+    if (n > 10) {
+      callSetErr("В ШК дублирован более 10 знаков. (сканирование " + scan + " не принято)", ctx);
+      return htmlWork("Стеллажи Самтекс", true, ctx);
+      }
     if (isAllDigitsComma(scan)) {
         
         Z_TS_SHKLIST3_STELL f = new Z_TS_SHKLIST3_STELL();

@@ -124,10 +124,10 @@ public class ProcessOpisSurov extends ProcessTask {
     }    
   
 // AM 10.06.2024
-//    if (d.scanIsDouble(scan)) {
-//      callSetErr("ШК дублирован (сканирование " + scan + " не принято)", ctx);
-//      return htmlWork("Опись суровья", true, ctx);
-//    }
+    if (d.scanIsDouble(scan)) {
+      callSetErr("ШК дублирован (сканирование " + scan + " не принято)", ctx);
+      return htmlWork("Опись суровья", true, ctx);
+    }
     
 //    if (isAllDigitsComma(scan)) {
     if (isScanSur(scan)) {
