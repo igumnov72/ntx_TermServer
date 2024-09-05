@@ -8,4 +8,5 @@ public class ZTS_IN4_S {
   public String CHARG = ""; // Номер партии
   public String PROD_DT = ""; // Дата пр-ва (текст ГГГГММДД)
   public BigDecimal QTY = new BigDecimal(0); // Количество
+  public String SHK = ""; // Штрих-код
 }

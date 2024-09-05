@@ -771,6 +771,7 @@ public class ProcessPriemka extends ProcessTask {
         f.IT_TOV[i].PROD_DT = tt.prDat;
       }
       f.IT_TOV[i].QTY = tt.qty;
+      f.IT_TOV[i].SHK = tt.scan;
     }
 
     f.execute();
@@ -827,6 +828,7 @@ public class ProcessPriemka extends ProcessTask {
         f.IT_TOV[i].PROD_DT = tt.prDat;
       }
       f.IT_TOV[i].QTY = tt.qty;
+      f.IT_TOV[i].SHK = tt.scan;
     }
 
     f.execute();

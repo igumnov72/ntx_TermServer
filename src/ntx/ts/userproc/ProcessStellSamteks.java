@@ -125,7 +125,11 @@ public class ProcessStellSamteks extends ProcessTask {
     
     int n = scan.length();
     if (n > 10) {
-      callSetErr("В ШК дублирован более 10 знаков. (сканирование " + scan + " не принято)", ctx);
+      callSetErr("В ШК более 10 знаков. (сканирование " + scan + " не принято)", ctx);
+      return htmlWork("Стеллажи Самтекс", true, ctx);
+      }
+    if (n < 8) {
+      callSetErr("В ШК менее 8 знаков. (сканирование " + scan + " не принято)", ctx);
       return htmlWork("Стеллажи Самтекс", true, ctx);
       }
     if (isAllDigitsComma(scan)) {

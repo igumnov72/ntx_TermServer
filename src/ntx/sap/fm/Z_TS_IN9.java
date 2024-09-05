@@ -135,6 +135,7 @@ public class Z_TS_IN9 {
         IT_TOV_t.setValue("CHARG", params.IT_TOV[i].CHARG);
         IT_TOV_t.setValue("PROD_DT", params.IT_TOV[i].PROD_DT);
         IT_TOV_t.setValue("QTY", params.IT_TOV[i].QTY);
+        IT_TOV_t.setValue("SHK", params.IT_TOV[i].SHK);
       }
 
       ret = SAPconn.executeFunction(function);
@@ -163,6 +164,7 @@ public class Z_TS_IN9 {
           IT_TOV_r.CHARG = IT_TOV_t.getString("CHARG");
           IT_TOV_r.PROD_DT = IT_TOV_t.getString("PROD_DT");
           IT_TOV_r.QTY = IT_TOV_t.getBigDecimal("QTY");
+          IT_TOV_r.SHK = IT_TOV_t.getString("SHK");
           params.IT_TOV[i] = IT_TOV_r;
         }
       }
