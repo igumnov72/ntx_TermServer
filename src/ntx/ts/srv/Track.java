@@ -126,7 +126,11 @@ public class Track {
         break;            
       case OPIS_SUROV:
         ret = new ProcessOpisSurov(procId);
-        break;       }
+        break;       
+      case FORM_KOR:
+        ret = new ProcessFormKor(procId);
+        break;       
+    }
     if (ret == null) {
       throw new Exception("Ошибка программы: не создан процесс типа " + pType.text);
     }
