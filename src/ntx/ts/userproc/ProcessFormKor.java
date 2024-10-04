@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 import ntx.sap.fm.Z_TS_FORMKOR1;
+import ntx.sap.fm.Z_TS_FORMKOR2;
 import ntx.sap.refs.RefCharg;
 import ntx.sap.refs.RefChargStruct;
 import ntx.sap.refs.RefInfo;
@@ -65,20 +66,21 @@ public class ProcessFormKor extends ProcessTask {
       return htmlMenu();
     }
     
+    String s = "";
+
     if (getTaskState() == TaskState.SEL_SHK) {
     
         int scan_count = d.getNScan();
-        String s = "";
     
         if (isScanMkSn(scan)) {
           if (d.scanIsDouble(scan)) {
             callSetErr("ШК дублирован (сканирование " + scan + " не принято)", ctx);
             return htmlWork("Формирование коробов", true, ctx);
           }
-          s = "В коробе " + String.valueOf(scan_count) + " СН";
+          d.callAddScan(scan, this, ctx);
+          s = "В коробе " + String.valueOf(scan_count+1) + " СН";
           callAddHist(scan, ctx);
           callSetMsg(s, ctx);
-          d.callAddScan(scan, this, ctx);
         } else 
         if (isScanMkPb(scan)) {
           Z_TS_FORMKOR1 f = new Z_TS_FORMKOR1();
@@ -112,7 +114,26 @@ public class ProcessFormKor extends ProcessTask {
         }
     }
     else if (getTaskState() == TaskState.KOROB) {
-        
+        if (isScanMkPb(scan)) {
+          Z_TS_FORMKOR2 f = new Z_TS_FORMKOR2();
+          f.USER_SHK = ctx.user.getUserSHK();
+          f.SHK = scan;
+
+          f.execute();
+
+          if (f.isErr) {
+            callSetErr(f.err, ctx);
+            return htmlWork("Формирование коробов", true, ctx);
+          }
+
+          s = "Короб " + scan + " удален";
+          callAddHist(s, ctx);
+          callSetMsg(s, ctx);
+          callSetTaskState(TaskState.SEL_SHK, ctx);
+        } else {
+          callSetErr("Некорректный ШК (сканирование " + scan + " не принято)", ctx);
+          return htmlWork("Формирование коробов", true, ctx);
+        }
     }
  
     return htmlWork("Формирование коробов", true, ctx);
