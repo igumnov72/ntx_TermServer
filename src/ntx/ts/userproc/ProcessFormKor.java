@@ -145,16 +145,23 @@ public class ProcessFormKor extends ProcessTask {
     if (d.getNScan() > 0) {
       definition = definition 
         + ";del_last:Отменить последнее сканирование"
-        + ";del_box:Удалить короб"
+        + ";del_all:Отменить все сканирования короба"
         ;
     }
 
+    if (d.getNScan() == 0) {
+      definition = definition 
+        + ";del_box:Удалить короб"
+        ;
+    }
+    
     HtmlPageMenu p = new HtmlPageMenu("Меню", "Формирование коробов",
             definition, null, null, null);
     return p.getPage();
   }
 
   public FileData handleMenu(String menu, UserContext ctx) throws Exception {
+    String s;
     if (menu.equals("fin")) {
       callTaskFinish(ctx);
       return null;
@@ -167,11 +174,16 @@ public class ProcessFormKor extends ProcessTask {
         int nn = d.getScanDataCount();
         if (nn > 0) { // отменяем сканирование товара
           String shk = d.getScanDataItem(nn-1);
-          String s = "Отменено сканирование ШК " + shk;
+          s = "Отменено сканирование ШК " + shk;
           d.callDelLast(this, ctx);
           callSetMsg(s, ctx);
           callAddHist(s, ctx);
         }      
+    } else if (menu.equals("del_all")) {
+        d.callClearScanData(this, ctx);
+        s = "Отменены все сканирования по коробу";
+        callSetMsg(s, ctx);
+        callAddHist(s, ctx);
     }
     
     return htmlWork("Формирование коробов", false, ctx);
