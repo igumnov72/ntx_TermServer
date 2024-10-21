@@ -5,6 +5,8 @@ import ntx.sap.fm.Z_TS_DESCR;
 import ntx.sap.refs.RefCharg;
 import ntx.sap.refs.RefChargStruct;
 import ntx.sap.refs.RefInfo;
+import ntx.sap.refs.RefMat;
+import ntx.sap.refs.RefMatStruct;
 import ntx.ts.html.*;
 import ntx.ts.http.FileData;
 import ntx.ts.srv.DataRecord;
@@ -60,13 +62,36 @@ public class ProcessTest extends ProcessTask {
     if (scan.length() == 6) {
       return htmlMatFoto(scan);
     }
+    
+    String extra_inf = "";
+    if (scan.length() > 40) {
+      int char_code;
+      char_code = (int) scan.charAt(7);
+      extra_inf = extra_inf + "+" + String.valueOf(char_code) + "- ";
+      if (scan.charAt(7) == ':') {
+        RefMatStruct mat = RefMat.get(scan.substring(1, 7));
+        if (mat == null) extra_inf = extra_inf + "+mat:" + scan.substring(1, 7) + "-";
+        else 
+        {
+          int i_scan = mat.name.length() + 10;
+          String qty = "";
+          while (scan.charAt(i_scan) != ' ' && i_scan < scan.length()) {
+              qty = qty + scan.charAt(i_scan);
+              i_scan++;
+          }
+          extra_inf = extra_inf + "+qty:" + qty + "-";
+          //String.valueOf(qty);
+        }
+    } else
+          extra_inf = "+ss:" + scan.charAt(7) + "-";
+    }
 
     Z_TS_DESCR f = new Z_TS_DESCR();
     f.SHK = scan;
     f.execute();
 
     if (!f.isErr && f.DESCR.startsWith("?")) {
-      callSetErr("Неизвестный штрих-код: " + scan, ctx);
+      callSetErr("Неизвестный штрих-код: " + scan + extra_inf, ctx);
     } else if (!f.isErr) {
       callAddHist(f.DESCR, ctx);
       callSetMsg(f.DESCR, ctx);

@@ -142,6 +142,35 @@ public class ProcessProgOpis extends ProcessTask {
             callSetMsg(s, ctx);
             callAddHist(s, ctx);
         }
+        if (scan.length() > 10 && scan.charAt(7) == ':' && isAllDigits(scan.substring(1,7))) {
+
+            prog_ref_mat = RefMat.get(scan.substring(1, 7));
+            if (prog_ref_mat == null) {
+                callSetErr("ОЗМ " + scan.substring(1, 7) + " не найден", ctx);
+            }
+            else 
+            {
+              int i_scan = prog_ref_mat.name.length() + 10;
+              tov_qty = "";
+              boolean tov_qty_err = false;
+              while (scan.charAt(i_scan) != ' ' && i_scan < scan.length()) {
+                  tov_qty = tov_qty + scan.charAt(i_scan);
+                  if ((scan.charAt(i_scan) < '0' || scan.charAt(i_scan) > '9') 
+                          && scan.charAt(i_scan) != ',') 
+                      tov_qty_err = true;
+                  i_scan++;
+              }
+              if (tov_qty.length() > 0 && !tov_qty_err) {
+                prog_scan = 'P' + scan.substring(1, 7) + tov_qty;
+                d.callAddShk(prog_scan, TaskState.TOV_CELL, this, ctx);
+                s = "Просканирован ШК остатка " + scan.substring(1, 7) + " " +
+                  prog_ref_mat.name + " метраж " + tov_qty;
+                callSetMsg(s, ctx);
+                callAddHist(s, ctx);
+              } else
+                  callSetErr("Некорректное количество: " + tov_qty, ctx);
+            }
+        }
         else
           callSetErr("Просканирован не ШК остатка (сканирование " + scan + " не принято)", ctx);
     } else
