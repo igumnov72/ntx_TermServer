@@ -64,8 +64,15 @@ public class ProcessTest extends ProcessTask {
     }
     
     String extra_inf = "";
+    int char_code;
     if (scan.length() > 40) {
-      int char_code;
+        for (int i=0; i < scan.length(); i++) {
+          char_code = (int) scan.charAt(i);
+          extra_inf = extra_inf + " " + String.valueOf(char_code);
+        }
+        callSetErr(extra_inf, ctx);
+        return htmlWork("Тестовая задача", true, ctx);
+        /*
       char_code = (int) scan.charAt(7);
       extra_inf = extra_inf + "+" + String.valueOf(char_code) + "- ";
       if (scan.charAt(7) == ':') {
@@ -84,6 +91,7 @@ public class ProcessTest extends ProcessTask {
         }
     } else
           extra_inf = "+ss:" + scan.charAt(7) + "-";
+*/
     }
 
     Z_TS_DESCR f = new Z_TS_DESCR();

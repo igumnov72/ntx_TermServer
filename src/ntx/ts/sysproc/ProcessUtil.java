@@ -271,7 +271,10 @@ public abstract class ProcessUtil extends Process {
         ((n == 15) && isAllDigits(scan.substring(0, 7)) && isAllDigits(scan.substring(8)) && 
                 ((scan.charAt(7) == 'D') || (scan.charAt(7) == 'C'))) ||
         ((n == 15) && isAllDigits(scan.substring(1)) && 
-                (scan.charAt(0) == 'R'))) {
+                (scan.charAt(0) == 'R')) ||
+        (scan.length() > 10 && scan.charAt(7) == ':' && isAllDigits(scan.substring(1,7)))
+            )
+    {
       return true;
     } else {
       return false;

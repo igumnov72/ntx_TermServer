@@ -141,7 +141,7 @@ public class ProcessProgOpis extends ProcessTask {
                 " метраж " + scan.substring(8,12) + "." + scan.substring(12);
             callSetMsg(s, ctx);
             callAddHist(s, ctx);
-        }
+        } else
         if (scan.length() > 10 && scan.charAt(7) == ':' && isAllDigits(scan.substring(1,7))) {
 
             prog_ref_mat = RefMat.get(scan.substring(1, 7));
