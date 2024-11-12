@@ -25,6 +25,7 @@ public class Z_TS_COMPL4 {
   public String ASK_MESH = ""; // Общий флаг
   public String TREB_SBOR = "";
   public String BOX_QTIES = "";
+  public String KUNWE_NAM = "";
   //
   // table params
   public ZTS_COMPL_CELL_S[] IT = new ZTS_COMPL_CELL_S[0]; // Ячейки для комплектации
@@ -98,6 +99,7 @@ public class Z_TS_COMPL4 {
         System.out.println("  ASK_MESH=" + ASK_MESH);
         System.out.println("  TREB_SBOR=" + TREB_SBOR);
         System.out.println("  BOX_QTIES=" + BOX_QTIES);
+        System.out.println("  KUNWE_NAM=" + KUNWE_NAM);
         System.out.println("  err=" + err);
         System.out.println("  IT.length=" + IT.length);
         System.out.println("  IT_FP.length=" + IT_FP.length);
@@ -183,6 +185,7 @@ public class Z_TS_COMPL4 {
         params.ASK_MESH = expParams.getString("ASK_MESH");
         params.TREB_SBOR = expParams.getString("TREB_SBOR");
         params.BOX_QTIES = expParams.getString("BOX_QTIES");
+        params.KUNWE_NAM = expParams.getString("KUNWE_NAM");
         params.err = expParams.getString("ERR");
         if (!params.err.isEmpty()) {
           params.isErr = true;

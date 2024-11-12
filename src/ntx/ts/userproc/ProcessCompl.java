@@ -123,15 +123,20 @@ public class ProcessCompl extends ProcessTask {
             callSetMsg("Уже введено " + String.valueOf(d.getBoxQty().size()) + " паллет" , ctx);
         return htmlWork("Комплектация", playSound, String.valueOf(d.getPalQty()), ctx);
       case QTY_BOX:
-
-          String defBoxQty = "";
+        String defBoxQty = "";
         int iBox = d.getBoxQty().size();
         if (d.getBoxQtySaved().size() > iBox)
             defBoxQty = String.valueOf(d.getBoxQtySaved().get(iBox));
         return htmlWork("Комплектация", playSound, defBoxQty, ctx);
       case QTY_MESH:
-        return htmlWork("Комплектация", playSound, String.valueOf(d.getMeshQty()), ctx);
-          
+//        return htmlWork("Комплектация", playSound, String.valueOf(d.getMeshQty()), ctx);
+
+        String defMeshQty = "";
+        int iMesh = d.getMeshQty().size();
+        if (d.getMeshQtySaved().size() > iMesh)
+            defMeshQty = String.valueOf(d.getMeshQtySaved().get(iMesh));
+        return htmlWork("Комплектация", playSound, defMeshQty, ctx);
+
       default:
         return htmlWork("Комплектация", playSound, ctx);
     }
@@ -516,7 +521,7 @@ public class ProcessCompl extends ProcessTask {
         if (f2.SGM.equalsIgnoreCase("X") && f2.SGM_ASK.equalsIgnoreCase("X")) 
             nextState = TaskState.ASK_SEL_SGM;
 
-        d.callAddVbeln(vbeln, f.IT, f.IT_FP, f.IT_CH, nextState, ctx);
+        d.callAddVbeln(vbeln, f.IT, f.IT_FP, f.IT_CH, f.KUNWE_NAM, nextState, ctx);
     //      crossDoc ? TaskState.CNF_CROSSDOC : TaskState.CELL_VBELN, ctx);
         d.callSetInfCompl(f.INF_COMPL, ctx);
         d.callSetCheckCompl(f.CHECK_COMPL, ctx);
@@ -1712,7 +1717,7 @@ public class ProcessCompl extends ProcessTask {
       return htmlGet(true, ctx);
     }
 
-    if (pal_qty == d.getBoxQty().size()) {
+    if (pal_qty == d.getBoxQty().size() && pal_qty > 0) {
       if (d.getAskMesh().equals("X")) {
         callSetTaskState(TaskState.QTY_MESH, ctx);
         return htmlGet(true, ctx);
@@ -1726,7 +1731,7 @@ public class ProcessCompl extends ProcessTask {
       callSetMsg("Паллета " + String.valueOf(d.getBoxQty().size() + 1) + 
         "/" + String.valueOf(pal_qty), ctx);
     } else 
-        callSetMsg("", ctx);
+        callSetMsg("Паллета 0/0", ctx);
       //return ComplDoneFin(ctx);
     return htmlGet(true, ctx);
   }
@@ -1739,26 +1744,25 @@ public class ProcessCompl extends ProcessTask {
     }
     
     int box_qty = Integer.parseInt(scan);
-    d.callAddBoxQty(box_qty, TaskState.QTY_BOX, ctx);  
-    
-    if (d.getPalBoxQtyPrevState() != 0) {
-        callSetTaskState(TaskState.values()[d.getPalBoxQtyPrevState()], ctx);
-        d.callClearPalBoxQtyPrevState(ctx);
-        return htmlGet(true, ctx);
-    }
-    else {
-        if (d.getBoxQty().size() >= d.getPalQty())
-          if (d.getAskMesh().equals("X")) {
-            callSetTaskState(TaskState.QTY_MESH, ctx);
+    TaskState next_state = TaskState.QTY_BOX;
+    if (d.getAskMesh().equals("X")) next_state = TaskState.QTY_MESH;
+    d.callAddBoxQty(box_qty, next_state, ctx);  
+    callSetMsg("Паллета " + String.valueOf(d.getBoxQty().size() + 1) + 
+      "/" + String.valueOf(d.getPalQty()), ctx);
+    if (next_state == TaskState.QTY_BOX) {
+        if (d.getPalBoxQtyPrevState() != 0) {
+            callSetMsg("", ctx);
+            callSetTaskState(TaskState.values()[d.getPalBoxQtyPrevState()], ctx);
+            d.callClearPalBoxQtyPrevState(ctx);
             return htmlGet(true, ctx);
-          }
-          else return htmlAskNK(ctx); //ComplDoneFin(ctx);
-        else {
-          callSetMsg("Паллета " + String.valueOf(d.getBoxQty().size() + 1) + 
-            "/" + String.valueOf(d.getPalQty()), ctx);
-          return htmlGet(true, ctx);
+        }
+        else
+        if (d.getBoxQty().size() >= d.getPalQty()) {
+            callSetMsg("", ctx);
+            return htmlAskNK(ctx);
         }
     }
+    return htmlGet(true, ctx);
   }
   
   private FileData handleScanQtyMesh(String scan, TaskContext ctx) throws Exception {
@@ -1769,8 +1773,27 @@ public class ProcessCompl extends ProcessTask {
     }
     
     int mesh_qty = Integer.parseInt(scan);
-    d.callSetMeshQty(mesh_qty, ctx);  
-    return htmlAskNK(ctx); //ComplDoneFin(ctx);
+    d.callAddMeshQty(mesh_qty, TaskState.QTY_BOX, ctx);  
+    callSetMsg("", ctx);
+
+    if (d.getPalBoxQtyPrevState() != 0) {
+        callSetTaskState(TaskState.values()[d.getPalBoxQtyPrevState()], ctx);
+        d.callClearPalBoxQtyPrevState(ctx);
+        return htmlGet(true, ctx);
+    }
+    else {
+        if (d.getBoxQty().size() >= d.getPalQty()) {
+          return htmlAskNK(ctx); //ComplDoneFin(ctx);
+        }  
+        else 
+        {
+          callSetMsg("Паллета " + String.valueOf(d.getBoxQty().size() + 1) + 
+            "/" + String.valueOf(d.getPalQty()), ctx);
+          return htmlGet(true, ctx);
+        }
+    }
+
+//    return htmlAskNK(ctx); //ComplDoneFin(ctx);
   }
   
   public FileData htmlAskNK(UserContext ctx) throws Exception {
@@ -2620,17 +2643,27 @@ public class ProcessCompl extends ProcessTask {
       Z_TS_COMPL24 f = new Z_TS_COMPL24();
       f.VBELN = fillZeros(d.getVbeln(), 10);
       f.PAL_QTY = BigDecimal.valueOf(d.getPalQty());
-      f.MESH_QTY = BigDecimal.valueOf(d.getMeshQty());
+      f.MESH_QTY = BigDecimal.valueOf(0); //BigDecimal.valueOf(d.getMeshQty());
       f.ZDC_NK = new_kor;
       ArrayList<Integer> bl = d.getBoxQty();
+      ArrayList<Integer> ml = d.getMeshQty();
       f.BOX_QTY = BigDecimal.valueOf(0);
       f.PAL_BOX_QTIES = "";
       for (Integer b : bl) {
         f.BOX_QTY = f.BOX_QTY.add(BigDecimal.valueOf(b));
-        if (f.PAL_BOX_QTIES.isEmpty())
-          f.PAL_BOX_QTIES = String.valueOf(b);
-        else
-          f.PAL_BOX_QTIES = f.PAL_BOX_QTIES + "," + String.valueOf(b);
+      }
+      for (Integer m : ml) {
+        f.MESH_QTY = f.MESH_QTY.add(BigDecimal.valueOf(m));
+      }
+      for (int i = 0; i < bl.size(); i++) {
+          Integer b = bl.get(i);
+          Integer m = 0;
+          if (i < ml.size()) m = ml.get(i);
+          if (f.PAL_BOX_QTIES.isEmpty())
+            f.PAL_BOX_QTIES = String.valueOf(b) + '/' + String.valueOf(m);
+          else
+            f.PAL_BOX_QTIES = f.PAL_BOX_QTIES + "," + 
+                    String.valueOf(b) + '/' + String.valueOf(m);
       }
       f.execute();
     }
@@ -2690,6 +2723,8 @@ public class ProcessCompl extends ProcessTask {
 */
               ) {
         callSetTaskState(TaskState.QTY_PAL, ctx);
+        callSetMsg("Уже введено " + String.valueOf(d.getBoxQty().size()) +
+                " паллет", ctx);
         return htmlGet(false, ctx);
       } else {
         return ComplDoneFin(ctx);
@@ -2815,12 +2850,14 @@ public class ProcessCompl extends ProcessTask {
 
   @Override
   public String getAddTaskName(UserContext ctx) throws Exception {
-    String addName = ctx.user.getAskQtyCompl(d.getLgort()) ? "<b>ввод кол-ва</b>" : "<b>БЕЗ ввода кол-ва</b>";
+    String addName = "";
+    if (ctx.user.getAskQtyCompl(d.getLgort()))
+      addName += "; <b>ввод кол-ва</b>"; // : ""; //"<b>БЕЗ ввода кол-ва</b>";
     String vbelns = d.getVbelns();
     if (vbelns != null) {
-      addName = vbelns + "; " + addName;
+      addName = vbelns + addName;
     }
-    if (d.isFreeCompl()) {
+    if (d.isSGM()) {// .isFreeCompl()) {
       addName = addName + "; <b>с СГМ</b>";
     }
     if (d.getInfCompl().equals("X")) {
@@ -2840,9 +2877,11 @@ public class ProcessCompl extends ProcessTask {
         addName += d.getToPal() + "</b>";
       }
     }
+    
+    addName += "; " + d.getKunweNam();
 
     if (!d.getLgort().isEmpty()) {
-      return d.getLgort() + " " + RefLgort.getNoNull(d.getLgort()).name + "; " + addName;
+      return d.getLgort() + "; " + addName; //" " + RefLgort.getNoNull(d.getLgort()).name
     } else {
       return addName;
     }
@@ -3005,8 +3044,11 @@ class ComplData extends ProcData {
   private final ArrayList<Integer> boxQty = new ArrayList<Integer>();
   private final ArrayList<Integer> boxQtySaved = new ArrayList<Integer>();
   private final ArrayList<String> noCorpBoxShkChargs = new ArrayList<String>();
-  private int meshQty = 0;
+  private final ArrayList<Integer> meshQtySaved = new ArrayList<Integer>();
+  //private int meshQty = 0;
+  private final ArrayList<Integer> meshQty = new ArrayList<Integer>();
   private int palBoxQtyPrevState = 0; 
+  private String kunwe_nam = "";
   
   public ArrayList<String> getNoCorpBoxShkChargs() {
     return noCorpBoxShkChargs;
@@ -3016,7 +3058,7 @@ class ComplData extends ProcData {
     return palQty;
   }
 
-  public int getMeshQty() {
+  public ArrayList<Integer> getMeshQty() {
     return meshQty;
   }
 
@@ -3028,8 +3070,16 @@ class ComplData extends ProcData {
     return boxQtySaved;
   }
 
+  public ArrayList<Integer> getMeshQtySaved() {
+    return meshQtySaved;
+  }
+
   public String getNextCellScan() {
     return nextCellScan;
+  }
+
+  public String getKunweNam() {
+    return kunwe_nam;
   }
 
   public String getNextVbelnScan() {
@@ -3533,6 +3583,7 @@ class ComplData extends ProcData {
           ZTS_COMPL_CELL_S[] it, 
           ZTS_COMPL_FP_S[] it_fp,
           ZTS_CHARG_PROPS_S[] it_ch,
+          String kunwe_name,
           TaskState state, TaskContext ctx) throws Exception {
     DataRecord dr = new DataRecord();
     dr.procId = ctx.task.getProcId();
@@ -3568,6 +3619,8 @@ class ComplData extends ProcData {
           t4[i] = it_ch[i].CHARG;
     dr.setSa(FieldType.CHARGS2, t4);
 
+    dr.setS(FieldType.CEH_NAME, kunwe_name);
+    
     if ((state != null) && (state != ctx.task.getTaskState())) {
       dr.setI(FieldType.TASK_STATE, state.ordinal());
     }
@@ -3720,10 +3773,12 @@ class ComplData extends ProcData {
     Track.saveProcessChange(dr, ctx.task, ctx);
   }
 
-  public void callSetMeshQty(int mesh_qty, TaskContext ctx) throws Exception {
+  public void callAddMeshQty(int mesh_qty, TaskState state, TaskContext ctx) throws Exception {
     DataRecord dr = new DataRecord();
     dr.procId = ctx.task.getProcId();
     dr.setI(FieldType.QTY_MESH, mesh_qty);
+    if ((state != null) && (state != ctx.task.getTaskState())) 
+      dr.setI(FieldType.TASK_STATE, state.ordinal());
     Track.saveProcessChange(dr, ctx.task, ctx);
   }
   
@@ -4271,6 +4326,9 @@ class ComplData extends ProcData {
           lastVbeln = vbeln;
           boxQty.clear();
           boxQtySaved.clear();
+          meshQty.clear();
+          meshQtySaved.clear();
+          kunwe_nam = dr.getValStr(FieldType.CEH_NAME);
         }
 
         if (dr.haveVal(FieldType.TAB3)) {
@@ -4412,18 +4470,31 @@ class ComplData extends ProcData {
         }
                 
         if (dr.haveVal(FieldType.QTY_MESH)) {
-          meshQty = (Integer) dr.getVal(FieldType.QTY_MESH);
+          Integer mesh_qty = (Integer) dr.getVal(FieldType.QTY_MESH);
+          meshQty.add(mesh_qty);
         }
 
         if (dr.haveVal(FieldType.QTIES)) {
           String boxQtiesStr = dr.getValStr(FieldType.QTIES); 
           String[] boxQties = boxQtiesStr.split(",");
           if (boxQties.length > 0) palQty = Integer.parseInt(boxQties[0]);
-          if (boxQties.length > 1) meshQty = Integer.parseInt(boxQties[1]);
+          if (boxQties.length > 1) ;//meshQty = Integer.parseInt(boxQties[1]);
           if (boxQties.length > 2) {
             boxQtySaved.clear();
-            for (int i = 2; i < boxQties.length; i++)
-              boxQtySaved.add(Integer.parseInt(boxQties[i]));
+            meshQtySaved.clear();
+            String[] words; 
+            for (int i = 2; i < boxQties.length; i++) {
+              words = boxQties[i].split("/");
+              if (words.length == 1) {
+                boxQtySaved.add(Integer.parseInt(words[0]));
+                meshQtySaved.add(Integer.valueOf(0));
+              }  
+              else 
+              if (words.length == 2) {
+                boxQtySaved.add(Integer.parseInt(words[0]));
+                meshQtySaved.add(Integer.parseInt(words[1]));
+              }
+            }
           }
         }
 

@@ -52,10 +52,18 @@ public abstract class ProcessUtil extends Process {
     String addTaskName = getAddTaskName(ctx);
     if (UserContext.class.isInstance(ctx)) {
       UserContext uctx = (UserContext) ctx;
+
+        int i = 0;
+        String userName = uctx.user.getUserName();
+        for (; i < userName.length(); i++ )
+            if (userName.charAt(i) == ' ') break;
+        userName = userName.substring(0, i);
+
       if (addTaskName == null) {
-        return uctx.user.getUserName();
+        return userName; //uctx.user.getUserName();
       } else {
-        return uctx.user.getUserName() + "; " + addTaskName;
+        return userName //uctx.user.getUserName() 
+                + "; " + addTaskName;
       }
     } else {
       return addTaskName == null ? "" : addTaskName;
