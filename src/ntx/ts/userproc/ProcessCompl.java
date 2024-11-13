@@ -1718,11 +1718,11 @@ public class ProcessCompl extends ProcessTask {
     }
 
     if (pal_qty == d.getBoxQty().size() && pal_qty > 0) {
-      if (d.getAskMesh().equals("X")) {
-        callSetTaskState(TaskState.QTY_MESH, ctx);
-        return htmlGet(true, ctx);
-      }
-      else 
+//      if (d.getAskMesh().equals("X")) {
+//        callSetTaskState(TaskState.QTY_MESH, ctx);
+//        return htmlGet(true, ctx);
+//      }
+//      else 
         return htmlAskNK(ctx); 
     }
     
@@ -1747,19 +1747,28 @@ public class ProcessCompl extends ProcessTask {
     TaskState next_state = TaskState.QTY_BOX;
     if (d.getAskMesh().equals("X")) next_state = TaskState.QTY_MESH;
     d.callAddBoxQty(box_qty, next_state, ctx);  
-    callSetMsg("Паллета " + String.valueOf(d.getBoxQty().size() + 1) + 
-      "/" + String.valueOf(d.getPalQty()), ctx);
-    if (next_state == TaskState.QTY_BOX) {
-        if (d.getPalBoxQtyPrevState() != 0) {
-            callSetMsg("", ctx);
-            callSetTaskState(TaskState.values()[d.getPalBoxQtyPrevState()], ctx);
-            d.callClearPalBoxQtyPrevState(ctx);
-            return htmlGet(true, ctx);
-        }
-        else
-        if (d.getBoxQty().size() >= d.getPalQty()) {
-            callSetMsg("", ctx);
-            return htmlAskNK(ctx);
+    if (d.getPalBoxQtyPrevState() != 0) {
+        if (next_state == TaskState.QTY_BOX)  {
+          callSetMsg("", ctx);
+          callSetTaskState(TaskState.values()[d.getPalBoxQtyPrevState()], ctx);
+          d.callClearPalBoxQtyPrevState(ctx);
+          return htmlGet(true, ctx);
+        } else
+            callSetMsg("Паллета " + String.valueOf(d.getBoxQty().size()) + 
+              "/" + String.valueOf(d.getBoxQty().size()), ctx);
+    }
+    else {
+        if (next_state == TaskState.QTY_BOX) {
+          callSetMsg("Паллета " + String.valueOf(d.getBoxQty().size() + 1) + 
+            "/" + String.valueOf(d.getPalQty()), ctx);
+          if (d.getBoxQty().size() >= d.getPalQty()) {
+              callSetMsg("", ctx);
+              return htmlAskNK(ctx);
+          }
+        } else  
+        if (next_state == TaskState.QTY_MESH) {
+            callSetMsg("Паллета " + String.valueOf(d.getBoxQty().size()) + 
+              "/" + String.valueOf(d.getPalQty()), ctx);
         }
     }
     return htmlGet(true, ctx);
