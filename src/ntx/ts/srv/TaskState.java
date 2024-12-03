@@ -67,7 +67,8 @@ public enum TaskState {
   QTY_BOX("Количество коробов:"),
   SEL_STELL("ШК Стеллажа:"),
   SEL_OZM("Введите номер ОЗМ:"),
-  QTY_MESH("Количество мешков:")
+  QTY_MESH("Количество мешков:"),
+  INCOR_KM("Некорректные марки:")
   ;
   //
   public final String actionText;

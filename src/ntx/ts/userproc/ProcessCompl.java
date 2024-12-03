@@ -40,6 +40,7 @@ public class ProcessCompl extends ProcessTask {
   private ZTS_VED_S[] curved;
   private String new_kor = ""; //новые короба
   private String treb_sbor = ""; 
+  private String incor_km_corr = ""; //признак исправленности некорректных марок
 
   public ProcessCompl(long procId) throws Exception {
     super(ProcType.COMPL, procId);
@@ -122,12 +123,14 @@ public class ProcessCompl extends ProcessTask {
         if (d.getBoxQty().size() > 0) 
             callSetMsg("Уже введено " + String.valueOf(d.getBoxQty().size()) + " паллет" , ctx);
         return htmlWork("Комплектация", playSound, String.valueOf(d.getPalQty()), ctx);
+
       case QTY_BOX:
         String defBoxQty = "";
         int iBox = d.getBoxQty().size();
         if (d.getBoxQtySaved().size() > iBox)
             defBoxQty = String.valueOf(d.getBoxQtySaved().get(iBox));
         return htmlWork("Комплектация", playSound, defBoxQty, ctx);
+
       case QTY_MESH:
 //        return htmlWork("Комплектация", playSound, String.valueOf(d.getMeshQty()), ctx);
 
@@ -137,6 +140,9 @@ public class ProcessCompl extends ProcessTask {
             defMeshQty = String.valueOf(d.getMeshQtySaved().get(iMesh));
         return htmlWork("Комплектация", playSound, defMeshQty, ctx);
 
+      case INCOR_KM:
+        return complIncor(ctx);
+        
       default:
         return htmlWork("Комплектация", playSound, ctx);
     }
@@ -546,9 +552,14 @@ public class ProcessCompl extends ProcessTask {
 
         return htmlGet(true, ctx);
     } else {
-      d.callAddVbelnBoxQties(vbeln, f.BOX_QTIES, TaskState.QTY_PAL, ctx);
-      d.callSetAskMesh(f.ASK_MESH, ctx);
-      return htmlGet(true, ctx);
+        if (f.IP_PROPS.INCOR_KM_CORR.equals("X")) {
+          //callSetTaskState(TaskState.INCOR_KM, ctx);
+          d.callAddVbelnBoxQties(vbeln, f.BOX_QTIES, TaskState.INCOR_KM, ctx);
+        } else {
+          d.callAddVbelnBoxQties(vbeln, f.BOX_QTIES, TaskState.QTY_PAL, ctx);
+          d.callSetAskMesh(f.ASK_MESH, ctx);
+        }
+        return htmlGet(true, ctx);
     }
   }
 
@@ -1669,6 +1680,19 @@ public class ProcessCompl extends ProcessTask {
     } else if (menu.startsWith("sel_nk")) {
         new_kor = "";
         if (menu.equals("sel_nk1")) new_kor = "X";
+        callSetTaskState(TaskState.INCOR_KM, ctx);
+        if (!treb_sbor.isEmpty())
+            return htmlShowInf(ctx, "Требования к сборке", treb_sbor);
+        //return ComplDoneFin(ctx);
+    } else if (menu.startsWith("sel_incor")) {
+        incor_km_corr = "X";
+        if (menu.equals("sel_incor1")) incor_km_corr = "";
+        Z_TS_COMPL25 f = new Z_TS_COMPL25();
+        f.VBELN = fillZeros(d.getVbeln(), 10);
+    //    f.USER_SHK = ctx.user.getUserSHK();
+        f.SET_INCOR_CORR = "X";
+        f.INCOR_CORR = incor_km_corr;
+        f.execute();
         return ComplDoneFin(ctx);
     } else if (menu.equals("palboxqty")) {
         String palBoxNum = String.valueOf(d.getBoxQty().size() + 1);
@@ -1811,6 +1835,27 @@ public class ProcessCompl extends ProcessTask {
     return p.getPage();
   }
 
+  public FileData complIncor(TaskContext ctx) throws Exception {
+    Z_TS_COMPL25 f = new Z_TS_COMPL25();
+    f.VBELN = fillZeros(d.getVbeln(), 10);
+//    f.USER_SHK = ctx.user.getUserSHK();
+    f.execute();
+
+    if (f.isErr) {
+      callSetErr(f.err, ctx);
+      return htmlGet(true, ctx);
+    }
+    
+    if (f.INCOR_CORR_CUR.equals("X")) { //f.INCOR_CORR_CUR.equals("X")) 
+      HtmlPageMenu p = new HtmlPageMenu("Некорректные марки", 
+            "Найдены некорректные СН: " + f.INCOR_KMS + 
+            ". Исправлено?",
+            "sel_incor0:нет;sel_incor1:да", "sel_incor0", null, null, false);
+      return p.getPage();
+    } else {
+        return ComplDoneFin(ctx);
+    }  
+  }
   private FileData handleScanZone(String scan, TaskContext ctx) throws Exception {
     if (!isScanZone(scan)) {
       callSetErr("Требуется отсканировать зону склада, в которую помещена паллета "
@@ -2658,6 +2703,7 @@ public class ProcessCompl extends ProcessTask {
       ArrayList<Integer> ml = d.getMeshQty();
       f.BOX_QTY = BigDecimal.valueOf(0);
       f.PAL_BOX_QTIES = "";
+      f.USER_SHK = ctx.user.getUserSHK();
       for (Integer b : bl) {
         f.BOX_QTY = f.BOX_QTY.add(BigDecimal.valueOf(b));
       }

@@ -26,6 +26,7 @@ public class Z_TS_COMPL4 {
   public String TREB_SBOR = "";
   public String BOX_QTIES = "";
   public String KUNWE_NAM = "";
+  public ZTS_IP_PROPS IP_PROPS = new ZTS_IP_PROPS(); // ZTS_IP_PROPS
   //
   // table params
   public ZTS_COMPL_CELL_S[] IT = new ZTS_COMPL_CELL_S[0]; // Ячейки для комплектации
@@ -100,6 +101,8 @@ public class Z_TS_COMPL4 {
         System.out.println("  TREB_SBOR=" + TREB_SBOR);
         System.out.println("  BOX_QTIES=" + BOX_QTIES);
         System.out.println("  KUNWE_NAM=" + KUNWE_NAM);
+        System.out.println("  IP_PROPS.PAL_ENTER_ALL=" + IP_PROPS.PAL_ENTER_ALL);
+        System.out.println("  IP_PROPS.INCOR_KM_CORR=" + IP_PROPS.INCOR_KM_CORR);
         System.out.println("  err=" + err);
         System.out.println("  IT.length=" + IT.length);
         System.out.println("  IT_FP.length=" + IT_FP.length);
@@ -143,6 +146,7 @@ public class Z_TS_COMPL4 {
       expParams.clear();
       tabParams.clear();
 
+      JCoStructure IP_PROPS_s = expParams.getStructure("IP_PROPS");
       JCoTable IT_t = tabParams.getTable("IT");
       JCoTable IT_FP_t = tabParams.getTable("IT_FP");
       JCoTable IT_CH_t = tabParams.getTable("IT_CH");
@@ -191,6 +195,8 @@ public class Z_TS_COMPL4 {
           params.isErr = true;
           params.errFull = params.err;
         }
+        params.IP_PROPS.PAL_ENTER_ALL = IP_PROPS_s.getString("PAL_ENTER_ALL");
+        params.IP_PROPS.INCOR_KM_CORR = IP_PROPS_s.getString("INCOR_KM_CORR");
 
         params.IT = new ZTS_COMPL_CELL_S[IT_t.getNumRows()];
         ZTS_COMPL_CELL_S IT_r;
