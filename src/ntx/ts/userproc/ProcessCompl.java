@@ -41,6 +41,7 @@ public class ProcessCompl extends ProcessTask {
   private String new_kor = ""; //новые короба
   private String treb_sbor = ""; 
   private String incor_km_corr = ""; //признак исправленности некорректных марок
+  public String pal_enter_all = ""; //ввод инф по паллетам по всей ИП
 
   public ProcessCompl(long procId) throws Exception {
     super(ProcType.COMPL, procId);
@@ -120,8 +121,12 @@ public class ProcessCompl extends ProcessTask {
 //          return htmlWork("Комплектация", playSound, ctx);  
 
       case QTY_PAL:
+        String QtyPalMsg = "";
+        if (pal_enter_all.equals("X"))
+            QtyPalMsg = QtyPalMsg + "Внимание! Ввод паллет по всей ИП.";
         if (d.getBoxQty().size() > 0) 
-            callSetMsg("Уже введено " + String.valueOf(d.getBoxQty().size()) + " паллет" , ctx);
+            QtyPalMsg = QtyPalMsg + " Уже введено " + String.valueOf(d.getBoxQty().size()) + " паллет";
+        callSetMsg(QtyPalMsg, ctx);
         return htmlWork("Комплектация", playSound, String.valueOf(d.getPalQty()), ctx);
 
       case QTY_BOX:
@@ -511,6 +516,8 @@ public class ProcessCompl extends ProcessTask {
       callSetErr(f.err, ctx);
       return htmlGet(true, ctx);
     }
+    
+    pal_enter_all = f.IP_PROPS.PAL_ENTER_ALL;
 
     if (f.IT.length > 0) {
         Z_TS_COMPL15 f2 = new Z_TS_COMPL15();
