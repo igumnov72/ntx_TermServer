@@ -116,6 +116,11 @@ public class ProcessCompl extends ProcessTask {
       case SEL_CELL:
       case TOV_CELL:
 //        if (getLastMsg() != null && getLastMsg().contains("ыбрана"))
+//          if (curved == null) {
+              refreshCurVed(ctx);
+              calcUMsg(true);
+//          } else
+//              calcUMsg(false);
           return htmlWork("Комплектация", playSound, null, ctx, umsg, uumsg);
 //        else
 //          return htmlWork("Комплектация", playSound, ctx);  
@@ -414,7 +419,7 @@ public class ProcessCompl extends ProcessTask {
     curved = f.IT.clone();
   }
 
-  private void calcUMsg() throws Exception {
+  private void calcUMsg(boolean subtract_scanned) throws Exception {
     umsg = null;
     uumsg = null;
     if (curved == null) return;
@@ -424,11 +429,12 @@ public class ProcessCompl extends ProcessTask {
     int n = curveda.length;
     ArrayList<ComplScanData> scanData = d.getScanData();
 
+    if (subtract_scanned)
     for (int i = 0; i < n; i++) {
       for (ComplScanData sd : scanData) {
-        if (sd.matnr.equals(curveda[i].MATNR)) {
+        if (sd.matnr.equals(delZeros(curveda[i].MATNR))) {
           if (curveda[i].CHARG.length() > 0) {
-            if ((sd.qtyP.signum() > 0) && sd.charg.equals(curveda[i].CHARG)) {
+            if ((sd.qtyP.signum() > 0) && sd.charg.equals(delZeros(curveda[i].CHARG))) {
               curveda[i].QTY = curveda[i].QTY.subtract(sd.qtyP);
             }
           } 
@@ -540,8 +546,8 @@ public class ProcessCompl extends ProcessTask {
         d.callSetCheckCompl(f.CHECK_COMPL, ctx);
         d.callSetAskMesh(f.ASK_MESH, ctx);
 
-        refreshCurVed(ctx);
-        calcUMsg();
+        //refreshCurVed(ctx);
+        //calcUMsg(true);
 
         String s = "Поставка " + vbeln + " выбрана для комплектации; кол-во "
                 + delDecZeros(d.getVbelnQty(vbeln).toString());
@@ -692,8 +698,8 @@ public class ProcessCompl extends ProcessTask {
       d.callSetCell(cell, d.getFP(cell) ? TaskState.FROM_PAL_CELL : TaskState.TOV_CELL, ctx);
     }
     sendCurCellInf(cell, ctx);
-    refreshCurVed(ctx);
-    calcUMsg();
+    //refreshCurVed(ctx);
+    //calcUMsg(true);
     return htmlGet(true, ctx);
   }
 
@@ -1251,7 +1257,7 @@ public class ProcessCompl extends ProcessTask {
                   + d.getPalQtyScan() + ")";
           callSetMsg(s, ctx);
           callAddHist(s, ctx);
-          calcUMsg();
+          //calcUMsg(true);
         } else {
           callSetErr("Взято " + delDecZeros(qty.toString()) + " ед, нужно не более "
                   + delDecZeros(tq.qty.toString()) + " ед\r\n" + s, ctx);
@@ -1262,7 +1268,7 @@ public class ProcessCompl extends ProcessTask {
                 + d.getPalQtyScan() + ")";
         callSetMsg(s, ctx);
         callAddHist(s, ctx);
-        calcUMsg();
+        //calcUMsg(true);
       }
       callSetTaskState(TaskState.TOV_CELL, ctx);
       return htmlGet(true, ctx);
@@ -1776,7 +1782,12 @@ public class ProcessCompl extends ProcessTask {
     
     int box_qty = Integer.parseInt(scan);
     TaskState next_state = TaskState.QTY_BOX;
-    if (d.getAskMesh().equals("X")) next_state = TaskState.QTY_MESH;
+    if (d.getAskMesh().equals("X")) 
+        next_state = TaskState.QTY_MESH;
+    else if(box_qty == 0) {
+      callSetErr("Требуется ввести ненулевое количество коробов", ctx);
+      return htmlGet(true, ctx);
+    }
     d.callAddBoxQty(box_qty, next_state, ctx);  
     if (d.getPalBoxQtyPrevState() != 0) {
         if (next_state == TaskState.QTY_BOX)  {
@@ -1813,6 +1824,15 @@ public class ProcessCompl extends ProcessTask {
     }
     
     int mesh_qty = Integer.parseInt(scan);
+    int i_box = d.getBoxQty().size() - 1;
+    
+    if (mesh_qty == 0 && i_box >= 0) {
+        if (d.getBoxQty().get(i_box) == 0) {
+            callSetErr("Требуется ввести ненулевое количество мешков", ctx);
+            return htmlGet(true, ctx);
+        }
+    }
+    
     d.callAddMeshQty(mesh_qty, TaskState.QTY_BOX, ctx);  
     callSetMsg("", ctx);
 
@@ -2186,6 +2206,7 @@ public class ProcessCompl extends ProcessTask {
             + ", поставке " + d.getVbeln() + " удалены", ctx);
     callAddHist("Удалено всё по ячейке " + d.getCell()
             + ", поставке " + d.getVbeln(), ctx);
+    refreshCurVed(ctx);
     return htmlGet(true, ctx);
   }
 
@@ -2196,6 +2217,7 @@ public class ProcessCompl extends ProcessTask {
             + " удалены", ctx);
     callAddHist("Удалено всё по последней паллете по ячейке " + d.getCell()
             + ", поставке " + d.getVbeln(), ctx);
+    refreshCurVed(ctx);
     return htmlGet(true, ctx);
   }
 
@@ -2265,6 +2287,7 @@ public class ProcessCompl extends ProcessTask {
 
     callSetMsg(s, ctx);
     callAddHist(s, ctx);
+    refreshCurVed(ctx);
 
     return htmlGet(true, ctx);
   }
