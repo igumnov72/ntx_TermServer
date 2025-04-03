@@ -130,6 +130,9 @@ public class Track {
       case FORM_KOR:
         ret = new ProcessFormKor(procId);
         break;       
+      case SHKINFO:
+        ret = new ProcessShkInfo(procId);
+        break;            
     }
     if (ret == null) {
       throw new Exception("Ошибка программы: не создан процесс типа " + pType.text);
