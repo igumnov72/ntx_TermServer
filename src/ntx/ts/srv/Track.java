@@ -132,7 +132,10 @@ public class Track {
         break;       
       case SHKINFO:
         ret = new ProcessShkInfo(procId);
-        break;            
+        break;      
+      case NABOR_PAL_SAMTEKS:
+        ret = new ProcessNaborPalSamteks(procId);
+        break;         
     }
     if (ret == null) {
       throw new Exception("Ошибка программы: не создан процесс типа " + pType.text);

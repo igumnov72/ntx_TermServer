@@ -498,7 +498,8 @@ public class ProcessPriemka extends ProcessTask {
   }
 
   private FileData handleScanVbeln0(String scan, TaskContext ctx) throws Exception {
-    if (!isScanVbeln(scan)) {
+    if (!isScanVbeln(scan) && (scan.length() != 6 || !isAllDigits(scan))) 
+    {
       callSetErr("Требуется отсканировать ШК поставки (сканирование " + scan + " не принято)", ctx);
       return htmlGet(true, ctx);
     }
@@ -547,7 +548,7 @@ public class ProcessPriemka extends ProcessTask {
   }
 
   private FileData handleScanVbelnTov(String scan, TaskContext ctx) throws Exception {
-    if (isScanVbeln(scan)) {
+    if (isScanVbeln(scan) || (scan.length() == 6 && isAllDigits(scan))) {
       return handleScanVbeln(scan, ctx);
     } else if (isScanTovMk(scan)) {
       d.callClearTov(ctx);

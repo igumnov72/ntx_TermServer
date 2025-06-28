@@ -238,7 +238,14 @@ public abstract class ProcessUtil extends Process {
       return false;
     }
   }
-
+  public static boolean isScanPallet(String scan) {
+    if ((scan.length() == 15) && (scan.charAt(0) == 'U')
+            && isAllDigits(scan.substring(1))) {
+      return true;
+    } else {
+      return false;
+    }
+  }
   public static boolean isScanVbelnVa(String scan) {
     if ((scan.length() <= 7) && isAllDigits(scan)) {
       return true;
