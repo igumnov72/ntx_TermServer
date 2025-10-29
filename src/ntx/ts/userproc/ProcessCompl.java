@@ -524,6 +524,7 @@ public class ProcessCompl extends ProcessTask {
     }
     
     pal_enter_all = f.IP_PROPS.PAL_ENTER_ALL;
+    String with_sgm = f.IP_PROPS.WITH_SGM;
 
     if (f.IT.length > 0) {
         Z_TS_COMPL15 f2 = new Z_TS_COMPL15();
@@ -537,15 +538,26 @@ public class ProcessCompl extends ProcessTask {
 
         boolean crossDoc = false; //f.ZCOMP_CLIENT.equals("X");
         TaskState nextState = TaskState.CELL_VBELN;
-        if (f2.SGM.equalsIgnoreCase("X") && f2.SGM_ASK.equalsIgnoreCase("X")) 
-            nextState = TaskState.ASK_SEL_SGM;
-
+        
+        if (with_sgm.isEmpty()) {
+          if (f2.SGM.equalsIgnoreCase("X") && f2.SGM_ASK.equalsIgnoreCase("X")) 
+              nextState = TaskState.ASK_SEL_SGM;
+        }  
+        
         d.callAddVbeln(vbeln, f.IT, f.IT_FP, f.IT_CH, f.KUNWE_NAM, nextState, ctx);
     //      crossDoc ? TaskState.CNF_CROSSDOC : TaskState.CELL_VBELN, ctx);
         d.callSetInfCompl(f.INF_COMPL, ctx);
         d.callSetCheckCompl(f.CHECK_COMPL, ctx);
         d.callSetAskMesh(f.ASK_MESH, ctx);
 
+        if (with_sgm.equals("+")) {
+          d.callSetIsSGM2(true, ctx);
+        }
+        
+        if (with_sgm.equals("-")) {
+          d.callSetIsSGM2(false, ctx);
+        }
+        
         //refreshCurVed(ctx);
         //calcUMsg(true);
 
@@ -560,8 +572,12 @@ public class ProcessCompl extends ProcessTask {
         }
 
         treb_sbor = f.TREB_SBOR;
-        if (!f.TREB_SBOR.isEmpty())
-          return htmlShowInf(ctx, "Требования к сборке", f.TREB_SBOR);
+        String treb_sbor_msg = treb_sbor;
+        if (with_sgm.equals("+")) {
+            treb_sbor_msg = "Сборка с СГМ!" + "<br>" + treb_sbor_msg;
+        }
+        if (!treb_sbor_msg.isEmpty())
+          return htmlShowInf(ctx, "Требования к сборке", treb_sbor_msg);
 
         return htmlGet(true, ctx);
     } else {
@@ -3660,6 +3676,15 @@ class ComplData extends ProcData {
     }
     if ((state != null) && (state != ctx.task.getTaskState())) {
       dr.setI(FieldType.TASK_STATE, state.ordinal());
+    }
+    Track.saveProcessChange(dr, ctx.task, ctx);
+  }
+
+  public void callSetIsSGM2(boolean isSGM, TaskContext ctx) throws Exception {
+    DataRecord dr = new DataRecord();
+    dr.procId = ctx.task.getProcId();
+    if (isSGM != this.isSGM) {
+      dr.setB(FieldType.IS_SGM, isSGM);
     }
     Track.saveProcessChange(dr, ctx.task, ctx);
   }

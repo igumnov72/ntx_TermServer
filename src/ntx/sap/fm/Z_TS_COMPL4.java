@@ -103,6 +103,7 @@ public class Z_TS_COMPL4 {
         System.out.println("  KUNWE_NAM=" + KUNWE_NAM);
         System.out.println("  IP_PROPS.PAL_ENTER_ALL=" + IP_PROPS.PAL_ENTER_ALL);
         System.out.println("  IP_PROPS.INCOR_KM_CORR=" + IP_PROPS.INCOR_KM_CORR);
+        System.out.println("  IP_PROPS.WITH_SGM=" + IP_PROPS.WITH_SGM);
         System.out.println("  err=" + err);
         System.out.println("  IT.length=" + IT.length);
         System.out.println("  IT_FP.length=" + IT_FP.length);
@@ -197,6 +198,7 @@ public class Z_TS_COMPL4 {
         }
         params.IP_PROPS.PAL_ENTER_ALL = IP_PROPS_s.getString("PAL_ENTER_ALL");
         params.IP_PROPS.INCOR_KM_CORR = IP_PROPS_s.getString("INCOR_KM_CORR");
+        params.IP_PROPS.WITH_SGM = IP_PROPS_s.getString("WITH_SGM");
 
         params.IT = new ZTS_COMPL_CELL_S[IT_t.getNumRows()];
         ZTS_COMPL_CELL_S IT_r;
