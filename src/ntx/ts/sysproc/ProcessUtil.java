@@ -368,7 +368,10 @@ public abstract class ProcessUtil extends Process {
   public static boolean isScanSsccBox(String scan) {
     int n = scan.length();
     char c = scan.charAt(0);
-    if ((n == 18) && c == '0' && isAllDigits(scan)) {
+    if ((n == 18) && (c == '0') && isAllDigits(scan)) {
+      return true;
+    }
+    if ((n == 20) && scan.startsWith("000") && isAllDigits(scan)) {
       return true;
     }
     return false;
@@ -378,6 +381,9 @@ public abstract class ProcessUtil extends Process {
     int n = scan.length();
     char c = scan.charAt(0);
     if ((n == 18) && c == '1' && isAllDigits(scan)) {
+      return true;
+    }
+    if ((n == 20) && scan.startsWith("001") && isAllDigits(scan)) {
       return true;
     }
     return false;

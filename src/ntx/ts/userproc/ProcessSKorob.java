@@ -115,13 +115,13 @@ public class ProcessSKorob extends ProcessTask {
       return htmlGet(true, ctx);
     }
     
-    if (!d.isMarked() && (scan.length() == 18)) 
+    if (!d.isMarked() && ((scan.length() == 18)||(scan.length() == 20))) 
     {
       callSetErr("Требуется ШК короба из матрицы (сканирование " + scan + " не принято)", ctx);
       return htmlGet(true, ctx);
     }
     
-    if (d.isMarked() && (scan.length() != 18) && (scan.charAt(0) == '0')) 
+    if (d.isMarked() && !isScanSsccBox(scan)) 
     {
       callSetErr("Требуется SSCC ШК короба (сканирование " + scan + " не принято)", ctx);
       return htmlGet(true, ctx);
