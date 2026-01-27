@@ -129,7 +129,7 @@ public class ProcessNaborPalSamteks extends ProcessTask {
           return htmlWork("Набор паллет Самтекс", true, ctx);
         }
         else {
-          callAddHist(scan, ctx);
+          callAddHist(f.INF, ctx); // scan
           d.callAddScan(scan, this, ctx);            
         }        
         

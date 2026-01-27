@@ -397,7 +397,8 @@ public class ProcessOpisK extends ProcessTask {
       return;
     }
 
-    String s = "Сохранен короб " + delZeros(f.KOROB) + " по заказу " + d.getVbelnVa() + " (" + delDecZeros(f.QTY_TOT.toString()) + " ед)";
+    String s = "Сохранен короб " + delZeros(f.KOROB) + " / " + f.KOROB_SSCC +
+      " по заказу " + d.getVbelnVa() + " (" + delDecZeros(f.QTY_TOT.toString()) + " ед)";
     callAddHist(s, ctx);
     callSetMsg(s, ctx);
 
