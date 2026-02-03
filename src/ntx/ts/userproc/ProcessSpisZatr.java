@@ -144,6 +144,7 @@ public class ProcessSpisZatr extends ProcessTask {
 
         if (f.isErr) {
           callSetErr(f.err, ctx);
+          callSetTaskState(TaskState.TOV, ctx);
           return htmlWork("Списание на затраты", true, ctx);
         }
         
@@ -205,15 +206,18 @@ public class ProcessSpisZatr extends ProcessTask {
 
         f.execute();
 
+        String s = f.INF;
+
         if (f.isErr) {
-          callSetErr(f.err, ctx);
+          s = s + " " + f.err;
+          callSetErr(s, ctx);
           return htmlWork("Списание на затраты", true, ctx);
         }
 
         d.callClearScanData(this, ctx);
-        String s = "Данные сохранены";
         callAddHist(s, ctx);
         callSetMsg(s, ctx);
+        callSetErr("", ctx);
 
     }
     
