@@ -460,12 +460,16 @@ public class ProcessSklMove extends ProcessTask {
         String s;
         if (haveTov()) {
           s = "Перемещение части товара из " + d.getCell1() + " " + 
-            d.getPal1() + " в " + d.getCell2() + " " + d.getPal2() + " успешно проведено";
+            d.getPal1() + " в " + d.getCell2() + " " + d.getPal2() + 
+            " успешно проведено" + " (Кол-во сканов: " + d.getScanCount() + ")";
         } else if (d.getPal1().equals(d.getPal2())) {
-          s = "Перемещение паллеты " + d.getPal1() + " из " + d.getCell1() + " в " + d.getCell2() + " успешно проведено";
+          s = "Перемещение паллеты " + d.getPal1() + " из " + d.getCell1() + 
+            " в " + d.getCell2() + " успешно проведено" + 
+            " (Кол-во сканов: " + d.getScanCount() + ")";
         } else {
           s = "Перемещение всего товара из " + d.getCell1() + " " + d.getPal1() + 
-            " в " + d.getCell2() + " " + d.getPal2() + " успешно проведено";
+            " в " + d.getCell2() + " " + d.getPal2() + " успешно проведено" + 
+            " (Кол-во сканов: " + d.getScanCount() + ")";
         }
         callSetMsg(s, ctx);
         callAddHist(s, ctx);
@@ -529,11 +533,17 @@ public class ProcessSklMove extends ProcessTask {
       d.callSetPal2(scan.substring(1), f.KEY1, ctx);
       String s;
       if (haveTov()) {
-        s = "Перемещение части товара из " + d.getCell1() + " " + d.getPal1() + " в " + d.getCell2() + " " + d.getPal2() + " успешно проведено";
+        s = "Перемещение части товара из " + d.getCell1() + " " + d.getPal1() + 
+            " в " + d.getCell2() + " " + d.getPal2() + " успешно проведено" + 
+            " (Кол-во сканов: " + d.getScanCount() + ")";
       } else if (d.getPal1().equals(d.getPal2())) {
-        s = "Перемещение паллеты " + d.getPal1() + " из " + d.getCell1() + " в " + d.getCell2() + " успешно проведено";
+        s = "Перемещение паллеты " + d.getPal1() + " из " + d.getCell1() + 
+            " в " + d.getCell2() + " успешно проведено" + 
+            " (Кол-во сканов: " + d.getScanCount() + ")";
       } else {
-        s = "Перемещение всего товара из " + d.getCell1() + " " + d.getPal1() + " в " + d.getCell2() + " " + d.getPal2() + " успешно проведено";
+        s = "Перемещение всего товара из " + d.getCell1() + " " + d.getPal1() + 
+            " в " + d.getCell2() + " " + d.getPal2() + " успешно проведено" + 
+            " (Кол-во сканов: " + d.getScanCount() + ")";
       }
       callSetMsg(s, ctx);
       callAddHist(s, ctx);
@@ -704,6 +714,10 @@ class SklMoveData extends ProcData {
 
   public int getPrevState() {
     return prevState;
+  }
+
+  public int getScanCount() {
+    return tovScans.size();
   }
 
   public boolean scanIsDouble(String scan) {
