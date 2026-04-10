@@ -124,7 +124,10 @@ public class ProcessProdPriemka extends ProcessTask {
   private FileData handleScanTov(String scan, TaskContext ctx) throws Exception {
     if (isScanTov(scan)) {
       return handleScanTovDo(scan, ctx);
-    } else {
+    } else if (isScanStelKK(scan)) {
+      return handleScanStelKK(scan, ctx);
+    }
+    else {
       callSetErr("Требуется отсканировать ШК товара (сканирование " + scan + " не принято)", ctx);
       return htmlGet(true, ctx);
     }
@@ -140,6 +143,48 @@ public class ProcessProdPriemka extends ProcessTask {
       return htmlGet(true, ctx);
     }
   }
+  
+  private ProdPriemkaTovRet processScanTov(String scan, TaskContext ctx) throws Exception {
+    ProdPriemkaTovRet ret = new ProdPriemkaTovRet();
+    String charg = getScanCharg(scan);
+    BigDecimal q = getScanQty(scan);
+
+    ProdPriemkaTovData r = d.getPrtQtyNull(charg);
+    ret.ok = false;
+    BigDecimal qtyTot = q;
+
+    if (r != null) {
+      // партия уже сканировалась, проверяем имеющееся макс кол-во
+      qtyTot = qtyTot.add(r.qty);
+      if (qtyTot.compareTo(r.qtyMax) <= 0) {
+        ret.ok = true;
+        ret.abc = r.abc;
+        d.callAddTov(charg, q, r.qtyMax, ret.abc, null, ctx);
+      }
+    }
+
+    if (!ret.ok) {
+      Z_TS_PROD1 f = new Z_TS_PROD1();
+      f.LGORT = d.getLgort();
+      f.CHARG = fillZeros(charg, 10);
+      f.EBELNS = d.getEbelns();
+      f.QTY_TOT = qtyTot;
+
+      f.execute();
+
+      if (!f.isErr) {
+        ret.abc = f.ABC;
+        d.callAddTov(charg, q, f.QTY_MAX, ret.abc, TaskState.TOV_PAL, ctx);
+        d.callSetEbelns(f.EBELNS2, ctx);
+        ret.ok = true;
+      } else {
+        ret.err = f.err;
+      }
+    }
+
+    return ret;
+  }
+
 
   private FileData handleScanTovDo(String scan, TaskContext ctx) throws Exception {
     // тип ШК уже проверен
@@ -155,6 +200,7 @@ public class ProcessProdPriemka extends ProcessTask {
       return htmlGet(true, ctx);
     }
 
+    /*
     ProdPriemkaTovData r = d.getPrtQtyNull(charg);
     boolean ok = false;
     BigDecimal qtyTot = q;
@@ -189,23 +235,56 @@ public class ProcessProdPriemka extends ProcessTask {
         callSetErr(f.err, ctx);
       }
     }
-
-    if (ok) {
+    */
+    
+    ProdPriemkaTovRet ret = processScanTov(scan, ctx);
+    
+    if (ret.ok) {
       String s = c.matnr + "/" + charg + " " + RefMat.getFullName(c.matnr)
               + ": " + delDecZeros(q.toString()) + " ед (на паллете: "
               + delDecZeros(d.getQtyPal().toString()) + " ед; "
               + d.getNScan() + " скан)";
-      if (!abc.isEmpty()) {
+      if (!ret.abc.isEmpty()) {
         //s += " (ABC: " + abc + ")";
         s = RefAbc.appendAbcXyz(s, d.getLgort(), c.matnr);
       }
       callSetMsg(s, ctx);
       callAddHist(s, ctx);
+    } else {
+      callSetErr(ret.err, ctx);
     }
 
     return htmlGet(true, ctx);
   }
 
+  private FileData handleScanStelKK(String scan, TaskContext ctx) throws Exception {
+/*
+      Z_TS_PROD8 f = new Z_TS_PROD8();
+      f.SHK = scan;
+
+      f.execute();
+
+      if (!f.isErr) {
+        ProdPriemkaTovRet ret;
+        for (int i = 0; i < f.it_shk.length; i++) {
+          ret = processScanTov(f.it_shk[i].shk, ctx);
+          if (!ret.ok) {
+            d.callClearTovData(TaskState.TOV, ctx);
+            callSetErr(ret.err, ctx);
+            break;
+          }
+        }
+        String s = "Стеллаж ОКК " + scan.substring(2) +
+           " (на паллете: "
+              + delDecZeros(d.getQtyPal().toString()) + " ед; "
+              + d.getNScan() + " кусков)";
+      } else {
+        callSetErr(f.err, ctx);
+      }
+*/
+      return htmlGet(true, ctx);
+  }
+  
   private FileData handleScanPalDo(String scan, TaskContext ctx) throws Exception {
     if (d.isAddrSkl()) {
       return handleScanPalDoAddr(scan, ctx);
@@ -610,6 +689,12 @@ class ProdPriemkaTovData {  // общее и максимальное кол-в�
   }
 }
 
+class ProdPriemkaTovRet {
+  public boolean ok = false;
+  public String err = ""; 
+  public String abc = ""; 
+}
+
 class ProdPriemkaData extends ProcData {
 
   private String lgort = ""; // склад
@@ -883,3 +968,4 @@ class ProdPriemkaData extends ProcData {
     }
   }
 }
+

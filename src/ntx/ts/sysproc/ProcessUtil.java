@@ -328,6 +328,17 @@ public abstract class ProcessUtil extends Process {
     }
     return false;
   }
+  
+  public static boolean isScanStelKK(String scan) {
+    int n = scan.length();
+    if (
+        (n == 9) && 
+        (scan.substring(0, 2).equals("KK")) && 
+        isAllDigits(scan.substring(2))
+       )
+        return true;
+    return false;
+  }
 
   public static boolean isScanSur(String scan) {
     int n = scan.length();
