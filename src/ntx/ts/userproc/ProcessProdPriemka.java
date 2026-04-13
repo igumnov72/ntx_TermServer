@@ -8,6 +8,7 @@ import java.util.Map.Entry;
 import ntx.sap.fm.*;
 import ntx.sap.refs.*;
 import ntx.sap.struct.ZTS_PRT_QTY_S;
+import ntx.sap.struct.ZTS_SHK_S;
 import ntx.ts.html.HtmlPage;
 import ntx.ts.html.HtmlPageMenu;
 import ntx.ts.html.HtmlPageMessage;
@@ -138,6 +139,8 @@ public class ProcessProdPriemka extends ProcessTask {
       return handleScanPalDo(scan, ctx);
     } else if (isScanTov(scan)) {
       return handleScanTovDo(scan, ctx);
+    } if (isScanStelKK(scan)) {
+      return handleScanStelKK(scan, ctx);
     } else {
       callSetErr("Требуется отсканировать ШК товара или паллеты (сканирование " + scan + " не принято)", ctx);
       return htmlGet(true, ctx);
@@ -258,7 +261,7 @@ public class ProcessProdPriemka extends ProcessTask {
   }
 
   private FileData handleScanStelKK(String scan, TaskContext ctx) throws Exception {
-/*
+      boolean all_ok = true;
       Z_TS_PROD8 f = new Z_TS_PROD8();
       f.SHK = scan;
 
@@ -266,22 +269,27 @@ public class ProcessProdPriemka extends ProcessTask {
 
       if (!f.isErr) {
         ProdPriemkaTovRet ret;
-        for (int i = 0; i < f.it_shk.length; i++) {
-          ret = processScanTov(f.it_shk[i].shk, ctx);
+        for (ZTS_SHK_S IT_SHK : f.IT_SHK) {
+          ret = processScanTov(IT_SHK.SHK, ctx);
           if (!ret.ok) {
             d.callClearTovData(TaskState.TOV, ctx);
             callSetErr(ret.err, ctx);
+            all_ok = false;
             break;
           }
         }
-        String s = "Стеллаж ОКК " + scan.substring(2) +
-           " (на паллете: "
+        if (all_ok) {
+          String s = "Стеллаж ОКК " + scan.substring(2) +
+             " (на паллете: "
               + delDecZeros(d.getQtyPal().toString()) + " ед; "
               + d.getNScan() + " кусков)";
+          callSetMsg(s, ctx);
+          callAddHist(s, ctx);
+        }
       } else {
         callSetErr(f.err, ctx);
       }
-*/
+
       return htmlGet(true, ctx);
   }
   
