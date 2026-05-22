@@ -139,6 +139,9 @@ public class Track {
       case SPIS_ZATR:
         ret = new ProcessSpisZatr(procId);
         break;         
+      case MARK_PALLET:
+        ret = new ProcessMarkPallet(procId);
+        break;       
     }
     if (ret == null) {
       throw new Exception("Ошибка программы: не создан процесс типа " + pType.text);

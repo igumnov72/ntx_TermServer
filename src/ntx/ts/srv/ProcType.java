@@ -38,7 +38,8 @@ public enum ProcType {
   FORM_KOR("Формирование коробов",25),
   SHKINFO("ШК Инфо",26),
   NABOR_PAL_SAMTEKS("Набор паллет Самтекс",27),   // Набор паллет Самтекс
-  SPIS_ZATR("Списание на затраты",28)
+  SPIS_ZATR("Списание на затраты",28),
+  MARK_PALLET("Маркировка паллет",29)             // Маркировка паллет
   ;
   //
   public final String text;
