@@ -130,6 +130,7 @@ public class ProcessMarkPallet extends ProcessTask {
         Z_TS_MARK_PALLET_SHK f = new Z_TS_MARK_PALLET_SHK();
         
         f.W_SHK = scan;
+        f.W_MATNR = d.getMATNR();
         f.execute();
         
         if (f.isErr) {
@@ -147,6 +148,9 @@ public class ProcessMarkPallet extends ProcessTask {
           String sInfo = f.INFO;
                    
 //          callSetMsg(sInfo + "  " + w1_qty.toString() + "[" + Integer.toString(d.getNScan()) + "]", ctx);       
+
+          d.callSetMATNR(f.MATNR, TaskState.SEL_SHK, this, ctx); 
+
           callSetMsg(sInfo, ctx);       
         }
     }
@@ -242,6 +246,7 @@ class MarkPalletData extends ProcData {
           = new ArrayList<String>(); // отсканированные ШК
   private final HashMap<String, Integer> mapMatCount
           = new HashMap<String, Integer>(); // кол-во сканов по ОЗМ
+    private String MATNR;
     private String vbeln;
     private String LGORT;
     private String OPIS; //Charg_PU;
@@ -278,6 +283,13 @@ class MarkPalletData extends ProcData {
     return s_qty;
   }    
     
+  public String getMATNR() {
+     if (MATNR == null) {
+         MATNR = "";
+     }                 
+      return MATNR;
+  }  
+  
   public String getLGORT() {
      return LGORT;
   }    
@@ -395,6 +407,21 @@ class MarkPalletData extends ProcData {
     return ret;
   }
   
+  
+  public void callSetMATNR(String MATNR, TaskState state, ProcessTask p, UserContext ctx) throws Exception {
+    DataRecord dr = new DataRecord();
+    dr.procId = p.getProcId();
+    if (!strEq(MATNR, this.MATNR)) {
+      dr.setS(FieldType.MATNR, MATNR);
+    }
+    if ((state != null) && (state != p.getTaskState())) {
+
+      dr.setI(FieldType.TASK_STATE, state.ordinal());
+      
+    }
+    Track.saveProcessChange(dr, p, ctx);
+  }      
+  
   public void callSetLGORT(String LGORT, TaskState state, ProcessTask p, UserContext ctx) throws Exception {
     DataRecord dr = new DataRecord();
     dr.procId = p.getProcId();
@@ -467,6 +494,10 @@ class MarkPalletData extends ProcData {
 
         if (dr.haveVal(FieldType.OPIS)) {
           OPIS = (String) dr.getVal(FieldType.OPIS);
+        }        
+
+        if (dr.haveVal(FieldType.MATNR)) {
+          MATNR = (String) dr.getVal(FieldType.MATNR);
         }        
 
         break;

@@ -12,11 +12,13 @@ public class Z_TS_MARK_PALLET_SHK {
 
   // importing params
   public String W_SHK = ""; // Штрих-код
+  public String W_MATNR = ""; // Номер материала
   //
   // exporting params
   public String ISERR = ""; // Признак ошибки
   public BigDecimal QTY = new BigDecimal(0); // Метраж выпуска партии
   public String INFO = ""; // Информация
+  public String MATNR = ""; // Номер материала
   //
   // переменные для работы с ошибками
   public boolean isErr;
@@ -41,6 +43,7 @@ public class Z_TS_MARK_PALLET_SHK {
     } else if (TSparams.logDocLevel >= 2) {
       System.out.println("Вызов ФМ Z_TS_MARK_PALLET_SHK:");
       System.out.println("  W_SHK=" + W_SHK);
+      System.out.println("  W_MATNR=" + W_MATNR);
     }
 
     // вызов САПовской процедуры
@@ -52,6 +55,7 @@ public class Z_TS_MARK_PALLET_SHK {
         System.out.println("  ISERR=" + ISERR);
         System.out.println("  QTY=" + QTY);
         System.out.println("  INFO=" + INFO);
+        System.out.println("  MATNR=" + MATNR);
         System.out.println("  err=" + err);
       }
     } else {
@@ -92,6 +96,7 @@ public class Z_TS_MARK_PALLET_SHK {
       expParams.clear();
 
       impParams.setValue("W_SHK", params.W_SHK);
+      impParams.setValue("W_MATNR", params.W_MATNR);
 
       ret = SAPconn.executeFunction(function);
 
@@ -99,6 +104,7 @@ public class Z_TS_MARK_PALLET_SHK {
         params.ISERR = expParams.getString("ISERR");
         params.QTY = expParams.getBigDecimal("QTY");
         params.INFO = expParams.getString("INFO");
+        params.MATNR = expParams.getString("MATNR");
         params.err = expParams.getString("ERR");
         if (!params.err.isEmpty()) {
           params.isErr = true;
